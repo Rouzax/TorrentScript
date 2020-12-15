@@ -28,7 +28,7 @@ Script will do the following:
     - Clean up the srt subtitles using [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
-    - Start Medusa Import
+    - Start Radarr Import
 3. Clean up Temporary folder
 
 
