@@ -1,6 +1,6 @@
 {
     "DateFormat": "yyyy.MM.dd_HH.mm.ss",
-    "ProccessPath": "C:\\TEMP\\Torrent\\Temp",
+    "ProcessPath": "C:\\TEMP\\Torrent\\Temp",
     "LogArchivePath": "C:\\TEMP\\Torrent\\Temp\\_LOGS",
     "Label": {
         "TV": "TV",
@@ -30,7 +30,7 @@
         "Password": "Password123",
         "omdbAPI": "2028C39D"
     },
-    "ExtractSrtLanguages": [
+    "WantedLanguages": [
         "eng",
         "dut"
     ],
