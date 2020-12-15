@@ -1,0 +1,57 @@
+{
+    "DateFormat": "yyyy.MM.dd_HH.mm.ss",
+    "ProccessPath": "C:\\TEMP\\Torrent\\Temp",
+    "LogArchivePath": "C:\\TEMP\\Torrent\\Temp\\_LOGS",
+    "Label": {
+        "TV": "TV",
+        "Movie": "Movie"
+    },
+    "Tools": {
+        "MKVStripPath": "C:\\GitHub\\mkvstriptest\\mkvstrip.py",
+        "WinRarPath": "C:\\Program Files\\WinRAR\\rar.exe",
+        "MKVMergePath": "C:\\GitHub\\MKVmerge\\mkvmerge.exe",
+        "MKVExtractPath": "C:\\GitHub\\MKVmerge\\mkvextract.exe",
+        "SubtitleEditPath": "C:\\GitHub\\SubtitleEdit\\SubtitleEdit.exe",
+        "SubliminalPath": "C:\\GitHub\\subliminal\\Scripts\\subliminal.exe",
+        "MailSendPath": "C:\\GitHub\\MailSend-Go\\mailsend-go.exe",
+        "PythonPath": "C:\\Python\\Python38\\python.exe"
+    },
+    "Mail": {
+        "To": "user@mail.com",
+        "From": "TorrentScript@mail.com",
+        "FromName": "TorrentScript",
+        "SMTPserver": "smtp.mail.com",
+        "SMTPport": "465",
+        "SMTPuser": "user@mail.com",
+        "SMTPpass": "Password123"
+    },
+    "OpenSub": {
+        "User": "user",
+        "Password": "Password123",
+        "omdbAPI": "2028C39D"
+    },
+    "ExtractSrtLanguages": [
+        "eng",
+        "dut"
+    ],
+    "LanguageCodes": [
+        {
+            "alpha3": "eng",
+            "alpha2": "en"
+        },
+        {
+            "alpha3": "dut",
+            "alpha2": "nl"
+        }
+    ],
+    "Medusa": {
+        "Host": "localhost",
+        "Port": "8081",
+        "APIKey": "4D5F5811CBE94B7299174D739DEC497E"
+    },
+    "Radarr": {
+        "Host": "localhost",
+        "Port": "7878",
+        "APIKey": "90E0C5B2A1F94D5D81E7D4D5AB62F67E"
+    }
+}
