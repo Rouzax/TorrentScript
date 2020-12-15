@@ -29,7 +29,7 @@ Script will do the following:
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
     - Start Radarr Import
-4. If there is another Lable will just unpack or extract
+4. If there is another Label will just unpack or extract
 5. Clean up Temporary folder
 6. If there is no Label set or label is `NoProcess` script will exit
 
