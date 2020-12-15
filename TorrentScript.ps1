@@ -826,8 +826,7 @@ $StopWatch = [system.diagnostics.stopwatch]::startNew()
 
 # Create Log file
 # Log file of current processing file (will be used to send out the mail)
-$LogFilePath = "$ProccessPath\$LogFileDateFormat-$DownloadName.html"
-# Add-Content $LogFilePath -Value '<pre>'
+$LogFilePath = Join-Path -Path $ProccessPath -ChildPath "$LogFileDateFormat-$DownloadName.html"
 
 # Log Header
 Format-Table -LogFile $LogFilePath -Start
