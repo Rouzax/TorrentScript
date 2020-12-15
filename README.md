@@ -18,7 +18,7 @@ Script will do the following:
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
      - Start Medusa Import
- - If Movie as defined in JSON Label
+3. If Movie as defined in JSON Label
     - Extract all SRT subtitles in JSON WantedLanguages
     - Rename all srt files from alpha3 to alpha2 codes as defined in JSON LanguageCodes
 	    - File.3.en.srt
@@ -29,8 +29,9 @@ Script will do the following:
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
     - Start Radarr Import
-3. Clean up Temporary folder
-
+4. If there is another Lable will just unpack or extract
+5. Clean up Temporary folder
+6. If there is no Label set or label is `NoProcess` script will exit
 
 ## Installation
 Need to create a config.json in the root folder of the script, you can copy the config-sample.json
