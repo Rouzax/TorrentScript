@@ -34,7 +34,7 @@ Script will do the following:
 6. If there is no Label set or label is `NoProcess` script will exit
 
 ## Installation
-Need to create a config.json in the root folder of the script, you can copy the config-sample.json
+Need to create a config.json in the root folder of the script, you can copy the config-sample.json.  
 Script needs to be called from qBittorrent after download is finished with the following command
 ```
 powershell "C:\Scripts\TorrentScript\TorrentScript.ps1" -DownloadPath '%D' -DownloadName '%N' -DownloadLabel '%L' -TorrentHash '%I'
