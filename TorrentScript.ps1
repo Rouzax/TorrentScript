@@ -593,7 +593,7 @@ function Import-Radarr {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
     }
-    if ($response.status -eq "queued") {
+    if ($response.status -eq "started") {
         $timeout = New-TimeSpan -Minutes 10
         $endTime = (Get-Date).Add($timeout)
         do {
