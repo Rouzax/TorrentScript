@@ -4,6 +4,8 @@ qBittorrent post processing script with import to Radarr and Medusa by using a t
 Caveat: I'm not a programmer, so use at own risk :)
 
 ## Description
+Only 1 instance of the script will be running and if other downloads complete during execution they will wait on the first script to finish. This is to prevent a system overload.
+
 Script will do the following:  
 1. Unpack or copy to Temporary Processing folder defined in config.json (copy from config-sample.json)
 2. If TV show as defined in JSON Label
