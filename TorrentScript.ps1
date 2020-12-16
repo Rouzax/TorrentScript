@@ -53,6 +53,7 @@ $MedusaApiKey = $Config.Medusa.APIKey
 $RadarrHost = $Config.Radarr.Host
 $RadarrPort = $Config.Radarr.Port
 $RadarrApiKey = $Config.Radarr.APIKey
+$RadarrTimeOutMinutes = $Config.Radarr.TimeOutMinutes
 
 # Mail Settings
 $MailTo = $Config.Mail.To
@@ -599,7 +600,7 @@ function Import-Radarr {
         Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
     }
     if ($response.status -eq "started") {
-        $timeout = New-TimeSpan -Minutes 10
+        $timeout = New-TimeSpan -Minutes $RadarrTimeOutMinutes
         $endTime = (Get-Date).Add($timeout)
         do {
             try {
