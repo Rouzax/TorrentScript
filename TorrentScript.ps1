@@ -533,7 +533,8 @@ function Start-Subliminal {
             # Write-HTMLLog -LogFile $LogFilePath -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Collected:" -Column2 "$VideoCollected Videos"
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Ignored:" -Column2 "$VideoIgnored Videos"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Downloaded:" -Column2 "$SubsDownloaded Videos"
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 "$VideoError Videos"
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
         }
         else {
@@ -644,7 +645,7 @@ function Send-Mail {
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
     # $stdout = $Process.StandardOutput.ReadToEnd()
-    $stderr = $Process.StandardError.ReadToEnd()
+    # $stderr = $Process.StandardError.ReadToEnd()
     # Write-Host "stdout: $stdout"
     # Write-Host "stderr: $stderr"
     $Process.WaitForExit()
