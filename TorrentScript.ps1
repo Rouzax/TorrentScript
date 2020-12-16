@@ -785,7 +785,7 @@ function Stop-Script {
     # Clean up process folder 
     try {
         If (test-path $ProcessPathFull) {
-            # Remove-Item -Force -Recurse -path $ProcessPathFull
+            Remove-Item -Force -Recurse -path $ProcessPathFull
         }
     }
     catch {
