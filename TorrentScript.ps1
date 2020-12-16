@@ -374,8 +374,32 @@ function Extract-Subtitles {
         Get-ChildItem -Path $_.FullName | ForEach-Object {
             $fileName = $_.BaseName
             $filePath = $_.FullName
-            $fileMetadata = &$MKVMergePath -J $filePath | ConvertFrom-Json
-        
+
+            # Start the json export with MKVMerge on the available tracks
+            $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $StartInfo.FileName = $MKVMergePath
+            $StartInfo.RedirectStandardError = $true
+            $StartInfo.RedirectStandardOutput = $true
+            $StartInfo.UseShellExecute = $false
+            $StartInfo.Arguments = @("-J", "`"$filePath`"")
+            $Process = New-Object System.Diagnostics.Process
+            $Process.StartInfo = $StartInfo
+            $Process.Start() | Out-Null
+            $stdout = $Process.StandardOutput.ReadToEnd()
+            $stderr = $Process.StandardError.ReadToEnd()
+            # Write-Host "stdout: $stdout"
+            # Write-Host "stderr: $stderr"
+            $Process.WaitForExit()
+            if ($Process.ExitCode -gt 0) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+                Stop-Script -ExitReason "MKVMerge Error: $DownloadLabel - $DownloadName"
+            }
+            else {
+                $fileMetadata = $stdout | ConvertFrom-Json
+            }
+
             $file = @{
                 FileName        = $fileName
                 FilePath        = $filePath
@@ -761,7 +785,7 @@ function Stop-Script {
     # Clean up process folder 
     try {
         If (test-path $ProcessPathFull) {
-            Remove-Item -Force -Recurse -path $ProcessPathFull
+            # Remove-Item -Force -Recurse -path $ProcessPathFull
         }
     }
     catch {
