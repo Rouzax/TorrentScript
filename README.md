@@ -41,3 +41,12 @@ powershell "C:\Scripts\TorrentScript\TorrentScript.ps1" -DownloadPath '%D' -Down
 ```
 ![qBittorrent settings page](https://i.imgur.com/8TWZyEY.png)
 
+The following external tools need to be available and the path defined in the `config.json`
+ - [MKVstrip](https://github.com/jobrien2001/mkvstrip)
+ - [WinRar](https://www.rarlab.com/download.htm)
+ - [MKVMerge](https://mkvtoolnix.download/)
+ - [MKVExtract](https://mkvtoolnix.download/)
+ - [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
+ - [Subliminal](https://github.com/Diaoul/subliminal)
+ - [MailSend](https://github.com/muquit/mailsend-go)
+ - [Python](https://www.python.org/downloads/)
