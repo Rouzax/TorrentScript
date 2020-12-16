@@ -1,6 +1,6 @@
 
 # TorrentScript
-qBittorrent post processing script with import to Radarr and Medusa by using a temporary directory
+qBittorrent post processing script with import to Radarr and Medusa by using a temporary directory.  
 Caveat: I'm not a programmer, so use at own risk :)
 
 ## Description
