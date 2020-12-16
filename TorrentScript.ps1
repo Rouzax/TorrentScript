@@ -276,8 +276,12 @@ function Start-RoboCopy {
     }
 
     if ($FailedDirs -gt 0 -or $FailedFiles -gt 0) {
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Dirs" -Column2 "$TotalDirs Total" -ColorBg "Error"
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Dirs" -Column2 "$FailedDirs Failed" -ColorBg "Error"
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Files:" -Column2 "$TotalFiles Total" -ColorBg "Error"
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Files:" -Column2 "$FailedFiles Failed" -ColorBg "Error"
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Size:" -Column2 "$TotalMBytes MB Total" -ColorBg "Error"
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Size:" -Column2 "$FailedMBytes MB Failed" -ColorBg "Error"
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName" 
     }
@@ -324,7 +328,7 @@ function Start-UnRar {
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
-    $stdout = $Process.StandardOutput.ReadToEnd()
+    # $stdout = $Process.StandardOutput.ReadToEnd()
     $stderr = $Process.StandardError.ReadToEnd()
     # Write-Host "stdout: $stdout"
     # Write-Host "stderr: $stderr"
@@ -438,7 +442,7 @@ function StripMKV {
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
-    $stdout = $Process.StandardOutput.ReadToEnd()
+    # $stdout = $Process.StandardOutput.ReadToEnd()
     $stderr = $Process.StandardError.ReadToEnd()
     $Process.WaitForExit()
     if ($Process.ExitCode -gt 0) {
@@ -470,7 +474,7 @@ function Start-SubEdit {
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
-    $stdout = $Process.StandardOutput.ReadToEnd()
+    # $stdout = $Process.StandardOutput.ReadToEnd()
     $stderr = $Process.StandardError.ReadToEnd()
     $Process.WaitForExit()
     if ($Process.ExitCode -gt 1) {
@@ -639,7 +643,7 @@ function Send-Mail {
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
-    $stdout = $Process.StandardOutput.ReadToEnd()
+    # $stdout = $Process.StandardOutput.ReadToEnd()
     $stderr = $Process.StandardError.ReadToEnd()
     # Write-Host "stdout: $stdout"
     # Write-Host "stderr: $stderr"
