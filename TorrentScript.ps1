@@ -613,12 +613,12 @@ function Import-Radarr {
             }
             Start-Sleep 1
         }
-        while ($status.state -ne "completed" -or ((Get-Date) -gt $endTime))
-        if ($status.state -eq "completed") {
+        while ($status.status -ne "completed" -or ((Get-Date) -gt $endTime))
+        if ($status.status -eq "completed") {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
         }
         else {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.state -ColorBg "Error" 
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 "Import Timeout: ($RadarrTimeOutMinutes) minutes" -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
         }
