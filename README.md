@@ -34,6 +34,14 @@ Script will do the following:
 4. If there is another Label will just unpack or extract
 5. Clean up Temporary folder
 6. If there is no Label set or label is `NoProcess` script will exit
+7. Send an email with result
+
+**Success**  
+![Success](https://i.imgur.com/Bjp5ggF.png)  
+**Medusa wrong host**  
+![Medusa wrong host](https://i.imgur.com/9BrtJ6z.png)  
+**Unrar error**  
+![Unrar error](https://i.imgur.com/TYvRUXL.png)  
 
 ## Installation
 Need to create a config.json in the root folder of the script, you can copy the config-sample.json.  
