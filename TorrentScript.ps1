@@ -398,8 +398,30 @@ function Extract-Subtitles {
                         $prefix = "$($_.properties.language)"
                     }
                     $destPath = "$($_.id):$($Source)\$($episode.FileName).$($prefix).srt"
-                    &$MKVExtractPath "$($episode.FilePath)" tracks $destPath | Out-Null
-                    $SubsExtracted = $true
+
+                    $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+                    $StartInfo.FileName = $MKVExtractPath
+                    $StartInfo.RedirectStandardError = $true
+                    $StartInfo.RedirectStandardOutput = $true
+                    $StartInfo.UseShellExecute = $false
+                    $StartInfo.Arguments = @("`"$($episode.FilePath)`"", "tracks", "`"$destPath`"")
+                    $Process = New-Object System.Diagnostics.Process
+                    $Process.StartInfo = $StartInfo
+                    $Process.Start() | Out-Null
+                    # $stdout = $Process.StandardOutput.ReadToEnd()
+                    $stderr = $Process.StandardError.ReadToEnd()
+                    # Write-Host "stdout: $stdout"
+                    # Write-Host "stderr: $stderr"
+                    $Process.WaitForExit()
+                    if ($Process.ExitCode -gt 0) {
+                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
+                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+                        Stop-Script -ExitReason "MKVExtract Error: $DownloadLabel - $DownloadName"
+                    }
+                    else {
+                        $SubsExtracted = $true
+                    }
                 }
             }
         }
