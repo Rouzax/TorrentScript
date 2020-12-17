@@ -955,7 +955,7 @@ $LogFilePath = Join-Path -Path $ProcessPath -ChildPath "$LogFileDateFormat-$Down
 # Log Header
 Format-Table -LogFile $LogFilePath -Start
 Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Information  ***" -Header
-Write-HTMLLog -LogFile $LogFilePath -Column1 "Start:" -Column2 "$(Get-Date -Format "yyyy-MM-dd") at $(Get-Date -Format "hh:mm:ss")"
+Write-HTMLLog -LogFile $LogFilePath -Column1 "Start:" -Column2 "$(Get-Date -Format "yyyy-MM-dd") at $(Get-Date -Format "HH:mm:ss")"
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Label:" -Column2 $DownloadLabel
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Name:" -Column2 $DownloadName
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Hash:" -Column2 $TorrentHash
