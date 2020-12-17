@@ -8,7 +8,7 @@ Only 1 instance of the script will be running and if other downloads complete du
 
 Script will do the following:  
 1. Unpack or copy to Temporary Processing folder defined in config.json (copy from config-sample.json)
-2. If TV show as defined in JSON Label
+2. If torrent label is TV show as defined in JSON Label
     - Will strip all subtitle languages not in JSON WantedLanguages
     - Extract all SRT subtitles in JSON WantedLanguages
     - Rename all srt files from alpha3 to alpha2 codes as defined in JSON LanguageCodes
@@ -20,7 +20,7 @@ Script will do the following:
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
      - Start Medusa Import
-3. If Movie as defined in JSON Label
+3. If torrent label is Movie as defined in JSON Label
     - Extract all SRT subtitles in JSON WantedLanguages
     - Rename all srt files from alpha3 to alpha2 codes as defined in JSON LanguageCodes
 	    - File.3.en.srt
