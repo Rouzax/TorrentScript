@@ -497,7 +497,7 @@ function Start-MKV-Subtitle-Strip {
             }
             elseif ($Process.ExitCode -eq 0) {
                 $SubsExtracted = $true
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles" -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles"
             }
             else {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
