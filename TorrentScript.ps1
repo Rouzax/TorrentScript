@@ -35,14 +35,12 @@ $TVLabel = $Config.Label.TV
 $MovieLabel = $Config.Label.Movie
 
 # Additional tools that are needed
-$MKVStripPath = $Config.Tools.MKVStripPath
 $WinRarPath = $Config.Tools.WinRarPath
 $MKVMergePath = $Config.Tools.MKVMergePath
 $MKVExtractPath = $Config.Tools.MKVExtractPath
 $SubtitleEditPath = $Config.Tools.SubtitleEditPath
 $SubliminalPath = $Config.Tools.SubliminalPath
 $MailSendPath = $Config.Tools.MailSendPath
-$PythonPath = $Config.Tools.PythonPath
 
 # Import Medusa Settings
 $MedusaHost = $Config.Medusa.Host
@@ -71,6 +69,7 @@ $omdbAPI = $Config.OpenSub.omdbAPI
 
 # Language codes of subtitles to keep
 $WantedLanguages = $Config.WantedLanguages
+$SubtitleNamesToRemove = $Config.SubtitleNamesToRemove
 
 # Functions
 Function Get-Input {
@@ -345,23 +344,26 @@ function Start-UnRar {
     }
 }
 
-function Extract-Subtitles {
+function Start-MKV-Subtitle-Strip {
     <#
     .SYNOPSIS
-    Extract wanted SRT subtitles from MKVs in root folder
+    Extract wanted SRT subtitles from MKVs in root folder and remux MKVs to strip out unwanted subtitle languages
     .DESCRIPTION
     Searches for all MKV files in root folder and extracts the SRT that are defined in $WantedLanguages 
-    and renames them based on $Config.LanguageCodes
+    Remux any MKV that has subtitles of unwanted languages or Track_name in $SubtitleNamesToRemove.
+    Rename srt subtitle files based on $LanguageCodes
     .PARAMETER Source
     Defines the root folder to start the search for MKV files 
     .EXAMPLE
-    Extract-Subtitles 'C:\Temp\Source'
+    Start-MKV-Subtitle-Strip 'C:\Temp\Source'
 	.OUTPUTS
     SRT files of the desired languages
     file.en.srt
     file.2.en.srt
     file.nl.srt
     file.de.srt
+    MKV files without the unwanted subtitles
+    file.mkv
     #>
     param (
         [Parameter(Mandatory = $true)]
@@ -370,10 +372,11 @@ function Extract-Subtitles {
     $episodes = @()
     $SubsExtracted = $false
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Extract srt files from MKV  ***" -Header
-    Get-ChildItem -Path $Source -Recurse -filter "*.mkv" | ForEach-Object {
-        Get-ChildItem -Path $_.FullName | ForEach-Object {
+    Get-ChildItem -LiteralPath $Source -Recurse -filter "*.mkv" | ForEach-Object {
+        Get-ChildItem -LiteralPath $_.FullName | ForEach-Object {
             $fileName = $_.BaseName
             $filePath = $_.FullName
+            $fileRoot = $_.Directory
 
             # Start the json export with MKVMerge on the available tracks
             $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
@@ -386,23 +389,33 @@ function Extract-Subtitles {
             $Process.StartInfo = $StartInfo
             $Process.Start() | Out-Null
             $stdout = $Process.StandardOutput.ReadToEnd()
-            $stderr = $Process.StandardError.ReadToEnd()
+            # $stderr = $Process.StandardError.ReadToEnd()
             # Write-Host "stdout: $stdout"
             # Write-Host "stderr: $stderr"
             $Process.WaitForExit()
-            if ($Process.ExitCode -gt 0) {
+            if ($Process.ExitCode -eq 2) {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
-                Stop-Script -ExitReason "MKVMerge Error: $DownloadLabel - $DownloadName"
+            }
+            elseif ($Process.ExitCode -eq 1) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+            }
+            elseif ($Process.ExitCode -eq 0) {
+                $fileMetadata = $stdout | ConvertFrom-Json
             }
             else {
-                $fileMetadata = $stdout | ConvertFrom-Json
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
             }
 
             $file = @{
                 FileName        = $fileName
                 FilePath        = $filePath
+                FileRoot        = $fileRoot
                 FileTracks      = $fileMetadata.tracks
                 FileAttachments = $fileMetadata.attachments
             }
@@ -410,46 +423,134 @@ function Extract-Subtitles {
             $episodes += New-Object PSObject -Property $file
         }
     }
+
+    # Exctract wanted SRT subtitles
     $episodes | ForEach-Object {
         $episode = $_
-        $_.FileTracks | ForEach-Object {
-            if ($_.id) {
-                if ($_.type -eq "subtitles" -and $_.codec -eq "SubRip/SRT" -and $_.properties.language -in $WantedLanguages) {
-                    if (Test-Path "$($Source)\$($episode.FileName).$($_.properties.language).srt") {
-                        $prefix = "$($_.id).$($_.properties.language)"
-                    }
-                    else {
-                        $prefix = "$($_.properties.language)"
-                    }
-                    $destPath = "$($_.id):$($Source)\$($episode.FileName).$($prefix).srt"
+        $SubIDsToKeep = @()
+        $SubIDsToRemove = @()
+        $SubsToExtract = @()
+        $SubNamesToKeep = @()
 
-                    $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
-                    $StartInfo.FileName = $MKVExtractPath
-                    $StartInfo.RedirectStandardError = $true
-                    $StartInfo.RedirectStandardOutput = $true
-                    $StartInfo.UseShellExecute = $false
-                    $StartInfo.Arguments = @("`"$($episode.FilePath)`"", "tracks", "`"$destPath`"")
-                    $Process = New-Object System.Diagnostics.Process
-                    $Process.StartInfo = $StartInfo
-                    $Process.Start() | Out-Null
-                    # $stdout = $Process.StandardOutput.ReadToEnd()
-                    $stderr = $Process.StandardError.ReadToEnd()
-                    # Write-Host "stdout: $stdout"
-                    # Write-Host "stderr: $stderr"
-                    $Process.WaitForExit()
-                    if ($Process.ExitCode -gt 0) {
-                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
-                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
-                        Stop-Script -ExitReason "MKVExtract Error: $DownloadLabel - $DownloadName"
+        $episode.FileTracks | ForEach-Object {
+            $FileTrack = $_
+            if ($FileTrack.id) {
+                # Check if subtitle is srt
+                if ($FileTrack.type -eq "subtitles" -and $FileTrack.codec -eq "SubRip/SRT") {
+                    
+                    # Check to see if track_name is part of $SubtitleNamesToRemove list
+                    if ($null -ne ($SubtitleNamesToRemove | Where-Object { $FileTrack.properties.track_name -match $_ })) {
+                        $SubIDsToRemove += $FileTrack.id
+                    }
+                    # Check is subtitle is in $WantedLanguages list
+                    elseif ($FileTrack.properties.language -in $WantedLanguages) {
+                        
+                        # Add subtitle ID to for MKV remux
+                        $SubIDsToKeep += $FileTrack.id
+                        
+                        # Handle multiple subtitles of same language, if exist append ID to file 
+                        if ("$($episode.FileName).$($FileTrack.properties.language).srt" -in $SubNamesToKeep) {
+                            $prefix = "$($FileTrack.id).$($FileTrack.properties.language)"
+                        }
+                        else {
+                            $prefix = "$($FileTrack.properties.language)"
+                        }
+    
+                        # Add Subtitle name and ID to be extracted
+                        $SubsToExtract += "`"$($FileTrack.id):$($episode.FileRoot)\$($episode.FileName).$($prefix).srt`""
+                        
+                        # Keep track of subtitle file names that will be extracted to handle possible duplicates
+                        $SubNamesToKeep += "$($episode.FileName).$($prefix).srt"
                     }
                     else {
-                        $SubsExtracted = $true
+                        $SubIDsToRemove += $FileTrack.id
                     }
                 }
             }
         }
-    }    
+
+        # Extract the wanted subtitle languages
+        if ($SubsToExtract.count -gt 0) {
+            $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $StartInfo.FileName = $MKVExtractPath
+            $StartInfo.RedirectStandardError = $true
+            $StartInfo.RedirectStandardOutput = $true
+            $StartInfo.UseShellExecute = $false
+            $StartInfo.Arguments = @("`"$($episode.FilePath)`"", "tracks", "$SubsToExtract")
+            $Process = New-Object System.Diagnostics.Process
+            $Process.StartInfo = $StartInfo
+            $Process.Start() | Out-Null
+            $stdout = $Process.StandardOutput.ReadToEnd()
+            # $stderr = $Process.StandardError.ReadToEnd()
+            # Write-Host "stdout: $stdout"
+            # Write-Host "stderr: $stderr"
+            $Process.WaitForExit()
+            if ($Process.ExitCode -eq 2) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+            }
+            elseif ($Process.ExitCode -eq 1) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+            }
+            elseif ($Process.ExitCode -eq 0) {
+                $SubsExtracted = $true
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles" -ColorBg "Error"
+            }
+            else {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Unknown" -ColorBg "Error"
+            }
+        }
+
+        # Remux and strip out all unwanted subtitle languages
+        if ($SubIDsToRemove.Count -gt 0) {
+            $TmpFileName = $Episode.FileName + ".tmp"
+            $TmpMkvPath = Join-Path $episode.FileRoot $TmpFileName
+            $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $StartInfo.FileName = $MKVMergePath
+            $StartInfo.RedirectStandardError = $true
+            $StartInfo.RedirectStandardOutput = $true
+            $StartInfo.UseShellExecute = $false
+            $StartInfo.Arguments = @("-o `"$TmpMkvPath`"", "-s $($SubIDsToKeep -join ",")", "`"$($episode.FilePath)`"")
+            $Process = New-Object System.Diagnostics.Process
+            $Process.StartInfo = $StartInfo
+            $Process.Start() | Out-Null
+            $stdout = $Process.StandardOutput.ReadToEnd()
+            # $stderr = $Process.StandardError.ReadToEnd()
+            # Write-Host "stdout: $stdout"
+            # Write-Host "stderr: $stderr"
+            $Process.WaitForExit()
+            if ($Process.ExitCode -eq 2) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+            }
+            elseif ($Process.ExitCode -eq 1) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+            }
+            elseif ($Process.ExitCode -eq 0) {
+                # Overwrite original mkv after successful remux
+                Move-Item -Path $TmpMkvPath -Destination $($episode.FilePath) -Force
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Removed:" -Column2 "$($SubIDsToRemove.Count) unwanted subtitle languages"
+            }
+            else {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+            }
+        }
+        else {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Removed:" -Column2 "No unwanted subtitle languages found"
+        }
+    }
+   
+    # Rename extracted subs to correct 2 county code based on $LanguageCodes
     if ($SubsExtracted) {
         $SrtFiles = Get-ChildItem -Path $Source -Recurse -filter "*.srt"
         foreach ($srt in $SrtFiles) {
@@ -470,36 +571,6 @@ function Extract-Subtitles {
     }
     else {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "No SRT subs found in MKV"
-    }
-}
-
-# Fuction to call python script to clean audio and subs
-function StripMKV {
-    param (
-        [Parameter(Mandatory = $true)] 
-        $MKVPath
-    )
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Remove unwanted subtitle languages  ***" -Header
-    $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $StartInfo.FileName = $PythonPath
-    $StartInfo.RedirectStandardError = $true
-    $StartInfo.RedirectStandardOutput = $true
-    $StartInfo.UseShellExecute = $false
-    $StartInfo.Arguments = @($MKVStripPath, "-b `"$MKVMergePath`"", "-l eng,dut", "-k", "-r Forced", "`"$MKVPath`"")
-    $Process = New-Object System.Diagnostics.Process
-    $Process.StartInfo = $StartInfo
-    $Process.Start() | Out-Null
-    # $stdout = $Process.StandardOutput.ReadToEnd()
-    $stderr = $Process.StandardError.ReadToEnd()
-    $Process.WaitForExit()
-    if ($Process.ExitCode -gt 0) {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
-        Stop-Script -ExitReason "MKVStrip Error: $DownloadLabel - $DownloadName"
-    }
-    else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
     }
 }
 
@@ -817,14 +888,13 @@ function Test-Variable-Path {
 }
 
 # Test additional programs
-Test-Variable-Path -Path $MKVStripPath -Name "MKVStripPath"
 Test-Variable-Path -Path $WinRarPath -Name "WinRarPath"
 Test-Variable-Path -Path $MKVMergePath -Name "MKVMergePath"
 Test-Variable-Path -Path $MKVExtractPath -Name "MKVExtractPath"
 Test-Variable-Path -Path $SubtitleEditPath -Name "SubtitleEditPath"
 Test-Variable-Path -Path $SubliminalPath -Name "SubliminalPath"
 Test-Variable-Path -Path $MailSendPath -Name "MailSendPath"
-Test-Variable-Path -Path $PythonPath -Name "PythonPath"
+
 
 # Get input if no parameters defined
 # Download Location
@@ -935,11 +1005,8 @@ if ($DownloadLabel -eq $TVLabel) {
     $MKVCount = $MKVFiles.Count
     if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
     if ($MKVFile) {
-        # Remove unwanted audio and subs
-        StripMKV -MKVPath $ProcessPathFull
-
-        # Extract wanted subtitles and rename
-        Extract-Subtitles $ProcessPathFull
+        # Remove unwanted subtitle languages and extract wanted subtitles and rename
+        Start-MKV-Subtitle-Strip $ProcessPathFull
   
         # Download any missing subs
         Start-Subliminal -Source $ProcessPathFull
@@ -975,7 +1042,7 @@ elseif ($DownloadLabel -eq $MovieLabel) {
     if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
     if ($MKVFile) {
         # Extract wanted subtitles and rename
-        Extract-Subtitles $ProcessPathFull
+        Start-MKV-Subtitle-Strip $ProcessPathFull
   
         # Download any missing subs
         Start-Subliminal -Source $ProcessPathFull

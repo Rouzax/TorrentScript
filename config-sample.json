@@ -7,14 +7,12 @@
         "Movie": "Movie"
     },
     "Tools": {
-        "MKVStripPath": "C:\\GitHub\\mkvstriptest\\mkvstrip.py",
         "WinRarPath": "C:\\Program Files\\WinRAR\\rar.exe",
         "MKVMergePath": "C:\\Program Files\\MKVToolNix\\mkvmerge.exe",
         "MKVExtractPath": "C:\\Program Files\\MKVToolNix\\mkvextract.exe",
         "SubtitleEditPath": "C:\\GitHub\\SubtitleEdit\\SubtitleEdit.exe",
         "SubliminalPath": "C:\\GitHub\\subliminal\\Scripts\\subliminal.exe",
-        "MailSendPath": "C:\\GitHub\\MailSend-Go\\mailsend-go.exe",
-        "PythonPath": "C:\\Python\\Python38\\python.exe"
+        "MailSendPath": "C:\\GitHub\\MailSend-Go\\mailsend-go.exe"
     },
     "Mail": {
         "To": "user@mail.com",
@@ -33,6 +31,9 @@
     "WantedLanguages": [
         "eng",
         "dut"
+    ],
+    "SubtitleNamesToRemove": [
+        "Forced"
     ],
     "LanguageCodes": [
         {
