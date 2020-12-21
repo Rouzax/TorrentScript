@@ -592,7 +592,7 @@ function Start-SubEdit {
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
-    # $stdout = $Process.StandardOutput.ReadToEnd()
+    $stdout = $Process.StandardOutput.ReadToEnd()
     $stderr = $Process.StandardError.ReadToEnd()
     $Process.WaitForExit()
     if ($Process.ExitCode -gt 1) {
