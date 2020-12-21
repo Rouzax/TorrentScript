@@ -1015,12 +1015,12 @@ if ($DownloadLabel -eq $TVLabel) {
     $MKVCount = $MKVFiles.Count
     if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
     if ($MKVFile) {
-        # Remove unwanted subtitle languages and extract wanted subtitles and rename
-        Start-MKV-Subtitle-Strip $ProcessPathFull
-  
         # Download any missing subs
         Start-Subliminal -Source $ProcessPathFull
         
+        # Remove unwanted subtitle languages and extract wanted subtitles and rename
+        Start-MKV-Subtitle-Strip $ProcessPathFull
+  
         # Clean up Subs
         Start-SubEdit -File "*.srt" -Source $ProcessPathFull
       
@@ -1051,12 +1051,12 @@ elseif ($DownloadLabel -eq $MovieLabel) {
     $MKVCount = $MKVFiles.Count
     if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
     if ($MKVFile) {
-        # Extract wanted subtitles and rename
-        Start-MKV-Subtitle-Strip $ProcessPathFull
-  
         # Download any missing subs
         Start-Subliminal -Source $ProcessPathFull
-        
+
+        # Extract wanted subtitles and rename
+        Start-MKV-Subtitle-Strip $ProcessPathFull
+          
         # Clean up Subs
         Start-SubEdit -File "*.srt" -Source $ProcessPathFull
         
