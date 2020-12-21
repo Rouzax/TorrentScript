@@ -371,6 +371,9 @@ function Start-MKV-Subtitle-Strip {
     )
     $episodes = @()
     $SubsExtracted = $false
+    $TotalSubsToKeep = 0
+    $TotalSubsToRemove = 0
+
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Extract srt files from MKV  ***" -Header
     Get-ChildItem -LiteralPath $Source -Recurse -filter "*.mkv" | ForEach-Object {
         Get-ChildItem -LiteralPath $_.FullName | ForEach-Object {
@@ -444,10 +447,7 @@ function Start-MKV-Subtitle-Strip {
                     }
                     # Check is subtitle is in $WantedLanguages list
                     elseif ($FileTrack.properties.language -in $WantedLanguages) {
-                        
-                        # Add subtitle ID to for MKV remux
-                        $SubIDsToKeep += $FileTrack.id
-                        
+
                         # Handle multiple subtitles of same language, if exist append ID to file 
                         if ("$($episode.FileName).$($FileTrack.properties.language).srt" -in $SubNamesToKeep) {
                             $prefix = "$($FileTrack.id).$($FileTrack.properties.language)"
@@ -461,6 +461,9 @@ function Start-MKV-Subtitle-Strip {
                         
                         # Keep track of subtitle file names that will be extracted to handle possible duplicates
                         $SubNamesToKeep += "$($episode.FileName).$($prefix).srt"
+
+                        # Add subtitle ID to for MKV remux
+                        $SubIDsToKeep += $FileTrack.id
                     }
                     else {
                         $SubIDsToRemove += $FileTrack.id
@@ -469,8 +472,12 @@ function Start-MKV-Subtitle-Strip {
             }
         }
 
+        # Count all subtitles to keep and remove of logging
+        $TotalSubsToKeep = $TotalSubsToKeep + $SubIDsToKeep.count
+        $TotalSubsToRemove = $TotalSubsToRemove + $SubIDsToRemove.count
+        
         # Extract the wanted subtitle languages
-        if ($SubsToExtract.count -gt 0) {
+        if ($SubIDsToKeep.count -gt 0) {
             $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
             $StartInfo.FileName = $MKVExtractPath
             $StartInfo.RedirectStandardError = $true
@@ -497,7 +504,7 @@ function Start-MKV-Subtitle-Strip {
             }
             elseif ($Process.ExitCode -eq 0) {
                 $SubsExtracted = $true
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles"
+                # Write-HTMLLog -LogFile $LogFilePath -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles"
             }
             else {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
@@ -537,16 +544,13 @@ function Start-MKV-Subtitle-Strip {
             elseif ($Process.ExitCode -eq 0) {
                 # Overwrite original mkv after successful remux
                 Move-Item -Path $TmpMkvPath -Destination $($episode.FilePath) -Force
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Removed:" -Column2 "$($SubIDsToRemove.Count) unwanted subtitle languages"
+                # Write-HTMLLog -LogFile $LogFilePath -Column1 "Removed:" -Column2 "$($SubIDsToRemove.Count) unwanted subtitle languages"
             }
             else {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
             }
-        }
-        else {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Removed:" -Column2 "No unwanted subtitle languages found"
         }
     }
    
@@ -566,6 +570,12 @@ function Start-MKV-Subtitle-Strip {
                     break
                 }
             }
+        }
+        if ($TotalSubsToKeep -gt 0){
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToKeep Extracted"
+        }
+        if ($TotalSubsToRemove -gt 0) {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToRemove Removed"
         }
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
     }
