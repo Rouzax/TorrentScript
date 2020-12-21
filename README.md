@@ -8,8 +8,8 @@ Only 1 instance of the script will be running and if other downloads complete du
 
 Script will do the following:  
 1. Unpack or copy to Temporary Processing folder defined in config.json (copy from config-sample.json)
-2. If TV show as defined in JSON Label
-    - Will strip all audio and subtitle languages not in JSON WantedLanguages, currently still using external Python script [MKVstrip](https://github.com/jobrien2001/mkvstrip)
+2. If torrent label is TV show as defined in JSON Label
+    - Will strip all subtitle languages not in JSON WantedLanguages
     - Extract all SRT subtitles in JSON WantedLanguages
     - Rename all srt files from alpha3 to alpha2 codes as defined in JSON LanguageCodes
 	    - File.3.en.srt
@@ -20,7 +20,7 @@ Script will do the following:
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
      - Start Medusa Import
-3. If Movie as defined in JSON Label
+3. If torrent label is Movie as defined in JSON Label
     - Extract all SRT subtitles in JSON WantedLanguages
     - Rename all srt files from alpha3 to alpha2 codes as defined in JSON LanguageCodes
 	    - File.3.en.srt
@@ -52,11 +52,9 @@ powershell "C:\Scripts\TorrentScript\TorrentScript.ps1" -DownloadPath '%D' -Down
 ![qBittorrent settings page](https://i.imgur.com/8TWZyEY.png)
 
 The following external tools need to be available and the path defined in the `config.json`
- - [MKVstrip](https://github.com/jobrien2001/mkvstrip)
  - [WinRar](https://www.rarlab.com/download.htm)
  - [MKVMerge](https://mkvtoolnix.download/)
  - [MKVExtract](https://mkvtoolnix.download/)
  - [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
  - [Subliminal](https://github.com/Diaoul/subliminal)
  - [MailSend](https://github.com/muquit/mailsend-go)
- - [Python](https://www.python.org/downloads/)
