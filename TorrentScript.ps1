@@ -865,7 +865,7 @@ function Stop-Script {
         
     # Clean up process folder 
     try {
-        If (test-path $ProcessPathFull) {
+        If (Test-Path -LiteralPath  $ProcessPathFull) {
             Remove-Item -Force -Recurse -path $ProcessPathFull
         }
     }
@@ -889,7 +889,7 @@ function Test-Variable-Path {
         [Parameter(Mandatory = $true)]
         [string] $Name
     )
-    if (!(Test-Path $Path)) {
+    if (!(Test-Path -LiteralPath  $Path)) {
         Write-Host "Cannot find: $Path" -ForegroundColor Red
         Write-Host "As defined in variable: $Name" -ForegroundColor Red
         Write-Host "Will now exit!" -ForegroundColor Red
@@ -935,20 +935,20 @@ if ($DownloadLabel -eq "" -or $DownloadLabel -eq "NoProcess") {
 
 # Check paths from Parameters
 $DownloadPathFull = Join-Path -Path $DownloadPath -ChildPath $DownloadName
-If (!(test-path $DownloadPath)) {
+If (!(Test-Path -LiteralPath  $DownloadPath)) {
     Write-Host "$DownloadPath - Not valid location"
     Exit 1
 }
-If (!(test-path $DownloadPathFull)) {
+If (!(Test-Path -LiteralPath  $DownloadPathFull)) {
     Write-Host "$DownloadPathFull - Not valid location"
     Exit 1
 }
 
 # Test File Paths
-If (!(test-path $ProcessPath)) {
+If (!(Test-Path -LiteralPath  $ProcessPath)) {
     New-Item -ItemType Directory -Force -Path $ProcessPath | Out-Null
 }
-If (!(test-path $LogArchivePath)) {
+If (!(Test-Path -LiteralPath  $LogArchivePath)) {
     New-Item -ItemType Directory -Force -Path $LogArchivePath | Out-Null
 }
 
@@ -988,7 +988,7 @@ $RarCount = $RarFilePaths.Count
 if ($RarCount -gt 0) { $RarFile = $true } else { $RarFile = $false }
 
 # Check is destination folder exists otherwise create it
-If (!(test-path $ProcessPathFull)) {
+If (!(Test-Path -LiteralPath  $ProcessPathFull)) {
     New-Item -ItemType Directory -Force -Path $ProcessPathFull | Out-Null
 }
 
