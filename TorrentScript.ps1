@@ -556,7 +556,7 @@ function Start-MKV-Subtitle-Strip {
    
     # Rename extracted subs to correct 2 county code based on $LanguageCodes
     if ($SubsExtracted) {
-        $SrtFiles = Get-ChildItem -Path $Source -Recurse -filter "*.srt"
+        $SrtFiles = Get-ChildItem -LiteralPath $Source -Recurse -filter "*.srt"
         foreach ($srt in $SrtFiles) {
             $FileDirectory = $srt.Directory
             $FilePath = $srt.FullName
@@ -971,8 +971,8 @@ Write-HTMLLog -LogFile $LogFilePath -Column1 "Name:" -Column2 $DownloadName
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Hash:" -Column2 $TorrentHash
 
 # Check if Single file or Folder 
-$SingleFile = (Get-Item $DownloadPathFull) -is [System.IO.FileInfo]
-$Folder = (Get-Item $DownloadPathFull) -is [System.IO.DirectoryInfo]
+$SingleFile = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.FileInfo]
+$Folder = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.DirectoryInfo]
 
 # Set Source and Destination paths
 if ($Folder) {
@@ -983,7 +983,7 @@ elseif ($SingleFile) {
 }
 
 # Find rar files
-$RarFilePaths = (Get-ChildItem -Path $DownloadPathFull -Recurse -filter "*.rar").FullName
+$RarFilePaths = (Get-ChildItem -LiteralPath $DownloadPathFull -Recurse -filter "*.rar").FullName
 $RarCount = $RarFilePaths.Count
 if ($RarCount -gt 0) { $RarFile = $true } else { $RarFile = $false }
 
@@ -1011,7 +1011,7 @@ elseif (-not $RarFile -and $Folder) {
 
 # Starting Post Processing for Movies and TV Shows
 if ($DownloadLabel -eq $TVLabel) {
-    $MKVFiles = Get-ChildItem -Path $ProcessPathFull -Recurse -filter "*.mkv"
+    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.mkv"
     $MKVCount = $MKVFiles.Count
     if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
     if ($MKVFile) {
@@ -1029,14 +1029,14 @@ if ($DownloadLabel -eq $TVLabel) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $Mkv.name
         }
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
-        $SrtFiles = Get-ChildItem -Path $ProcessPathFull -Recurse -filter "*.srt"
+        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.srt"
         foreach ($Srt in $SrtFiles) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
         }
     }
     else {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Files  ***" -Header
-        $Files = Get-ChildItem -Path $ProcessPathFull -Recurse -filter "*.*"
+        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.*"
         foreach ($File in $Files) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
         }
@@ -1047,7 +1047,7 @@ if ($DownloadLabel -eq $TVLabel) {
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
 elseif ($DownloadLabel -eq $MovieLabel) {
-    $MKVFiles = Get-ChildItem -Path $ProcessPathFull -Recurse -filter "*.mkv"
+    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.mkv"
     $MKVCount = $MKVFiles.Count
     if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
     if ($MKVFile) {
@@ -1065,14 +1065,14 @@ elseif ($DownloadLabel -eq $MovieLabel) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $Mkv.name
         }
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
-        $SrtFiles = Get-ChildItem -Path $ProcessPathFull -Recurse -filter "*.srt"
+        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.srt"
         foreach ($Srt in $SrtFiles) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
         }
     }
     else {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Files  ***" -Header
-        $Files = Get-ChildItem -Path $ProcessPathFull -Recurse -filter "*.*"
+        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.*"
         foreach ($File in $Files) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
         }
@@ -1085,7 +1085,7 @@ elseif ($DownloadLabel -eq $MovieLabel) {
 
 # Reached the end of script
 Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Post Process General Download  ***" -Header
-$Files = Get-ChildItem -Path $ProcessPathFull -Recurse -filter "*.*"
+$Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.*"
 foreach ($File in $Files) {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
 }
