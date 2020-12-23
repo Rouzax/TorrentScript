@@ -763,7 +763,7 @@ function Send-Mail {
         $MailSubject
     )
     # Close log file
-    # Add-Content $LogFilePath -Value '</pre>'
+    # Add-Content -LiteralPath  $LogFilePath -Value '</pre>'
 
     $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
     $StartInfo.FileName = $MailSendPath
@@ -801,25 +801,25 @@ Function Write-HTMLLog {
     )
 
     If ($LogFile) {
-        Add-Content $LogFile -Value "<tr>"
+        Add-Content -LiteralPath  $LogFile -Value "<tr>"
         if ($Header) {
-            Add-Content $LogFile -Value "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
+            Add-Content -LiteralPath  $LogFile -Value "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
         }
         else {
             if ($ColorBg -eq "") {
-                Add-Content $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                Add-Content $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
-                Add-Content $LogFile -Value "</tr>"
+                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
+                Add-Content -LiteralPath  $LogFile -Value "</tr>"
             }
             elseif ($ColorBg -eq "Success") {
-                Add-Content $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                Add-Content $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
-                Add-Content $LogFile -Value "</tr>"  
+                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
+                Add-Content -LiteralPath  $LogFile -Value "</tr>"  
             }
             elseif ($ColorBg -eq "Error") {
-                Add-Content $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                Add-Content $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
-                Add-Content $LogFile -Value "</tr>"  
+                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
+                Add-Content -LiteralPath  $LogFile -Value "</tr>"  
             }
         }
         Write-Output "$Column1 $Column2"
@@ -837,15 +837,15 @@ function Format-Table {
         [string] $LogFile
     )
     if ($Start) {
-        Add-Content $LogFile -Value "<table border=`"0`" align=`"center`" cellspacing=`"0`""
-        Add-Content $LogFile -Value "style=`"border-collapse:collapse;background-color:#555555;color:#FFFFFF;font-family:arial,helvetica,sans-serif;font-size:10pt;`">"
-        Add-Content $LogFile -Value "<col width=`"125`">"
-        Add-Content $LogFile -Value "<col width=`"500`">"
-        Add-Content $LogFile -Value "<tbody>"
+        Add-Content -LiteralPath  $LogFile -Value "<table border=`"0`" align=`"center`" cellspacing=`"0`""
+        Add-Content -LiteralPath  $LogFile -Value "style=`"border-collapse:collapse;background-color:#555555;color:#FFFFFF;font-family:arial,helvetica,sans-serif;font-size:10pt;`">"
+        Add-Content -LiteralPath  $LogFile -Value "<col width=`"125`">"
+        Add-Content -LiteralPath  $LogFile -Value "<col width=`"500`">"
+        Add-Content -LiteralPath  $LogFile -Value "<tbody>"
     }
     else {
-        Add-Content $LogFile -Value "</tbody>"
-        Add-Content $LogFile -Value "</table>"
+        Add-Content -LiteralPath  $LogFile -Value "</tbody>"
+        Add-Content -LiteralPath  $LogFile -Value "</table>"
     }
 }
 
