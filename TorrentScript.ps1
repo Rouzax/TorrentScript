@@ -571,7 +571,7 @@ function Start-MKV-Subtitle-Strip {
                 }
             }
         }
-        if ($TotalSubsToKeep -gt 0){
+        if ($TotalSubsToKeep -gt 0) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToKeep Extracted"
         }
         if ($TotalSubsToRemove -gt 0) {
@@ -974,16 +974,19 @@ Write-HTMLLog -LogFile $LogFilePath -Column1 "Hash:" -Column2 $TorrentHash
 $SingleFile = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.FileInfo]
 $Folder = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.DirectoryInfo]
 
-# Set Source and Destination paths
+# Set Source and Destination paths and get Rar paths
 if ($Folder) {
     $ProcessPathFull = Join-Path -Path $ProcessPath -ChildPath $DownloadLabel | Join-Path -ChildPath $DownloadName
+    $RarFilePaths = (Get-ChildItem -LiteralPath $DownloadPathFull -Recurse -filter "*.rar").FullName
 }
 elseif ($SingleFile) {
     $ProcessPathFull = Join-Path -Path $ProcessPath -ChildPath $DownloadLabel | Join-Path -ChildPath $DownloadName.Substring(0, $DownloadName.LastIndexOf('.'))
+    if ([IO.Path]::GetExtension($downloadPathFull) -eq '.rar') {
+        $RarFilePaths = (Get-Item -LiteralPath $DownloadPathFull).FullName
+    } 
 }
 
 # Find rar files
-$RarFilePaths = (Get-ChildItem -LiteralPath $DownloadPathFull -Recurse -filter "*.rar").FullName
 $RarCount = $RarFilePaths.Count
 if ($RarCount -gt 0) { $RarFile = $true } else { $RarFile = $false }
 
