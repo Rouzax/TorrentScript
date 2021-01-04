@@ -701,11 +701,11 @@ function Import-Medusa {
     foreach ($line in $response) {
         switch -Regex ($line) {
             "directory doesn't exist" {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data) -ColorBg "Success"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data)
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Folder does not exist" -ColorBg "Error"
             }
             "This show isn't in your list" {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data) -ColorBg "Success"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data)
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Show isn't in your list" -ColorBg "Error"
             }
             "Post-processing completed." {
@@ -715,7 +715,7 @@ function Import-Medusa {
     }
 }
 
-# Fuction to Process Radarr
+# Function to Process Radarr
 function Import-Radarr {
     param (
         [Parameter(Mandatory = $true)] 
