@@ -697,7 +697,22 @@ function Import-Medusa {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
     }
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"  
+
+    foreach ($line in $response) {
+        switch -Regex ($line) {
+            "directory doesn't exist" {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data) -ColorBg "Success"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Folder does not exist" -ColorBg "Error"
+            }
+            "This show isn't in your list" {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data) -ColorBg "Success"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Show isn't in your list" -ColorBg "Error"
+            }
+            "Post-processing completed." {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"  
+            }
+        }
+    }
 }
 
 # Fuction to Process Radarr
