@@ -132,7 +132,13 @@ function New-Mutex {
     catch {
         $Mutex = New-Object System.Threading.Mutex($true, $MutexName, [ref]$MutexWasCreated)
     }
-    try { if (!$MutexWasCreated) { $Mutex.WaitOne() | Out-Null } } catch { }
+    try {
+        if (!$MutexWasCreated) {
+            $Mutex.WaitOne() | Out-Null 
+        } 
+    }
+    catch { 
+    }
     Write-Host "Lock [$MutexName] acquired. Executing..." -ForegroundColor DarkGray
     Write-Output ([PSCustomObject]@{ Name = $MutexName; Mutex = $Mutex })
 } # New-Mutex
@@ -156,7 +162,11 @@ function Remove-Mutex {
     Param ([Parameter(Mandatory)][ValidateNotNull()][PSObject]$MutexObject)
     # $MutexObject | fl * | Out-String | Write-Host
     Write-Host "Releasing lock [$($MutexObject.Name)]..." -ForegroundColor DarkGray
-    try { [void]$MutexObject.Mutex.ReleaseMutex() } catch { }
+    try {
+        [void]$MutexObject.Mutex.ReleaseMutex() 
+    }
+    catch { 
+    }
 } # Remove-Mutex
 
 # Robocopy function
@@ -315,7 +325,7 @@ function Start-UnRar {
         $UnRarTargetPath
     )
  
-    $RarFile = split-path -path $UnRarSourcePath -Leaf
+    $RarFile = Split-Path -Path $UnRarSourcePath -Leaf
   
     #executing unrar command
     Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 "$RarFile"
@@ -371,11 +381,11 @@ function Start-MKV-Subtitle-Strip {
     )
     $episodes = @()
     $SubsExtracted = $false
-    $TotalSubsToKeep = 0
+    $TotalSubsToExtract = 0
     $TotalSubsToRemove = 0
 
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Extract srt files from MKV  ***" -Header
-    Get-ChildItem -LiteralPath $Source -Recurse -filter "*.mkv" | ForEach-Object {
+    Get-ChildItem -LiteralPath $Source -Recurse -Filter "*.mkv" | ForEach-Object {
         Get-ChildItem -LiteralPath $_.FullName | ForEach-Object {
             $fileName = $_.BaseName
             $filePath = $_.FullName
@@ -430,10 +440,12 @@ function Start-MKV-Subtitle-Strip {
     # Exctract wanted SRT subtitles
     $episodes | ForEach-Object {
         $episode = $_
-        $SubIDsToKeep = @()
+        $SubIDsToExtract = @()
         $SubIDsToRemove = @()
         $SubsToExtract = @()
         $SubNamesToKeep = @()
+        TotalSubsToExtract = 0
+        TotalSubsToRemove = 0
 
         $episode.FileTracks | ForEach-Object {
             $FileTrack = $_
@@ -463,7 +475,7 @@ function Start-MKV-Subtitle-Strip {
                         $SubNamesToKeep += "$($episode.FileName).$($prefix).srt"
 
                         # Add subtitle ID to for MKV remux
-                        $SubIDsToKeep += $FileTrack.id
+                        $SubIDsToExtract += $FileTrack.id
                     }
                     else {
                         $SubIDsToRemove += $FileTrack.id
@@ -473,11 +485,11 @@ function Start-MKV-Subtitle-Strip {
         }
 
         # Count all subtitles to keep and remove of logging
-        $TotalSubsToKeep = $TotalSubsToKeep + $SubIDsToKeep.count
+        $TotalSubsToExtract = $TotalSubsToExtract + $SubIDsToExtract.count
         $TotalSubsToRemove = $TotalSubsToRemove + $SubIDsToRemove.count
         
         # Extract the wanted subtitle languages
-        if ($SubIDsToKeep.count -gt 0) {
+        if ($SubIDsToExtract.count -gt 0) {
             $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
             $StartInfo.FileName = $MKVExtractPath
             $StartInfo.RedirectStandardError = $true
@@ -522,7 +534,7 @@ function Start-MKV-Subtitle-Strip {
             $StartInfo.RedirectStandardError = $true
             $StartInfo.RedirectStandardOutput = $true
             $StartInfo.UseShellExecute = $false
-            $StartInfo.Arguments = @("-o `"$TmpMkvPath`"", "-s $($SubIDsToKeep -join ",")", "`"$($episode.FilePath)`"")
+            $StartInfo.Arguments = @("-o `"$TmpMkvPath`"", "-s !$($SubIDsToRemove -join ",")", "`"$($episode.FilePath)`"")
             $Process = New-Object System.Diagnostics.Process
             $Process.StartInfo = $StartInfo
             $Process.Start() | Out-Null
@@ -556,7 +568,7 @@ function Start-MKV-Subtitle-Strip {
    
     # Rename extracted subs to correct 2 county code based on $LanguageCodes
     if ($SubsExtracted) {
-        $SrtFiles = Get-ChildItem -LiteralPath $Source -Recurse -filter "*.srt"
+        $SrtFiles = Get-ChildItem -LiteralPath $Source -Recurse -Filter "*.srt"
         foreach ($srt in $SrtFiles) {
             $FileDirectory = $srt.Directory
             $FilePath = $srt.FullName
@@ -571,8 +583,8 @@ function Start-MKV-Subtitle-Strip {
                 }
             }
         }
-        if ($TotalSubsToKeep -gt 0) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToKeep Extracted"
+        if ($TotalSubsToExtract -gt 0) {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToExtract Extracted"
         }
         if ($TotalSubsToRemove -gt 0) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToRemove Removed"
@@ -734,7 +746,7 @@ function Import-Radarr {
     }
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Radarr Import  ***" -Header
     try {
-        $response = Invoke-RestMethod -uri "http://$RadarrHost`:$RadarrPort/api/command" -Method Post -Body $Body -Headers $headers
+        $response = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/command" -Method Post -Body $Body -Headers $headers
     }
     catch {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
@@ -746,7 +758,7 @@ function Import-Radarr {
         $endTime = (Get-Date).Add($timeout)
         do {
             try {
-                $status = Invoke-RestMethod -uri "http://$RadarrHost`:$RadarrPort/api/command/$($response.id)" -Method Get -Headers $headers
+                $status = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/command/$($response.id)" -Method Get -Headers $headers
             }
             catch {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
@@ -881,7 +893,7 @@ function Stop-Script {
     # Clean up process folder 
     try {
         If (Test-Path -LiteralPath  $ProcessPathFull) {
-            Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
+            # Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
         }
     }
     catch {
@@ -944,7 +956,7 @@ $TorrentHash = $TorrentHash.ToUpper()
 
 # Handle empty Torrent Label or NoProcess
 if ($DownloadLabel -eq "" -or $DownloadLabel -eq "NoProcess") {
-    write-host "Do nothing"
+    Write-Host "Do nothing"
     Exit
 }
 
@@ -992,7 +1004,7 @@ $Folder = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.DirectoryInfo
 # Set Source and Destination paths and get Rar paths
 if ($Folder) {
     $ProcessPathFull = Join-Path -Path $ProcessPath -ChildPath $DownloadLabel | Join-Path -ChildPath $DownloadName
-    $RarFilePaths = (Get-ChildItem -LiteralPath $DownloadPathFull -Recurse -filter "*.rar").FullName
+    $RarFilePaths = (Get-ChildItem -LiteralPath $DownloadPathFull -Recurse -Filter "*.rar").FullName
 }
 elseif ($SingleFile) {
     $ProcessPathFull = Join-Path -Path $ProcessPath -ChildPath $DownloadLabel | Join-Path -ChildPath $DownloadName.Substring(0, $DownloadName.LastIndexOf('.'))
@@ -1003,7 +1015,12 @@ elseif ($SingleFile) {
 
 # Find rar files
 $RarCount = $RarFilePaths.Count
-if ($RarCount -gt 0) { $RarFile = $true } else { $RarFile = $false }
+if ($RarCount -gt 0) {
+    $RarFile = $true 
+}
+else {
+    $RarFile = $false 
+}
 
 # Check is destination folder exists otherwise create it
 If (!(Test-Path -LiteralPath  $ProcessPathFull)) {
@@ -1029,9 +1046,14 @@ elseif (-not $RarFile -and $Folder) {
 
 # Starting Post Processing for Movies and TV Shows
 if ($DownloadLabel -eq $TVLabel) {
-    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.mkv"
+    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.mkv"
     $MKVCount = $MKVFiles.Count
-    if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
+    if ($MKVCount -gt 0) {
+        $MKVFile = $true 
+    }
+    else {
+        $MKVFile = $false 
+    }
     if ($MKVFile) {
         # Download any missing subs
         Start-Subliminal -Source $ProcessPathFull
@@ -1047,14 +1069,14 @@ if ($DownloadLabel -eq $TVLabel) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $Mkv.name
         }
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
-        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.srt"
+        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.srt"
         foreach ($Srt in $SrtFiles) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
         }
     }
     else {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Files  ***" -Header
-        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.*"
+        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.*"
         foreach ($File in $Files) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
         }
@@ -1065,9 +1087,14 @@ if ($DownloadLabel -eq $TVLabel) {
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
 elseif ($DownloadLabel -eq $MovieLabel) {
-    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.mkv"
+    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.mkv"
     $MKVCount = $MKVFiles.Count
-    if ($MKVCount -gt 0) { $MKVFile = $true } else { $MKVFile = $false }
+    if ($MKVCount -gt 0) {
+        $MKVFile = $true 
+    }
+    else {
+        $MKVFile = $false 
+    }
     if ($MKVFile) {
         # Download any missing subs
         Start-Subliminal -Source $ProcessPathFull
@@ -1083,14 +1110,14 @@ elseif ($DownloadLabel -eq $MovieLabel) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $Mkv.name
         }
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
-        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.srt"
+        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.srt"
         foreach ($Srt in $SrtFiles) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
         }
     }
     else {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Files  ***" -Header
-        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.*"
+        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.*"
         foreach ($File in $Files) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
         }
@@ -1103,7 +1130,7 @@ elseif ($DownloadLabel -eq $MovieLabel) {
 
 # Reached the end of script
 Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Post Process General Download  ***" -Header
-$Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -filter "*.*"
+$Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.*"
 foreach ($File in $Files) {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
 }
