@@ -893,7 +893,7 @@ function Stop-Script {
     # Clean up process folder 
     try {
         If (Test-Path -LiteralPath  $ProcessPathFull) {
-            # Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
+            Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
         }
     }
     catch {
