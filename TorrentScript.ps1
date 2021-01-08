@@ -808,7 +808,7 @@ function Send-Mail {
     $Process.WaitForExit()
     # Write-Host "exit code: " + $p.ExitCode
     # return $stdout
-    Move-Item -Path $LogFilePath -Destination $LogArchivePath
+    Move-Item -LiteralPath $LogFilePath -Destination $LogArchivePath
 
 }
 
