@@ -444,8 +444,6 @@ function Start-MKV-Subtitle-Strip {
         $SubIDsToRemove = @()
         $SubsToExtract = @()
         $SubNamesToKeep = @()
-        $TotalSubsToExtract = 0
-        $TotalSubsToRemove = 0
 
         $episode.FileTracks | ForEach-Object {
             $FileTrack = $_
