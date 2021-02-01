@@ -659,9 +659,9 @@ function Start-Subliminal {
         $SubsDownloaded = $Matches.0
     }
     if ($stdout -match 'Some providers have been discarded due to unexpected errors') {
-        $Process.ExitCode = 1
+        $SubliminalExitCode = 1
     }
-    if ($Process.ExitCode -gt 0) {
+    if ($SubliminalExitCode -gt 0) {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
