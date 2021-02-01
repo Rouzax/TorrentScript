@@ -952,10 +952,15 @@ if ( ($Null -eq $TorrentHash) -or ($TorrentHash -eq '') ) {
 # Uppercase TorrentHash
 $TorrentHash = $TorrentHash.ToUpper()
 
-# Handle empty Torrent Label or NoProcess
-if ($DownloadLabel -eq "" -or $DownloadLabel -eq "NoProcess") {
+# Handle NoProcess Torrent Label
+if ($DownloadLabel -eq "NoProcess") {
     Write-Host "Do nothing"
     Exit
+}
+
+# Handle empty Torrent Label
+if ($DownloadLabel -eq "") {
+    $DownloadLabel = "NoLabel"
 }
 
 # Check paths from Parameters
