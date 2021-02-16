@@ -996,6 +996,7 @@ If (!(Test-Path -LiteralPath  $DownloadPathFull)) {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "Path:" -Column2 "$DownloadPathFull - Not valid location" -ColorBg "Error"
     Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
     Stop-Script -ExitReason "Path Error: $DownloadLabel - $DownloadName"
+}
 
 # Start of script
 $ScriptMutex = New-Mutex -MutexName 'DownloadScript'
