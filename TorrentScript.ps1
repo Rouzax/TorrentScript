@@ -982,12 +982,6 @@ If (!(Test-Path -LiteralPath  $LogArchivePath)) {
     New-Item -ItemType Directory -Force -Path $LogArchivePath | Out-Null
 }
 
-# Start of script
-$ScriptMutex = New-Mutex -MutexName 'DownloadScript'
-
-# Start Stopwatch
-$StopWatch = [system.diagnostics.stopwatch]::startNew()
-
 # Create Log file
 # Log file of current processing file (will be used to send out the mail)
 $LogFilePath = Join-Path -Path $ProcessPath -ChildPath "$LogFileDateFormat-$DownloadName.html"
@@ -999,6 +993,12 @@ Write-HTMLLog -LogFile $LogFilePath -Column1 "Start:" -Column2 "$(Get-Date -Form
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Label:" -Column2 $DownloadLabel
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Name:" -Column2 $DownloadName
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Hash:" -Column2 $TorrentHash
+
+# Start of script
+$ScriptMutex = New-Mutex -MutexName 'DownloadScript'
+
+# Start Stopwatch
+$StopWatch = [system.diagnostics.stopwatch]::startNew()
 
 # Check if Single file or Folder 
 $SingleFile = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.FileInfo]
