@@ -963,25 +963,6 @@ if ($DownloadLabel -eq "") {
     $DownloadLabel = "NoLabel"
 }
 
-# Check paths from Parameters
-$DownloadPathFull = Join-Path -Path $DownloadPath -ChildPath $DownloadName
-If (!(Test-Path -LiteralPath  $DownloadPath)) {
-    Write-Host "$DownloadPath - Not valid location"
-    Exit 1
-}
-If (!(Test-Path -LiteralPath  $DownloadPathFull)) {
-    Write-Host "$DownloadPathFull - Not valid location"
-    Exit 1
-}
-
-# Test File Paths
-If (!(Test-Path -LiteralPath  $ProcessPath)) {
-    New-Item -ItemType Directory -Force -Path $ProcessPath | Out-Null
-}
-If (!(Test-Path -LiteralPath  $LogArchivePath)) {
-    New-Item -ItemType Directory -Force -Path $LogArchivePath | Out-Null
-}
-
 # Create Log file
 # Log file of current processing file (will be used to send out the mail)
 $LogFilePath = Join-Path -Path $ProcessPath -ChildPath "$LogFileDateFormat-$DownloadName.html"
@@ -993,6 +974,28 @@ Write-HTMLLog -LogFile $LogFilePath -Column1 "Start:" -Column2 "$(Get-Date -Form
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Label:" -Column2 $DownloadLabel
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Name:" -Column2 $DownloadName
 Write-HTMLLog -LogFile $LogFilePath -Column1 "Hash:" -Column2 $TorrentHash
+
+# Test File Paths
+If (!(Test-Path -LiteralPath  $ProcessPath)) {
+    New-Item -ItemType Directory -Force -Path $ProcessPath | Out-Null
+}
+If (!(Test-Path -LiteralPath  $LogArchivePath)) {
+    New-Item -ItemType Directory -Force -Path $LogArchivePath | Out-Null
+}
+
+# Check paths from Parameters
+$DownloadPathFull = Join-Path -Path $DownloadPath -ChildPath $DownloadName
+If (!(Test-Path -LiteralPath  $DownloadPath)) {
+    Write-Host "$DownloadPath - Not valid location"
+    Write-HTMLLog -LogFile $LogFilePath -Column1 "Path:" -Column2 "$DownloadPath - Not valid location" -ColorBg "Error"
+    Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+    Stop-Script -ExitReason "Path Error: $DownloadLabel - $DownloadName"
+}
+If (!(Test-Path -LiteralPath  $DownloadPathFull)) {
+    Write-Host "$DownloadPathFull - Not valid location"
+    Write-HTMLLog -LogFile $LogFilePath -Column1 "Path:" -Column2 "$DownloadPathFull - Not valid location" -ColorBg "Error"
+    Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+    Stop-Script -ExitReason "Path Error: $DownloadLabel - $DownloadName"
 
 # Start of script
 $ScriptMutex = New-Mutex -MutexName 'DownloadScript'
