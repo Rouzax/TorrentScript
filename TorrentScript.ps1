@@ -983,6 +983,12 @@ If (!(Test-Path -LiteralPath  $LogArchivePath)) {
     New-Item -ItemType Directory -Force -Path $LogArchivePath | Out-Null
 }
 
+# Start of script
+$ScriptMutex = New-Mutex -MutexName 'DownloadScript'
+
+# Start Stopwatch
+$StopWatch = [system.diagnostics.stopwatch]::startNew()
+
 # Check paths from Parameters
 $DownloadPathFull = Join-Path -Path $DownloadPath -ChildPath $DownloadName
 If (!(Test-Path -LiteralPath  $DownloadPath)) {
@@ -997,12 +1003,6 @@ If (!(Test-Path -LiteralPath  $DownloadPathFull)) {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
     Stop-Script -ExitReason "Path Error: $DownloadLabel - $DownloadName"
 }
-
-# Start of script
-$ScriptMutex = New-Mutex -MutexName 'DownloadScript'
-
-# Start Stopwatch
-$StopWatch = [system.diagnostics.stopwatch]::startNew()
 
 # Check if Single file or Folder 
 $SingleFile = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.FileInfo]
