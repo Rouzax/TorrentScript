@@ -1069,10 +1069,12 @@ if ($DownloadLabel -eq $TVLabel) {
         foreach ($Mkv in $MKVFiles) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $Mkv.name
         }
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
         $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.srt"
-        foreach ($Srt in $SrtFiles) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
+        if ($SrtFiles.Count -gt 0) {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
+            foreach ($Srt in $SrtFiles) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
+            }
         }
     }
     else {
