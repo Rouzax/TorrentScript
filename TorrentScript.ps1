@@ -714,10 +714,12 @@ function Import-Medusa {
             "directory doesn't exist" {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data)
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Folder does not exist" -ColorBg "Error"
+                Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
             }
             "This show isn't in your list" {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data)
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Show isn't in your list" -ColorBg "Error"
+                Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
             }
             "Post-processing completed." {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"  
@@ -774,15 +776,17 @@ function Import-Radarr {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 "Import Timeout: ($RadarrTimeOutMinutes) minutes" -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+            Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
         }
     }
     else {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $response.status -ColorBg "Error"
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
     }
 }
 
-# Fuction to close the log and send out mail
+# Function to close the log and send out mail
 function Send-Mail {
     param (
         [Parameter(Mandatory = $true)] 
