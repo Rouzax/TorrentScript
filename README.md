@@ -48,7 +48,7 @@ Script will do the following:
 Need to create a config.json in the root folder of the script, you can copy the config-sample.json.  
 Script needs to be called from qBittorrent after download is finished with the following command
 ```
-powershell "C:\Scripts\TorrentScript\TorrentScript.ps1" -DownloadPath '%D' -DownloadName '%N' -DownloadLabel '%L' -TorrentHash '%I'
+powershell "C:\Scripts\TorrentScript\TorrentScript.ps1" -DownloadPath '%R' -DownloadLabel '%L' -TorrentHash '%I'
 ```
 ![qBittorrent settings page](https://i.imgur.com/8TWZyEY.png)
 

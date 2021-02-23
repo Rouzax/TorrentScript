@@ -1,7 +1,8 @@
 {
     "DateFormat": "yyyy.MM.dd_HH.mm.ss",
-    "ProcessPath": "C:\\TEMP\\Torrent\\Temp",
-    "LogArchivePath": "C:\\TEMP\\Torrent\\Temp\\_LOGS",
+    "ProcessPath": "C:\\TEMP\\Torrent\\PROCD",
+    "LogArchivePath": "C:\\TEMP\\Torrent\\PROCD\\_LOGS",
+    "DownloadRootPath": "C:\\TEMP\\Torrent\\Downloads",
     "Label": {
         "TV": "TV",
         "Movie": "Movie"

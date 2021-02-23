@@ -2,8 +2,6 @@ param(
     [Parameter(mandatory = $false)]
     [string] $DownloadPath, 
     [Parameter(mandatory = $false)]
-    [string] $DownloadName,
-    [Parameter(mandatory = $false)]
     [string] $DownloadLabel,
     [Parameter(mandatory = $false)]
     [string] $TorrentHash
@@ -29,6 +27,9 @@ $ProcessPath = $Config.ProcessPath
 
 # Archive location of the log files of handeled donwloads
 $LogArchivePath = $Config.LogArchivePath
+
+# Default download root path
+$DownloadRootPath = $Config.DownloadRootPath
 
 # Label for TV Shows and Movies
 $TVLabel = $Config.Label.TV
@@ -932,14 +933,14 @@ Test-Variable-Path -Path $MailSendPath -Name "MailSendPath"
 
 
 # Get input if no parameters defined
-# Download Location
+# Build the download Location, this is the Download Root Path added with the Download name
 if ( ($Null -eq $DownloadPath) -or ($DownloadPath -eq '') ) {
-    $DownloadPath = Get-Input -Message "Download Path" -Required 
+    $DownloadPath = Get-Input -Message "Download Name" -Required
+    $DownloadPath = Join-Path -Path $DownloadRootPath -ChildPath $DownloadPath 
 }
 # Download Name
-if ( ($Null -eq $DownloadName) -or ($DownloadName -eq '') ) {
-    $DownloadName = Get-Input -Message "Download Name" -Required 
-}
+$DownloadName = Split-Path -Path $DownloadPath -Leaf
+
 # Download Label
 if ( ($Null -eq $DownloadLabel) -or ($DownloadLabel -eq '') ) {
     $DownloadLabel = Get-Input -Message "Download Label" 
@@ -990,33 +991,26 @@ $ScriptMutex = New-Mutex -MutexName 'DownloadScript'
 $StopWatch = [system.diagnostics.stopwatch]::startNew()
 
 # Check paths from Parameters
-$DownloadPathFull = Join-Path -Path $DownloadPath -ChildPath $DownloadName
 If (!(Test-Path -LiteralPath  $DownloadPath)) {
     Write-Host "$DownloadPath - Not valid location"
     Write-HTMLLog -LogFile $LogFilePath -Column1 "Path:" -Column2 "$DownloadPath - Not valid location" -ColorBg "Error"
     Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
     Stop-Script -ExitReason "Path Error: $DownloadLabel - $DownloadName"
 }
-If (!(Test-Path -LiteralPath  $DownloadPathFull)) {
-    Write-Host "$DownloadPathFull - Not valid location"
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Path:" -Column2 "$DownloadPathFull - Not valid location" -ColorBg "Error"
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
-    Stop-Script -ExitReason "Path Error: $DownloadLabel - $DownloadName"
-}
 
 # Check if Single file or Folder 
-$SingleFile = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.FileInfo]
-$Folder = (Get-Item -LiteralPath $DownloadPathFull) -is [System.IO.DirectoryInfo]
+$SingleFile = (Get-Item -LiteralPath $DownloadPath) -is [System.IO.FileInfo]
+$Folder = (Get-Item -LiteralPath $DownloadPath) -is [System.IO.DirectoryInfo]
 
 # Set Source and Destination paths and get Rar paths
 if ($Folder) {
     $ProcessPathFull = Join-Path -Path $ProcessPath -ChildPath $DownloadLabel | Join-Path -ChildPath $DownloadName
-    $RarFilePaths = (Get-ChildItem -LiteralPath $DownloadPathFull -Recurse -Filter "*.rar").FullName
+    $RarFilePaths = (Get-ChildItem -LiteralPath $DownloadPath -Recurse -Filter "*.rar").FullName
 }
 elseif ($SingleFile) {
     $ProcessPathFull = Join-Path -Path $ProcessPath -ChildPath $DownloadLabel | Join-Path -ChildPath $DownloadName.Substring(0, $DownloadName.LastIndexOf('.'))
-    if ([IO.Path]::GetExtension($downloadPathFull) -eq '.rar') {
-        $RarFilePaths = (Get-Item -LiteralPath $DownloadPathFull).FullName
+    if ([IO.Path]::GetExtension($DownloadPath) -eq '.rar') {
+        $RarFilePaths = (Get-Item -LiteralPath $DownloadPath).FullName
     } 
 }
 
@@ -1047,7 +1041,7 @@ elseif (-not $RarFile -and $SingleFile) {
 }
 elseif (-not $RarFile -and $Folder) {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Folder  ***" -Header
-    Start-RoboCopy -Source $DownloadPathFull -Destination $ProcessPathFull -File '*.*'
+    Start-RoboCopy -Source $DownloadPath -Destination $ProcessPathFull -File '*.*'
 }
 
 
