@@ -1037,7 +1037,7 @@ if ($RarFile) {
 }
 elseif (-not $RarFile -and $SingleFile) {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Single File  ***" -Header
-    Start-RoboCopy -Source $DownloadPath -Destination $ProcessPathFull -File $DownloadName
+    Start-RoboCopy -Source $DownloadRootPath -Destination $ProcessPathFull -File $DownloadName
 }
 elseif (-not $RarFile -and $Folder) {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Folder  ***" -Header
