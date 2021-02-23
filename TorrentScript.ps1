@@ -692,7 +692,7 @@ function Import-Medusa {
     $body = @{
         'cmd'            = 'postprocess'
         'force_replace'  = 1
-        'is_priority'    = 1
+        'is_priority'    = 0
         'delete_files'   = 1
         'path'           = $Source
         'return_data'    = 1
