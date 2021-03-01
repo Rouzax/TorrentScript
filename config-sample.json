@@ -49,7 +49,8 @@
     "Medusa": {
         "Host": "localhost",
         "Port": "8081",
-        "APIKey": "4D5F5811CBE94B7299174D739DEC497E"
+        "APIKey": "4D5F5811CBE94B7299174D739DEC497E",
+        "TimeOutMinutes": "15"
     },
     "Radarr": {
         "Host": "localhost",

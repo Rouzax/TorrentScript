@@ -47,6 +47,7 @@ $MailSendPath = $Config.Tools.MailSendPath
 $MedusaHost = $Config.Medusa.Host
 $MedusaPort = $Config.Medusa.Port
 $MedusaApiKey = $Config.Medusa.APIKey
+$MedusaTimeOutMinutes = $Config.Medusa.TimeOutMinutes
 
 # Import Radarr Settings
 $RadarrHost = $Config.Radarr.Host
@@ -690,41 +691,58 @@ function Import-Medusa {
     )
 
     $body = @{
-        'cmd'            = 'postprocess'
-        'force_replace'  = 1
-        'is_priority'    = 0
-        'delete_files'   = 1
-        'path'           = $Source
-        'return_data'    = 1
-        'process_method' = "move"
-        'type'           = "manual"
+        'proc_dir'       = $Source
+        'resource'       = ''
+        'process_method' = 'move'
+        'force'          = 'true'
+        'is_priority'    = 'false'
+        'delete_on'      = 'false'
+        'failed'         = 'false'
+        'proc_type'      = 'manual'
+        'ignore_subs'    = 'false'
+    } | ConvertTo-Json
+
+    $headers = @{
+        'X-Api-Key' = $MedusaApiKey
     }
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Medusa Import  ***" -Header
     try {
-        $response = Invoke-RestMethod "http://$MedusaHost`:$MedusaPort/api/$MedusaApiKey" -Method Get -Body $Body
+        $response = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess" -Method Post -Body $Body -Headers $headers
     }
     catch {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
     }
-
-    foreach ($line in $response) {
-        switch -Regex ($line) {
-            "directory doesn't exist" {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data)
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Folder does not exist" -ColorBg "Error"
+    if ($response.status -eq "success") {
+        $timeout = New-TimeSpan -Minutes $MedusaTimeOutMinutes
+        $endTime = (Get-Date).Add($timeout)
+        do {
+            try {
+                $status = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess/$($response.queueItem.identifier)" -Method Get -Headers $headers
+            }
+            catch {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
                 Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
             }
-            "This show isn't in your list" {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Data:" -Column2 $($response.data)
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Show isn't in your list" -ColorBg "Error"
-                Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
-            }
-            "Post-processing completed." {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"  
-            }
+            Start-Sleep 1
         }
+        while ($status.success -ne "true" -or ((Get-Date) -gt $endTime))
+        if ($status.sucess -eq "true") {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
+        }
+        else {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $status.success -ColorBg "Error" 
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 "Import Timeout: ($MedusaTimeOutMinutes) minutes" -ColorBg "Error" 
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+            Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
+        }
+    }
+    else {
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $response.status -ColorBg "Error"
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
     }
 }
 
