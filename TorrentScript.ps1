@@ -694,12 +694,12 @@ function Import-Medusa {
         'proc_dir'       = $Source
         'resource'       = ''
         'process_method' = 'move'
-        'force'          = 'true'
-        'is_priority'    = 'false'
-        'delete_on'      = 'false'
-        'failed'         = 'false'
+        'force'          = $true
+        'is_priority'    = $false
+        'delete_on'      = $false
+        'failed'         = $false
         'proc_type'      = 'manual'
-        'ignore_subs'    = 'false'
+        'ignore_subs'    = $false
     } | ConvertTo-Json
 
     $headers = @{
@@ -728,9 +728,18 @@ function Import-Medusa {
             }
             Start-Sleep 1
         }
-        while ($status.success -ne "true" -or ((Get-Date) -gt $endTime))
-        if ($status.sucess -eq "true") {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
+        until ($status.success -or ((Get-Date) -gt $endTime))
+        if ($status.success) {
+            $ValuesToFind = 'Processing failed', 'aborting post-processing'
+            $MatchPattern = ($ValuesToFind | ForEach-Object { [regex]::Escape($_) }) -join '|'
+            if ($status.output -match $MatchPattern) {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 "$($status.output -match $MatchPattern)" -ColorBg "Error" 
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+                Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
+            }
+            else {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"    
+            }
         }
         else {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $status.success -ColorBg "Error" 
