@@ -4,7 +4,9 @@ param(
     [Parameter(mandatory = $false)]
     [string] $DownloadLabel,
     [Parameter(mandatory = $false)]
-    [string] $TorrentHash
+    [string] $TorrentHash,       
+    [Parameter(Mandatory = $false)]
+    [switch] $NoCleanUp
 )
 
 # User Variables
@@ -921,14 +923,19 @@ function Stop-Script {
     Write-HTMLLog -LogFile $LogFilePath -Column1 "Time Taken:" -Column2 $($StopWatch.Elapsed.ToString('mm\:ss'))
         
     # Clean up process folder 
-    try {
-        If (Test-Path -LiteralPath  $ProcessPathFull) {
-            Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
-        }
+    if ($NoCleanUp) {
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Cleanup" -Column2 "Files left in Temp path"
     }
-    catch {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+    else {
+        try {
+            If (Test-Path -LiteralPath  $ProcessPathFull) {
+                Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
+            }
+        }
+        catch {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        }
     }
     
     Format-Table -LogFile $LogFilePath
