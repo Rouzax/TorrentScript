@@ -737,14 +737,11 @@ function Import-Medusa {
             if ($status.output -match $MatchPattern) {
                 $ValuesToFind = 'Retrieving episode object for', 'Current quality', 'New quality', 'Old size', 'New size', 'Processing failed', 'aborting post-processing'
                 $MatchPattern = ($ValuesToFind | ForEach-Object { [regex]::Escape($_) }) -join '|'
-                $MedusaLogOutput = @()
                 foreach ($line in $status.output ) {
                     if ($line -match $MatchPattern) {
-                        $MedusaLogOutput += $line
+                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $line -ColorBg "Error" 
                     }       
                 }
-                $MedusaError = $MedusaLogOutput -join "`n"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $MedusaError -ColorBg "Error" 
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
                 Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
             }
