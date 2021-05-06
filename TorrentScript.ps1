@@ -813,7 +813,7 @@ function Import-Radarr {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
             Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
         }
-        else {
+        if ((Get-Date) -gt $endTime){
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 "Import Timeout: ($RadarrTimeOutMinutes) minutes" -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
