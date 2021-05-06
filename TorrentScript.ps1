@@ -782,7 +782,7 @@ function Import-Radarr {
     }
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Radarr Import  ***" -Header
     try {
-        $response = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/command" -Method Post -Body $Body -Headers $headers
+        $response = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command" -Method Post -Body $Body -Headers $headers
     }
     catch {
         Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
@@ -794,7 +794,7 @@ function Import-Radarr {
         $endTime = (Get-Date).Add($timeout)
         do {
             try {
-                $status = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/command/$($response.id)" -Method Get -Headers $headers
+                $status = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command/$($response.id)" -Method Get -Headers $headers
             }
             catch {
                 Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
@@ -803,7 +803,7 @@ function Import-Radarr {
             }
             Start-Sleep 1
         }
-        until ($status.status -eq "completed" -or ((Get-Date) -gt $endTime) -or $status.status -eq "failed" )
+        until ($status.status -ne "started" -or ((Get-Date) -gt $endTime) )
         if ($status.status -eq "completed") {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
         }
