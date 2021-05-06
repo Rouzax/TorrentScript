@@ -807,7 +807,7 @@ function Import-Radarr {
         if ($status.status -eq "completed") {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
         }
-        if ($status.status -eq "completed") {
+        if ($status.status -eq "failed") {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.exception -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
