@@ -803,9 +803,15 @@ function Import-Radarr {
             }
             Start-Sleep 1
         }
-        while ($status.status -ne "completed" -or ((Get-Date) -gt $endTime))
+        until ($status.status -eq "completed" -or ((Get-Date) -gt $endTime) -or $status.status -eq "failed" )
         if ($status.status -eq "completed") {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
+        }
+        if ($status.status -eq "completed") {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.exception -ColorBg "Error" 
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+            Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
         }
         else {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
