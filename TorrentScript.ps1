@@ -920,6 +920,25 @@ function Format-Table {
     }
 }
 
+# Fuction to clean up process folder 
+function CleanProcessPath {
+
+        if ($NoCleanUp) {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Cleanup" -Column2 "NoCleanUp switch was given at command line, leaving files"
+        }
+        else {
+            try {
+                If (Test-Path -LiteralPath  $ProcessPathFull) {
+                    Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
+                }
+            }
+            catch {
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+            }
+        }  
+}
+
 
 # Fuction to stop the script and send out the mail
 function Stop-Script {
@@ -927,29 +946,12 @@ function Stop-Script {
         [Parameter(Mandatory = $true)]
         [string] $ExitReason
     )         
-    
     # Stop the Stopwatch
     $StopWatch.Stop()
 
     Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Script Exection time  ***" -Header
     Write-HTMLLog -LogFile $LogFilePath -Column1 "Time Taken:" -Column2 $($StopWatch.Elapsed.ToString('mm\:ss'))
-        
-    # Clean up process folder 
-    if ($NoCleanUp) {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Cleanup" -Column2 "Files left in Temp path"
-    }
-    else {
-        try {
-            If (Test-Path -LiteralPath  $ProcessPathFull) {
-                Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
-            }
-        }
-        catch {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
-        }
-    }
-    
+      
     Format-Table -LogFile $LogFilePath
     Send-Mail -MailSubject $ExitReason
     # Clean up the Mutex
@@ -1137,6 +1139,7 @@ if ($DownloadLabel -eq $TVLabel) {
 
     # Call Medusa to Post Process
     Import-Medusa -Source $ProcessPathFull
+    CleanProcessPath
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
 elseif ($DownloadLabel -eq $MovieLabel) {
@@ -1178,6 +1181,7 @@ elseif ($DownloadLabel -eq $MovieLabel) {
 
     # Call Radarr to Post Process
     Import-Radarr -Source $ProcessPathFull
+    CleanProcessPath
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
 
