@@ -813,7 +813,7 @@ function Import-Radarr {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
             Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
         }
-        if ((Get-Date) -gt $endTime){
+        if ((Get-Date) -gt $endTime) {
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 "Import Timeout: ($RadarrTimeOutMinutes) minutes" -ColorBg "Error" 
             Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
@@ -923,20 +923,20 @@ function Format-Table {
 # Fuction to clean up process folder 
 function CleanProcessPath {
 
-        if ($NoCleanUp) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Cleanup" -Column2 "NoCleanUp switch was given at command line, leaving files"
+    if ($NoCleanUp) {
+        Write-HTMLLog -LogFile $LogFilePath -Column1 "Cleanup" -Column2 "NoCleanUp switch was given at command line, leaving files"
+    }
+    else {
+        try {
+            If (Test-Path -LiteralPath  $ProcessPathFull) {
+                Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
+            }
         }
-        else {
-            try {
-                If (Test-Path -LiteralPath  $ProcessPathFull) {
-                    Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
-                }
-            }
-            catch {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
-            }
-        }  
+        catch {
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        }
+    }  
 }
 
 
@@ -990,6 +990,7 @@ if ( ($Null -eq $DownloadPath) -or ($DownloadPath -eq '') ) {
     $DownloadPath = Get-Input -Message "Download Name" -Required
     $DownloadPath = Join-Path -Path $DownloadRootPath -ChildPath $DownloadPath 
 }
+
 # Download Name
 $DownloadName = Split-Path -Path $DownloadPath -Leaf
 
@@ -1061,6 +1062,7 @@ if ($Folder) {
 }
 elseif ($SingleFile) {
     $ProcessPathFull = Join-Path -Path $ProcessPath -ChildPath $DownloadLabel | Join-Path -ChildPath $DownloadName.Substring(0, $DownloadName.LastIndexOf('.'))
+    $DownloadRootPath = Split-Path -Path $DownloadPath
     if ([IO.Path]::GetExtension($DownloadPath) -eq '.rar') {
         $RarFilePaths = (Get-Item -LiteralPath $DownloadPath).FullName
     } 
