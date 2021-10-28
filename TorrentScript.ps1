@@ -210,7 +210,7 @@ function Start-RoboCopy {
     $cmdArgs = @("`"$Source`"", "`"$Destination`"", "`"$File`"", $options)
  
     #executing unrar command
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Starting:" -Column2 "Copy files"
+    Write-HTMLLog -Column1 "Starting:" -Column2 "Copy files"
     #executing Robocopy command
     $Output = robocopy @cmdArgs
   
@@ -290,21 +290,21 @@ function Start-RoboCopy {
     }
 
     if ($FailedDirs -gt 0 -or $FailedFiles -gt 0) {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Dirs" -Column2 "$TotalDirs Total" -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Dirs" -Column2 "$FailedDirs Failed" -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Files:" -Column2 "$TotalFiles Total" -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Files:" -Column2 "$FailedFiles Failed" -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Size:" -Column2 "$TotalMBytes MB Total" -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Size:" -Column2 "$FailedMBytes MB Failed" -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Dirs" -Column2 "$TotalDirs Total" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Dirs" -Column2 "$FailedDirs Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Files:" -Column2 "$TotalFiles Total" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Files:" -Column2 "$FailedFiles Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Size:" -Column2 "$TotalMBytes MB Total" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Size:" -Column2 "$FailedMBytes MB Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName" 
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Dirs:" -Column2 "$CopiedDirs Copied"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Files:" -Column2 "$CopiedFiles Copied"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Size:" -Column2 "$CopiedMBytes MB"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Throughput:" -Column2 "$SpeedMBSec MB/s"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
+        Write-HTMLLog -Column1 "Dirs:" -Column2 "$CopiedDirs Copied"
+        Write-HTMLLog -Column1 "Files:" -Column2 "$CopiedFiles Copied"
+        Write-HTMLLog -Column1 "Size:" -Column2 "$CopiedMBytes MB"
+        Write-HTMLLog -Column1 "Throughput:" -Column2 "$SpeedMBSec MB/s"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
     }
 }
 
@@ -332,7 +332,7 @@ function Start-UnRar {
     $RarFile = Split-Path -Path $UnRarSourcePath -Leaf
   
     #executing unrar command
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 "$RarFile"
+    Write-HTMLLog -Column1 "File:" -Column2 "$RarFile"
     $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
     $StartInfo.FileName = $WinRarPath
     $StartInfo.RedirectStandardError = $true
@@ -348,13 +348,13 @@ function Start-UnRar {
     # Write-Host "stderr: $stderr"
     $Process.WaitForExit()
     if ($Process.ExitCode -gt 0) {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+        Write-HTMLLog -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Unrar Error: $DownloadLabel - $DownloadName"
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
     }
 }
 
@@ -388,7 +388,7 @@ function Start-MKV-Subtitle-Strip {
     $TotalSubsToExtract = 0
     $TotalSubsToRemove = 0
 
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Extract srt files from MKV  ***" -Header
+    Write-HTMLLog -Column1 "***  Extract srt files from MKV  ***" -Header
     Get-ChildItem -LiteralPath $Source -Recurse -Filter "*.mkv" | ForEach-Object {
         Get-ChildItem -LiteralPath $_.FullName | ForEach-Object {
             $fileName = $_.BaseName
@@ -411,22 +411,22 @@ function Start-MKV-Subtitle-Strip {
             # Write-Host "stderr: $stderr"
             $Process.WaitForExit()
             if ($Process.ExitCode -eq 2) {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
             }
             elseif ($Process.ExitCode -eq 1) {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
             }
             elseif ($Process.ExitCode -eq 0) {
                 $fileMetadata = $stdout | ConvertFrom-Json
             }
             else {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
             }
 
             $file = @{
@@ -507,23 +507,23 @@ function Start-MKV-Subtitle-Strip {
             # Write-Host "stderr: $stderr"
             $Process.WaitForExit()
             if ($Process.ExitCode -eq 2) {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
             }
             elseif ($Process.ExitCode -eq 1) {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
             }
             elseif ($Process.ExitCode -eq 0) {
                 $SubsExtracted = $true
-                # Write-HTMLLog -LogFile $LogFilePath -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles"
+                # Write-HTMLLog -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles"
             }
             else {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Unknown" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvextract:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Unknown" -ColorBg "Error"
             }
         }
 
@@ -546,24 +546,24 @@ function Start-MKV-Subtitle-Strip {
             # Write-Host "stderr: $stderr"
             $Process.WaitForExit()
             if ($Process.ExitCode -eq 2) {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
             }
             elseif ($Process.ExitCode -eq 1) {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
             }
             elseif ($Process.ExitCode -eq 0) {
                 # Overwrite original mkv after successful remux
                 Move-Item -Path $TmpMkvPath -Destination $($episode.FilePath) -Force
-                # Write-HTMLLog -LogFile $LogFilePath -Column1 "Removed:" -Column2 "$($SubIDsToRemove.Count) unwanted subtitle languages"
+                # Write-HTMLLog -Column1 "Removed:" -Column2 "$($SubIDsToRemove.Count) unwanted subtitle languages"
             }
             else {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+                Write-HTMLLog -Column1 "mkvmerge:" -Column2 $stdout -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Warning" -ColorBg "Error"
             }
         }
     }
@@ -586,15 +586,15 @@ function Start-MKV-Subtitle-Strip {
             }
         }
         if ($TotalSubsToExtract -gt 0) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToExtract Extracted"
+            Write-HTMLLog -Column1 "Subtitles:" -Column2 "$TotalSubsToExtract Extracted"
         }
         if ($TotalSubsToRemove -gt 0) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Subtitles:" -Column2 "$TotalSubsToRemove Removed"
+            Write-HTMLLog -Column1 "Subtitles:" -Column2 "$TotalSubsToRemove Removed"
         }
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "No SRT subs found in MKV"
+        Write-HTMLLog -Column1 "Result:" -Column2 "No SRT subs found in MKV"
     }
 }
 
@@ -606,7 +606,7 @@ function Start-SubEdit {
         [Parameter(Mandatory = $true)] 
         $Files
     )
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Clean up Subtitles  ***" -Header
+    Write-HTMLLog -Column1 "***  Clean up Subtitles  ***" -Header
     $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
     $StartInfo.FileName = $SubtitleEditPath
     $StartInfo.RedirectStandardError = $true
@@ -620,13 +620,13 @@ function Start-SubEdit {
     $stderr = $Process.StandardError.ReadToEnd()
     $Process.WaitForExit()
     if ($Process.ExitCode -gt 1) {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+        Write-HTMLLog -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "SubEdit Error: $DownloadLabel - $DownloadName"
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
     }
 }
 
@@ -635,7 +635,7 @@ function Start-Subliminal {
         [Parameter(Mandatory = $true)] 
         $Source
     )
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Download missing Subtitles  ***" -Header
+    Write-HTMLLog -Column1 "***  Download missing Subtitles  ***" -Header
     $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
     $StartInfo.FileName = $SubliminalPath
     $StartInfo.RedirectStandardError = $true
@@ -666,21 +666,21 @@ function Start-Subliminal {
         $SubliminalExitCode = 1
     }
     if ($SubliminalExitCode -gt 0) {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Exit Code:" -Column2 $($Process.ExitCode) -ColorBg "Error"
+        Write-HTMLLog -Column1 "Error:" -Column2 $stderr -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
     }
     else {
         if ($SubsDownloaded -gt 0) {
-            # Write-HTMLLog -LogFile $LogFilePath -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Collected:" -Column2 "$VideoCollected Videos"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Ignored:" -Column2 "$VideoIgnored Videos"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Error:" -Column2 "$VideoError Videos"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
+            # Write-HTMLLog -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
+            Write-HTMLLog -Column1 "Collected:" -Column2 "$VideoCollected Videos"
+            Write-HTMLLog -Column1 "Ignored:" -Column2 "$VideoIgnored Videos"
+            Write-HTMLLog -Column1 "Error:" -Column2 "$VideoError Videos"
+            Write-HTMLLog -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
+            Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"
         }
         else {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "No subs downloaded with Subliminal"
+            Write-HTMLLog -Column1 "Result:" -Column2 "No subs downloaded with Subliminal"
         }
     }
 }
@@ -707,13 +707,13 @@ function Import-Medusa {
     $headers = @{
         'X-Api-Key' = $MedusaApiKey
     }
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Medusa Import  ***" -Header
+    Write-HTMLLog -Column1 "***  Medusa Import  ***" -Header
     try {
         $response = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess" -Method Post -Body $Body -Headers $headers
     }
     catch {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
     }
     if ($response.status -eq "success") {
@@ -724,8 +724,8 @@ function Import-Medusa {
                 $status = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess/$($response.queueItem.identifier)" -Method Get -Headers $headers
             }
             catch {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
                 Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
             }
             Start-Sleep 1
@@ -739,26 +739,26 @@ function Import-Medusa {
                 $MatchPattern = ($ValuesToFind | ForEach-Object { [regex]::Escape($_) }) -join '|'
                 foreach ($line in $status.output ) {
                     if ($line -match $MatchPattern) {
-                        Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $line -ColorBg "Error" 
+                        Write-HTMLLog -Column1 "Medusa:" -Column2 $line -ColorBg "Error" 
                     }       
                 }
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+                Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
                 Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
             }
             else {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"    
+                Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"    
             }
         }
         else {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $status.success -ColorBg "Error" 
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 "Import Timeout: ($MedusaTimeOutMinutes) minutes" -ColorBg "Error" 
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Medusa:" -Column2 $status.success -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Medusa:" -Column2 "Import Timeout: ($MedusaTimeOutMinutes) minutes" -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
             Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
         }
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Medusa:" -Column2 $response.status -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Medusa:" -Column2 $response.status -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
     }
 }
@@ -780,13 +780,13 @@ function Import-Radarr {
     $headers = @{
         'X-Api-Key' = $RadarrApiKey
     }
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Radarr Import  ***" -Header
+    Write-HTMLLog -Column1 "***  Radarr Import  ***" -Header
     try {
         $response = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command" -Method Post -Body $Body -Headers $headers
     }
     catch {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
     }
     if ($response.status -eq "queued" -or $response.status -eq "started" -or $response.status -eq "completed") {
@@ -797,32 +797,32 @@ function Import-Radarr {
                 $status = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command/$($response.id)" -Method Get -Headers $headers
             }
             catch {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-                Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+                Write-HTMLLog -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+                Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
                 Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
             }
             Start-Sleep 1
         }
         until ($status.status -ne "started" -or ((Get-Date) -gt $endTime) )
         if ($status.status -eq "completed") {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
+            Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
         }
         if ($status.status -eq "failed") {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.exception -ColorBg "Error" 
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Radarr:" -Column2 $status.exception -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
             Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
         }
         if ((Get-Date) -gt $endTime) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 "Import Timeout: ($RadarrTimeOutMinutes) minutes" -ColorBg "Error" 
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Radarr:" -Column2 "Import Timeout: ($RadarrTimeOutMinutes) minutes" -ColorBg "Error" 
+            Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
             Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
         }
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Radarr:" -Column2 $response.status -ColorBg "Error"
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+        Write-HTMLLog -Column1 "Radarr:" -Column2 $response.status -ColorBg "Error"
+        Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
     }
 }
@@ -858,8 +858,6 @@ function Send-Mail {
 
 Function Write-HTMLLog {
     Param(
-        [Parameter(Mandatory = $false)]
-        [string] $LogFile,
         [Parameter(Mandatory = $true)]
         [string] $Column1,
         [Parameter(Mandatory = $false)]
@@ -871,60 +869,65 @@ Function Write-HTMLLog {
         [string] $ColorBg
     )
 
-    If ($LogFile) {
-        Add-Content -LiteralPath  $LogFile -Value "<tr>"
+        $global:Log += "<tr>"
         if ($Header) {
-            Add-Content -LiteralPath  $LogFile -Value "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
+            $global:Log += "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
         }
         else {
             if ($ColorBg -eq "") {
-                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
-                Add-Content -LiteralPath  $LogFile -Value "</tr>"
+                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
+                $global:Log += "</tr>"
             }
             elseif ($ColorBg -eq "Success") {
-                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
-                Add-Content -LiteralPath  $LogFile -Value "</tr>"  
+                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
+                $global:Log += "</tr>"  
             }
             elseif ($ColorBg -eq "Error") {
-                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                Add-Content -LiteralPath  $LogFile -Value "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
-                Add-Content -LiteralPath  $LogFile -Value "</tr>"  
+                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
+                $global:Log += "</tr>"  
             }
         }
         Write-Output "$Column1 $Column2"
-    }
-    Else {
-        Write-Output "$Column1 $Column2"
-    }
+
 }
 
 function Format-Table {
     param (
         [Parameter(Mandatory = $false)]
-        [switch] $Start,
-        [Parameter(Mandatory = $false)]
-        [string] $LogFile
+        [switch] $Start
     )
     if ($Start) {
-        Add-Content -LiteralPath  $LogFile -Value "<table border=`"0`" align=`"center`" cellspacing=`"0`""
-        Add-Content -LiteralPath  $LogFile -Value "style=`"border-collapse:collapse;background-color:#555555;color:#FFFFFF;font-family:arial,helvetica,sans-serif;font-size:10pt;`">"
-        Add-Content -LiteralPath  $LogFile -Value "<col width=`"125`">"
-        Add-Content -LiteralPath  $LogFile -Value "<col width=`"500`">"
-        Add-Content -LiteralPath  $LogFile -Value "<tbody>"
+        $global:Log = @()
+        $global:Log += "<table border=`"0`" align=`"center`" cellspacing=`"0`""
+        $global:Log += "<table border=`"0`" align=`"center`" cellspacing=`"0`""
+        $global:Log += "style=`"border-collapse:collapse;background-color:#555555;color:#FFFFFF;font-family:arial,helvetica,sans-serif;font-size:10pt;`">"
+        $global:Log += "<col width=`"125`">"
+        $global:Log += "<col width=`"500`">"
+        $global:Log += "<tbody>"
     }
     else {
-        Add-Content -LiteralPath  $LogFile -Value "</tbody>"
-        Add-Content -LiteralPath  $LogFile -Value "</table>"
+        $global:Log += "</tbody>"
+        $global:Log += "</table>"
     }
+}
+
+function WriteLog {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string] $LogFile
+    )
+    Set-Content -Path $LogFile -Encoding Unicode -Value $global:Log
+    
 }
 
 # Fuction to clean up process folder 
 function CleanProcessPath {
 
     if ($NoCleanUp) {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "Cleanup" -Column2 "NoCleanUp switch was given at command line, leaving files"
+        Write-HTMLLog -Column1 "Cleanup" -Column2 "NoCleanUp switch was given at command line, leaving files"
     }
     else {
         try {
@@ -933,8 +936,8 @@ function CleanProcessPath {
             }
         }
         catch {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+            Write-HTMLLog -Column1 "Exception:" -Column2 $_.Exception.Message -ColorBg "Error"
+            Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
         }
     }  
 }
@@ -949,10 +952,11 @@ function Stop-Script {
     # Stop the Stopwatch
     $StopWatch.Stop()
 
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Script Exection time  ***" -Header
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Time Taken:" -Column2 $($StopWatch.Elapsed.ToString('mm\:ss'))
+    Write-HTMLLog -Column1 "***  Script Exection time  ***" -Header
+    Write-HTMLLog -Column1 "Time Taken:" -Column2 $($StopWatch.Elapsed.ToString('mm\:ss'))
       
-    Format-Table -LogFile $LogFilePath
+    Format-Table
+    Write-Log -LogFile $LogFilePath
     Send-Mail -MailSubject $ExitReason
     # Clean up the Mutex
 
@@ -1022,12 +1026,12 @@ if ($DownloadLabel -eq "") {
 $LogFilePath = Join-Path -Path $ProcessPath -ChildPath "$LogFileDateFormat-$DownloadName.html"
 
 # Log Header
-Format-Table -LogFile $LogFilePath -Start
-Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Information  ***" -Header
-Write-HTMLLog -LogFile $LogFilePath -Column1 "Start:" -Column2 "$(Get-Date -Format "yyyy-MM-dd") at $(Get-Date -Format "HH:mm:ss")"
-Write-HTMLLog -LogFile $LogFilePath -Column1 "Label:" -Column2 $DownloadLabel
-Write-HTMLLog -LogFile $LogFilePath -Column1 "Name:" -Column2 $DownloadName
-Write-HTMLLog -LogFile $LogFilePath -Column1 "Hash:" -Column2 $TorrentHash
+Format-Table -Start
+Write-HTMLLog -Column1 "***  Information  ***" -Header
+Write-HTMLLog -Column1 "Start:" -Column2 "$(Get-Date -Format "yyyy-MM-dd") at $(Get-Date -Format "HH:mm:ss")"
+Write-HTMLLog -Column1 "Label:" -Column2 $DownloadLabel
+Write-HTMLLog -Column1 "Name:" -Column2 $DownloadName
+Write-HTMLLog -Column1 "Hash:" -Column2 $TorrentHash
 
 # Test File Paths
 If (!(Test-Path -LiteralPath  $ProcessPath)) {
@@ -1046,8 +1050,8 @@ $StopWatch = [system.diagnostics.stopwatch]::startNew()
 # Check paths from Parameters
 If (!(Test-Path -LiteralPath  $DownloadPath)) {
     Write-Host "$DownloadPath - Not valid location"
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Path:" -Column2 "$DownloadPath - Not valid location" -ColorBg "Error"
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
+    Write-HTMLLog -Column1 "Path:" -Column2 "$DownloadPath - Not valid location" -ColorBg "Error"
+    Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error"
     Stop-Script -ExitReason "Path Error: $DownloadLabel - $DownloadName"
 }
 
@@ -1083,18 +1087,18 @@ If (!(Test-Path -LiteralPath  $ProcessPathFull)) {
 }
 
 if ($RarFile) {
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Unrar Download  ***" -Header
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "Starting:" -Column2 "Unpacking files"
+    Write-HTMLLog -Column1 "***  Unrar Download  ***" -Header
+    Write-HTMLLog -Column1 "Starting:" -Column2 "Unpacking files"
     foreach ($Rar in $RarFilePaths) {
         Start-UnRar -UnRarSourcePath $Rar -UnRarTargetPath $ProcessPathFull
     }  
 }
 elseif (-not $RarFile -and $SingleFile) {
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Single File  ***" -Header
+    Write-HTMLLog -Column1 "***  Single File  ***" -Header
     Start-RoboCopy -Source $DownloadRootPath -Destination $ProcessPathFull -File $DownloadName
 }
 elseif (-not $RarFile -and $Folder) {
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Folder  ***" -Header
+    Write-HTMLLog -Column1 "***  Folder  ***" -Header
     Start-RoboCopy -Source $DownloadPath -Destination $ProcessPathFull -File '*.*'
 }
 
@@ -1119,23 +1123,23 @@ if ($DownloadLabel -eq $TVLabel) {
         # Clean up Subs
         Start-SubEdit -File "*.srt" -Source $ProcessPathFull
       
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "***  MKV Files  ***" -Header
+        Write-HTMLLog -Column1 "***  MKV Files  ***" -Header
         foreach ($Mkv in $MKVFiles) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $Mkv.name
+            Write-HTMLLog -Column1 " " -Column2 $Mkv.name
         }
         $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.srt"
         if ($SrtFiles.Count -gt 0) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
+            Write-HTMLLog -Column1 "***  Subtitle Files  ***" -Header
             foreach ($Srt in $SrtFiles) {
-                Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
+                Write-HTMLLog -Column1 " " -Column2 $srt.name
             }
         }
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Files  ***" -Header
+        Write-HTMLLog -Column1 "***  Files  ***" -Header
         $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.*"
         foreach ($File in $Files) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
+            Write-HTMLLog -Column1 "File:" -Column2 $File.name
         }
     }
 
@@ -1163,21 +1167,21 @@ elseif ($DownloadLabel -eq $MovieLabel) {
         # Clean up Subs
         Start-SubEdit -File "*.srt" -Source $ProcessPathFull
         
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "***  MKV Files  ***" -Header
+        Write-HTMLLog -Column1 "***  MKV Files  ***" -Header
         foreach ($Mkv in $MKVFiles) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $Mkv.name
+            Write-HTMLLog -Column1 " " -Column2 $Mkv.name
         }
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Subtitle Files  ***" -Header
+        Write-HTMLLog -Column1 "***  Subtitle Files  ***" -Header
         $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.srt"
         foreach ($Srt in $SrtFiles) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 " " -Column2 $srt.name
+            Write-HTMLLog -Column1 " " -Column2 $srt.name
         }
     }
     else {
-        Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Files  ***" -Header
+        Write-HTMLLog -Column1 "***  Files  ***" -Header
         $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.*"
         foreach ($File in $Files) {
-            Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
+            Write-HTMLLog -Column1 "File:" -Column2 $File.name
         }
     }
 
@@ -1188,9 +1192,9 @@ elseif ($DownloadLabel -eq $MovieLabel) {
 }
 
 # Reached the end of script
-Write-HTMLLog -LogFile $LogFilePath -Column1 "***  Post Process General Download  ***" -Header
+Write-HTMLLog -Column1 "***  Post Process General Download  ***" -Header
 $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter "*.*"
 foreach ($File in $Files) {
-    Write-HTMLLog -LogFile $LogFilePath -Column1 "File:" -Column2 $File.name
+    Write-HTMLLog -Column1 "File:" -Column2 $File.name
 }
 Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
