@@ -912,12 +912,12 @@ function Format-Table {
     }
 }
 
-function WriteLog {
+function Write-Log {
     param (
         [Parameter(Mandatory = $true)]
         [string] $LogFile
     )
-    Set-Content -Path $LogFile -Encoding Unicode -Value $global:Log
+    Set-Content -Path $LogFile -Value $global:Log
     
 }
 
