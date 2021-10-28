@@ -852,8 +852,6 @@ function Send-Mail {
     $Process.WaitForExit()
     # Write-Host "exit code: " + $p.ExitCode
     # return $stdout
-    Move-Item -LiteralPath $LogFilePath -Destination $LogArchivePath
-
 }
 
 Function Write-HTMLLog {
@@ -869,28 +867,28 @@ Function Write-HTMLLog {
         [string] $ColorBg
     )
 
-        $global:Log += "<tr>"
-        if ($Header) {
-            $global:Log += "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
+    $global:Log += "<tr>"
+    if ($Header) {
+        $global:Log += "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
+    }
+    else {
+        if ($ColorBg -eq "") {
+            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
+            $global:Log += "</tr>"
         }
-        else {
-            if ($ColorBg -eq "") {
-                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
-                $global:Log += "</tr>"
-            }
-            elseif ($ColorBg -eq "Success") {
-                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
-                $global:Log += "</tr>"  
-            }
-            elseif ($ColorBg -eq "Error") {
-                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-                $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
-                $global:Log += "</tr>"  
-            }
+        elseif ($ColorBg -eq "Success") {
+            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
+            $global:Log += "</tr>"  
         }
-        Write-Output "$Column1 $Column2"
+        elseif ($ColorBg -eq "Error") {
+            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
+            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
+            $global:Log += "</tr>"  
+        }
+    }
+    Write-Output "$Column1 $Column2"
 
 }
 
@@ -1023,7 +1021,7 @@ if ($DownloadLabel -eq "") {
 
 # Create Log file
 # Log file of current processing file (will be used to send out the mail)
-$LogFilePath = Join-Path -Path $ProcessPath -ChildPath "$LogFileDateFormat-$DownloadName.html"
+$LogFilePath = Join-Path -Path $LogArchivePath -ChildPath "$LogFileDateFormat-$DownloadName.html"
 
 # Log Header
 Format-Table -Start
