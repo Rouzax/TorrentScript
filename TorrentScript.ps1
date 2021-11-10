@@ -805,7 +805,15 @@ function Import-Radarr {
         }
         until ($status.status -ne "started" -or ((Get-Date) -gt $endTime) )
         if ($status.status -eq "completed") {
-            Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
+            if ($status.duration -gt "00:00:05.0000000") {
+                Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg "Success"         
+            }
+            else {
+                Write-HTMLLog -Column1 "Radarr:" -Column2 "Completed but failed" -ColorBg "Error" 
+                Write-HTMLLog -Column1 "Radarr:" -Column2 "Radarr has no failed handling see: https://github.com/Radarr/Radarr/issues/5539" -ColorBg "Error" 
+                Write-HTMLLog -Column1 "Result:" -Column2 "Failed" -ColorBg "Error" 
+                Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
+            }
         }
         if ($status.status -eq "failed") {
             Write-HTMLLog -Column1 "Radarr:" -Column2 $status.status -ColorBg "Error" 
