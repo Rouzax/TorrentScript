@@ -26,6 +26,26 @@ function Start-MKV-Subtitle-Strip
         )]
         [string]    $Source
     )
+
+    # Make sure needed functions are available otherwise try to load them.
+    $commands = 'Write-HTMLLog'
+    foreach ($commandName in $commands)
+    {
+        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
+        {
+            Try
+            {
+                . $PSScriptRoot\$commandName.ps1
+                Write-Host "$commandName Function loaded." -ForegroundColor Green
+            }
+            Catch
+            {
+                Write-Error -Message "Failed to import $commandName function: $_"
+                exit 1
+            }
+        }
+    }
+    # Start
     
     $episodes = @()
     $SubsExtracted = $false

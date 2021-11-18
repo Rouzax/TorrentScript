@@ -36,7 +36,6 @@ function Start-RoboCopy
 
     # Make sure needed functions are available otherwise try to load them.
     $commands = 'Write-HTMLLog', 'Stop-Script'
-
     foreach ($commandName in $commands)
     {
         if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
