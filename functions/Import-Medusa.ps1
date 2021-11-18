@@ -89,11 +89,11 @@ function Import-Medusa
         until ($status.success -or ((Get-Date) -gt $endTime))
         if ($status.success)
         {
-            $ValuesToFind = 'Processing failed', 'aborting post-processing'
+            $ValuesToFind = 'Processing failed', 'aborting post-processing', 'Unable to figure out what folder to process'
             $MatchPattern = ($ValuesToFind | ForEach-Object { [regex]::Escape($_) }) -join '|'
             if ($status.output -match $MatchPattern)
             {
-                $ValuesToFind = 'Retrieving episode object for', 'Current quality', 'New quality', 'Old size', 'New size', 'Processing failed', 'aborting post-processing'
+                $ValuesToFind = 'Retrieving episode object for', 'Current quality', 'New quality', 'Old size', 'New size', 'Processing failed', 'aborting post-processing', 'Unable to figure out what folder to process'
                 $MatchPattern = ($ValuesToFind | ForEach-Object { [regex]::Escape($_) }) -join '|'
                 foreach ($line in $status.output )
                 {
