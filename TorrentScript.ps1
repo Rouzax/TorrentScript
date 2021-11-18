@@ -184,23 +184,6 @@ function Stop-Script
     Exit
 }
 
-function Test-Variable-Path
-{
-    param (
-        [Parameter(Mandatory = $true)]
-        [string] $Path,
-        [Parameter(Mandatory = $true)]
-        [string] $Name
-    )
-    if (!(Test-Path -LiteralPath  $Path))
-    {
-        Write-Host "Cannot find: $Path" -ForegroundColor Red
-        Write-Host "As defined in variable: $Name" -ForegroundColor Red
-        Write-Host 'Will now exit!' -ForegroundColor Red
-        Exit 1
-    } 
-}
-
 # Test additional programs
 Test-Variable-Path -Path $WinRarPath -Name 'WinRarPath'
 Test-Variable-Path -Path $MKVMergePath -Name 'MKVMergePath'
