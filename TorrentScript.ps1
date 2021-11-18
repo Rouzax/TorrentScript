@@ -90,27 +90,6 @@ ForEach ($import in @($functions)) {
 }
 
 
-# Functions
-Function Get-Input {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string] $Message,
-        [Parameter(Mandatory = $false)]
-        [switch] $Required
-    )
-    if ($Required) {
-        While ( ($Null -eq $Variable) -or ($Variable -eq '') ) {
-            $Variable = Read-Host -Prompt "$Message"
-            $Variable = $Variable.Trim()
-        }
-    }
-    else {
-        $Variable = Read-Host -Prompt "$Message"
-        $Variable = $Variable.Trim()
-    }
-    Return $Variable
-}
-
 function New-Mutex {
     <#
 	.SYNOPSIS
