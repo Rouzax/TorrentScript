@@ -18,9 +18,12 @@ function Format-Table
     General notes
     #>
     param (
-        [Parameter(Mandatory = $false)]
-        [switch] $Start
+        [Parameter(
+            Mandatory = $false
+        )]
+        [switch]    $Start
     )
+
     if ($Start)
     {
         $global:Log = @()
@@ -146,8 +149,10 @@ function Write-Log
     General notes
     #>
     param (
-        [Parameter(Mandatory = $true)]
-        [string] $LogFile
+        [Parameter(
+            Mandatory = $true
+        )]
+        [string]    $LogFile
     )
     Set-Content -Path $LogFile -Value $global:Log
 }

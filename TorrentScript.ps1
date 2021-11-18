@@ -89,7 +89,6 @@ $SubtitleNamesToRemove = $Config.SubtitleNamesToRemove
 
 # Get function definition files.
 $Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1  -ErrorAction SilentlyContinue )
-
 # Dot source the files
 ForEach ($import in @($Functions))
 {
@@ -103,32 +102,6 @@ ForEach ($import in @($Functions))
         Write-Error -Message "Failed to import function $($import.fullname): $_"
     }
 }
-
-# Fuction to clean up process folder 
-function CleanProcessPath
-{
-
-    if ($NoCleanUp)
-    {
-        Write-HTMLLog -Column1 'Cleanup' -Column2 'NoCleanUp switch was given at command line, leaving files'
-    }
-    else
-    {
-        try
-        {
-            If (Test-Path -LiteralPath  $ProcessPathFull)
-            {
-                Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
-            }
-        }
-        catch
-        {
-            Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
-            Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
-        }
-    }  
-}
-
 
 # Test additional programs
 Test-Variable-Path -Path $WinRarPath -Name 'WinRarPath'
@@ -323,7 +296,7 @@ if ($DownloadLabel -eq $TVLabel)
 
     # Call Medusa to Post Process
     Import-Medusa -Source $ProcessPathFull
-    CleanProcessPath
+    CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
 elseif ($DownloadLabel -eq $MovieLabel)
