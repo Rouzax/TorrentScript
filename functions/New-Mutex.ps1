@@ -33,12 +33,12 @@ function New-Mutex
     )]
     Param(
         [Parameter(
-            Mandatory
+            Mandatory = $true
         )]
         [ValidateNotNullOrEmpty()]
         [string]    $MutexName
     )
-    
+
     $MutexWasCreated = $false
     $Mutex = $Null
     Write-Host "Waiting to acquire lock [$MutexName]..." -ForegroundColor DarkGray

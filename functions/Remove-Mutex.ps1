@@ -17,7 +17,7 @@ function Remove-Mutex
     [CmdletBinding()]
     Param(
         [Parameter(
-            Mandatory
+            Mandatory = $true
         )]
         [ValidateNotNull()]
         [PSObject]$MutexObject
