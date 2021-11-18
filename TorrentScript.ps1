@@ -1,21 +1,21 @@
 param(
     [Parameter(
         mandatory = $false
-        )]
+    )]
     [string]    $DownloadPath, 
 
     [Parameter(
         mandatory = $false
-        )]
+    )]
     [string]    $DownloadLabel,
 
     [Parameter(
         mandatory = $false
-        )]
+    )]
     [string]    $TorrentHash,       
     [Parameter(
         Mandatory = $false
-        )]
+    )]
     [switch]    $NoCleanUp
 )
 
@@ -164,8 +164,10 @@ function CleanProcessPath
 function Stop-Script
 {
     Param(
-        [Parameter(Mandatory = $true)]
-        [string] $ExitReason
+        [Parameter(
+            Mandatory = $true
+        )]
+        [string]    $ExitReason
     )         
     # Stop the Stopwatch
     $StopWatch.Stop()
@@ -176,8 +178,8 @@ function Stop-Script
     Format-Table
     Write-Log -LogFile $LogFilePath
     Send-Mail -MailSubject $ExitReason
+    
     # Clean up the Mutex
-
     Remove-Mutex -MutexObject $ScriptMutex
     Exit
 }

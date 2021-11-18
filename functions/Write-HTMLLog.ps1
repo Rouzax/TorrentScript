@@ -124,7 +124,6 @@ Function Write-HTMLLog
         }
     }
     Write-Output "$Column1 $Column2"
-
 }
 
 
@@ -151,5 +150,4 @@ function Write-Log
         [string] $LogFile
     )
     Set-Content -Path $LogFile -Value $global:Log
-    
 }
