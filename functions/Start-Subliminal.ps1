@@ -1,5 +1,21 @@
 function Start-Subliminal
 {
+    <#
+    .SYNOPSIS
+    Start Subliminal to download subs
+    
+    .DESCRIPTION
+    Start Subliminal to download needed subtitles
+    
+    .PARAMETER Source
+    Path to files that need subtitles
+    
+    .EXAMPLE
+    Start-Subliminal -Source 'C:\Temp\Episode'
+    
+    .NOTES
+    General notes
+    #>
     param (
         [Parameter(
             Mandatory = $true
