@@ -75,6 +75,21 @@ $omdbAPI = $Config.OpenSub.omdbAPI
 $WantedLanguages = $Config.WantedLanguages
 $SubtitleNamesToRemove = $Config.SubtitleNamesToRemove
 
+# Get function definition files.
+$functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1  -ErrorAction SilentlyContinue )
+
+# Dot source the files
+ForEach ($import in @($functions)) {
+    Try {
+        # Lightweight alternative to dotsourcing a function script
+        . ([ScriptBlock]::Create([System.Io.File]::ReadAllText($import)))
+    }
+    Catch {
+        Write-Error -Message "Failed to import function $($import.fullname): $_"
+    }
+}
+
+
 # Functions
 Function Get-Input {
     param(
