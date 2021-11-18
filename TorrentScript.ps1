@@ -160,30 +160,6 @@ function CleanProcessPath
 }
 
 
-# Fuction to stop the script and send out the mail
-function Stop-Script
-{
-    Param(
-        [Parameter(
-            Mandatory = $true
-        )]
-        [string]    $ExitReason
-    )         
-    # Stop the Stopwatch
-    $StopWatch.Stop()
-
-    Write-HTMLLog -Column1 '***  Script Exection time  ***' -Header
-    Write-HTMLLog -Column1 'Time Taken:' -Column2 $($StopWatch.Elapsed.ToString('mm\:ss'))
-      
-    Format-Table
-    Write-Log -LogFile $LogFilePath
-    Send-Mail -MailSubject $ExitReason
-    
-    # Clean up the Mutex
-    Remove-Mutex -MutexObject $ScriptMutex
-    Exit
-}
-
 # Test additional programs
 Test-Variable-Path -Path $WinRarPath -Name 'WinRarPath'
 Test-Variable-Path -Path $MKVMergePath -Name 'MKVMergePath'
