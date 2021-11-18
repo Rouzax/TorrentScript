@@ -88,10 +88,10 @@ $WantedLanguages = $Config.WantedLanguages
 $SubtitleNamesToRemove = $Config.SubtitleNamesToRemove
 
 # Get function definition files.
-$functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1  -ErrorAction SilentlyContinue )
+$Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1  -ErrorAction SilentlyContinue )
 
 # Dot source the files
-ForEach ($import in @($functions))
+ForEach ($import in @($Functions))
 {
     Try
     {
@@ -103,36 +103,6 @@ ForEach ($import in @($functions))
         Write-Error -Message "Failed to import function $($import.fullname): $_"
     }
 }
-
-# Function to close the log and send out mail
-function Send-Mail
-{
-    param (
-        [Parameter(Mandatory = $true)] 
-        $MailSubject
-    )
-    # Close log file
-    # Add-Content -LiteralPath  $LogFilePath -Value '</pre>'
-
-    $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $StartInfo.FileName = $MailSendPath
-    $StartInfo.RedirectStandardError = $true
-    $StartInfo.RedirectStandardOutput = $true
-    $StartInfo.UseShellExecute = $false
-    $StartInfo.Arguments = @("-smtp $SMTPserver", "-port $SMTPport", "-domain $SMTPserver", "-t $MailTo", "-f $MailFrom", "-fname `"$MailFromName`"", "-sub `"$MailSubject`"", 'body', "-file `"$LogFilePath`"", "-mime-type `"text/html`"", '-ssl', "auth -user $SMTPuser -pass $SMTPpass")
-    $Process = New-Object System.Diagnostics.Process
-    $Process.StartInfo = $StartInfo
-    $Process.Start() | Out-Null
-    # $stdout = $Process.StandardOutput.ReadToEnd()
-    # $stderr = $Process.StandardError.ReadToEnd()
-    # Write-Host "stdout: $stdout"
-    # Write-Host "stderr: $stderr"
-    $Process.WaitForExit()
-    # Write-Host "exit code: " + $p.ExitCode
-    # return $stdout
-}
-
-
 
 # Fuction to clean up process folder 
 function CleanProcessPath
