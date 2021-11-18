@@ -46,8 +46,18 @@ function Start-RoboCopy
  
     #executing unrar command
     Write-HTMLLog -Column1 'Starting:' -Column2 'Copy files'
-    #executing Robocopy command
-    $Output = robocopy @cmdArgs
+    try
+    {
+        #executing Robocopy command
+        $Output = robocopy @cmdArgs
+    }
+    catch
+    {
+        Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
+        Write-Host 'RoboCopy not found' -ForegroundColor Red
+        exit 1
+    }
+
   
     foreach ($line in $Output)
     {
