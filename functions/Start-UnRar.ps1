@@ -26,7 +26,7 @@ function Start-UnRar
  
     $RarFile = Split-Path -Path $UnRarSourcePath -Leaf
   
-    #executing unrar command
+    # executing unrar command
     Write-HTMLLog -Column1 'File:' -Column2 "$RarFile"
     $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
     $StartInfo.FileName = $WinRarPath

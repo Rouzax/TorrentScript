@@ -1,12 +1,22 @@
 param(
-    [Parameter(mandatory = $false)]
-    [string] $DownloadPath, 
-    [Parameter(mandatory = $false)]
-    [string] $DownloadLabel,
-    [Parameter(mandatory = $false)]
-    [string] $TorrentHash,       
-    [Parameter(Mandatory = $false)]
-    [switch] $NoCleanUp
+    [Parameter(
+        mandatory = $false
+        )]
+    [string]    $DownloadPath, 
+
+    [Parameter(
+        mandatory = $false
+        )]
+    [string]    $DownloadLabel,
+
+    [Parameter(
+        mandatory = $false
+        )]
+    [string]    $TorrentHash,       
+    [Parameter(
+        Mandatory = $false
+        )]
+    [switch]    $NoCleanUp
 )
 
 # User Variables
