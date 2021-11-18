@@ -23,6 +23,26 @@ function Start-UnRar
         )] 
         [string]    $UnRarTargetPath
     )
+
+    # Make sure needed functions are available otherwise try to load them.
+    $commands = 'Write-HTMLLog', 'Stop-Script'
+    foreach ($commandName in $commands)
+    {
+        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
+        {
+            Try
+            {
+                . $PSScriptRoot\$commandName.ps1
+                Write-Host "$commandName Function loaded." -ForegroundColor Green
+            }
+            Catch
+            {
+                Write-Error -Message "Failed to import $commandName function: $_"
+                exit 1
+            }
+        }
+    }
+    # Start
  
     $RarFile = Split-Path -Path $UnRarSourcePath -Leaf
   
