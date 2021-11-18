@@ -16,7 +16,7 @@ function Start-RoboCopy
     Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination -File '*.*'
     Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination -File 'file.ext'
     #>
-    param (
+    param(
         [Parameter(
             Mandatory = $true
         )]
