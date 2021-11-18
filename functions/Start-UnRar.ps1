@@ -43,7 +43,6 @@ function Start-UnRar
         }
     }
     # Start
- 
     $RarFile = Split-Path -Path $UnRarSourcePath -Leaf
   
     # executing unrar command
