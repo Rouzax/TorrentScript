@@ -13,6 +13,7 @@ param(
         mandatory = $false
     )]
     [string]    $TorrentHash,       
+    
     [Parameter(
         Mandatory = $false
     )]
@@ -173,10 +174,7 @@ If (!(Test-Path -LiteralPath  $LogArchivePath))
 }
 
 # Start of script
-$ScriptMutex = New-Mutex -MutexName 'DownloadScript'
-
-# Start Stopwatch
-$StopWatch = [system.diagnostics.stopwatch]::startNew()
+Start-Script
 
 # Check paths from Parameters
 If (!(Test-Path -LiteralPath  $DownloadPath))
