@@ -229,10 +229,16 @@ if ($RarFile)
 {
     Write-HTMLLog -Column1 '***  Unrar Download  ***' -Header
     Write-HTMLLog -Column1 'Starting:' -Column2 'Unpacking files'
+    $TotalSize = (Get-ChildItem -LiteralPath $DownloadPath -Recurse | Measure-Object -Property Length -sum).Sum
+    $UnRarStopWatch = [system.diagnostics.stopwatch]::startNew()
     foreach ($Rar in $RarFilePaths)
     {
         Start-UnRar -UnRarSourcePath $Rar -UnRarTargetPath $ProcessPathFull
-    }  
+    }
+    # Stop the Stopwatch
+    $UnRarStopWatch.Stop() 
+    Write-HTMLLog -Column1 'Size:' -Column2 (Format-Size -SizeInBytes $TotalSize)
+    Write-HTMLLog -Column1 'Throughput:' -Column2 "$(Format-Size -SizeInBytes ($TotalSize/$UnRarStopWatch.Elapsed.TotalSeconds))/s"
 }
 elseif (-not $RarFile -and $SingleFile)
 {
