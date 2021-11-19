@@ -14,8 +14,8 @@ function Start-RoboCopy
     File patern to copy *.* or name.ext
     This allows for folder or single filecopy 
     .EXAMPLE
-    Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination -File '*.*'
-    Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination -File 'file.ext'
+    Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination' -File '*.*'
+    Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination' -File 'file.ext'
     #>
     param(
         [Parameter(
@@ -35,7 +35,7 @@ function Start-RoboCopy
     )
 
     # Make sure needed functions are available otherwise try to load them.
-    $commands = 'Write-HTMLLog', 'Stop-Script'
+    $commands = 'Write-HTMLLog', 'Stop-Script', 'Format-Size'
     foreach ($commandName in $commands)
     {
         if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
@@ -119,7 +119,7 @@ function Start-RoboCopy
                 $bytes = $bytes -split '\s+'
     
                 # The raw text from the log file contains a k,m,or g after the non zero numers.
-                # This will be used as a multiplier to determin the size in MB.
+                # This will be used as a multiplier to determin the size in kb.
                 $counter = 0
                 $tempByteArray = 0, 0, 0, 0, 0, 0
                 $tempByteArrayCounter = 0
@@ -127,17 +127,17 @@ function Start-RoboCopy
                 {
                     if ($column -eq 'k')
                     {
-                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) / 1024)
+                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1])* 1024)
                         $counter += 1
                     }
                     elseif ($column -eq 'm')
                     {
-                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f $bytes[$counter - 1]
+                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1048576)
                         $counter += 1
                     }
                     elseif ($column -eq 'g')
                     {
-                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1024)
+                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1073741824)
                         $counter += 1
                     }
                     else
@@ -148,23 +148,23 @@ function Start-RoboCopy
                     }
                 }
                 # Assign the appropriate column to values.
-                $TotalMBytes = $tempByteArray[0]
-                $CopiedMBytes = $tempByteArray[1]
-                $FailedMBytes = $tempByteArray[4]
+                $TotalSize = Format-Size -SizeInBytes ([double]::Parse($tempByteArray[0]))
+                $CopiedSize = Format-Size -SizeInBytes ([double]::Parse($tempByteArray[1]))
+                $FailedSize = Format-Size -SizeInBytes ([double]::Parse($tempByteArray[4]))
                 # array columns 2,3, and 5 are available, but not being used currently.
             }
             # Speed metrics
             '^\s+Speed\s:.*sec.$'
             {
-                # Example:   Speed :             120.816 MegaBytes/min.
+                # Example:   Speed :             120.816 Bytes/min.
                 $speed = $_.Replace('Speed :', '').Trim()
                 $speed = $speed.Replace('Bytes/sec.', '').Trim()
                 # Assign the appropriate column to values.
-                $speed = $speed / 1048576
-                $SpeedMBSec = [math]::Round($speed, 2)
+                $speed = Format-Size -SizeInBytes $speed
             }
         }
     }
+
 
     if ($FailedDirs -gt 0 -or $FailedFiles -gt 0)
     {
@@ -172,8 +172,8 @@ function Start-RoboCopy
         Write-HTMLLog -Column1 'Dirs' -Column2 "$FailedDirs Failed" -ColorBg 'Error'
         Write-HTMLLog -Column1 'Files:' -Column2 "$TotalFiles Total" -ColorBg 'Error'
         Write-HTMLLog -Column1 'Files:' -Column2 "$FailedFiles Failed" -ColorBg 'Error'
-        Write-HTMLLog -Column1 'Size:' -Column2 "$TotalMBytes MB Total" -ColorBg 'Error'
-        Write-HTMLLog -Column1 'Size:' -Column2 "$FailedMBytes MB Failed" -ColorBg 'Error'
+        Write-HTMLLog -Column1 'Size:' -Column2 "$TotalSize Total" -ColorBg 'Error'
+        Write-HTMLLog -Column1 'Size:' -Column2 "$FailedSize Failed" -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName" 
     }
@@ -181,8 +181,8 @@ function Start-RoboCopy
     {
         Write-HTMLLog -Column1 'Dirs:' -Column2 "$CopiedDirs Copied"
         Write-HTMLLog -Column1 'Files:' -Column2 "$CopiedFiles Copied"
-        Write-HTMLLog -Column1 'Size:' -Column2 "$CopiedMBytes MB"
-        Write-HTMLLog -Column1 'Throughput:' -Column2 "$SpeedMBSec MB/s"
+        Write-HTMLLog -Column1 'Size:' -Column2 "$CopiedSize"
+        Write-HTMLLog -Column1 'Throughput:' -Column2 "$Speed/s"
         Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
     }
 }
