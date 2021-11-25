@@ -353,7 +353,7 @@ elseif ($DownloadLabel -eq $MovieLabel)
 
     # Call Radarr to Post Process
     Import-Radarr -Source $ProcessPathFull
-    CleanProcessPath
+    CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
 
