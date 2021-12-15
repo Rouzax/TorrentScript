@@ -57,7 +57,7 @@ function Start-SubEdit
     $StartInfo.RedirectStandardError = $true
     $StartInfo.RedirectStandardOutput = $true
     $StartInfo.UseShellExecute = $false
-    $StartInfo.Arguments = @('/convert', "$Files", 'subrip', "/inputfolder`:`"$Source`"", '/overwrite', '/fixcommonerrors', '/removetextforhi', '/fixcommonerrors', '/fixcommonerrors')
+    $StartInfo.Arguments = @('/convert', "$Files", 'subrip', "/inputfolder`:`"$Source`"", '/overwrite', '/MergeSameTimeCodes', '/fixcommonerrors', '/removetextforhi', '/fixcommonerrors', '/fixcommonerrors')
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
