@@ -52,6 +52,7 @@ function Import-Radarr
 
     $headers = @{
         'X-Api-Key' = $RadarrApiKey
+        'Content-Type' = 'application/json'
     }
     Write-HTMLLog -Column1 '***  Radarr Import  ***' -Header
     try
