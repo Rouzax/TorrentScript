@@ -52,6 +52,10 @@ powershell "C:\Scripts\TorrentScript\TorrentScript.ps1" -DownloadPath '%R' -Down
 ```
 ![qBittorrent settings page](https://i.imgur.com/8TWZyEY.png)
 
+Other important setting is that for each torrent a new Folder needs to be created.
+![qBittorrent Folder settings page](https://i.imgur.com/Uq6bOBP.png)
+
+
 The following external tools need to be available and the path defined in the `config.json`
  - [WinRar](https://www.rarlab.com/download.htm)
  - [MKVMerge](https://mkvtoolnix.download/)
