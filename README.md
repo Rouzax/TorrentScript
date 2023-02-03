@@ -62,6 +62,7 @@ Example:
 ![Radarr Remote Path Mapping settings page](https://i.imgur.com/qL0aOKl.png)
 With this setup, Radarr will never find the finished torrent download and only this script will trigger the import.
 
+## Required external tools
 The following external tools need to be available and the path defined in the `config.json`
  - [WinRar](https://www.rarlab.com/download.htm)
  - [MKVMerge](https://mkvtoolnix.download/)
