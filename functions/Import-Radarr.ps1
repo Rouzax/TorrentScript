@@ -86,7 +86,7 @@ function Import-Radarr
         until ($status.status -ne 'started' -or ((Get-Date) -gt $endTime) )
         if ($status.status -eq 'completed')
         {
-            if ($status.duration -gt '00:00:05.0000000')
+            if ($status.duration -gt '00:00:02.0000000')
             {
                 Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'         
             }
