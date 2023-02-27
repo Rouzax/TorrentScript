@@ -154,5 +154,5 @@ function Write-Log
         )]
         [string]    $LogFile
     )
-    Set-Content -Path $LogFile -Value $global:Log
+    Set-Content -LiteralPath $LogFile -Value $global:Log
 }
