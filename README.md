@@ -56,10 +56,12 @@ Other important setting is that for each torrent a new Folder needs to be create
 ![qBittorrent Folder settings page](https://i.imgur.com/Uq6bOBP.png)
 
 Within Radarr you need to set up Remote Path Mapping to an emtpy folder, otherwise Radarr will pick up to downloads directly from qbittorent
+
 Example:
 - qBittorent root download path = C:\Torrent\Downloads\
 - Radarr Remote Path Mapping = C:\Torrent\Radarr\
 ![Radarr Remote Path Mapping settings page](https://i.imgur.com/qL0aOKl.png)
+
 With this setup, Radarr will never find the finished torrent download and only this script will trigger the import.
 
 ## Required external tools
