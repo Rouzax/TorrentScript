@@ -1,5 +1,4 @@
-function Start-UnRar
-{
+function Start-UnRar {
     <#
     .SYNOPSIS
     Unrar file
@@ -12,31 +11,28 @@ function Start-UnRar
     .EXAMPLE
     Start-UnRar -UnRarSourcePath 'C:\Temp\Source\file.rar' -UnRarTargetPath 'C:\Temp\Destination'
     #>
+    [CmdletBinding()]
     Param( 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $UnRarSourcePath, 
+        [string]$UnRarSourcePath, 
        
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $UnRarTargetPath
+        [string]$UnRarTargetPath
     )
 
     # Make sure needed functions are available otherwise try to load them.
     $commands = 'Write-HTMLLog', 'Stop-Script'
-    foreach ($commandName in $commands)
-    {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
-        {
-            Try
-            {
+    foreach ($commandName in $commands) {
+        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
+            Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
             }
-            Catch
-            {
+            Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -61,15 +57,13 @@ function Start-UnRar
     # Write-Host "stdout: $stdout"
     # Write-Host "stderr: $stderr"
     $Process.WaitForExit()
-    if ($Process.ExitCode -gt 0)
-    {
+    if ($Process.ExitCode -gt 0) {
         Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
         Write-HTMLLog -Column1 'Error:' -Column2 $stderr -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Unrar Error: $DownloadLabel - $DownloadName"
     }
-    else
-    {
+    else {
         Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
     }
 }

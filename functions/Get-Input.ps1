@@ -1,5 +1,4 @@
-Function Get-Input
-{
+Function Get-Input {
     <#
     .SYNOPSIS
     Get input from user
@@ -25,24 +24,21 @@ Function Get-Input
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $Message,
+        [string]$Message,
 
         [Parameter(
             Mandatory = $false
         )]
-        [switch]    $Required
+        [switch]$Required
         
     )
-    if ($Required)
-    {
-        While ( ($Null -eq $Variable) -or ($Variable -eq '') )
-        {
+    if ($Required) {
+        While ( ($Null -eq $Variable) -or ($Variable -eq '') ) {
             $Variable = Read-Host -Prompt "$Message"
             $Variable = $Variable.Trim()
         }
     }
-    else
-    {
+    else {
         $Variable = Read-Host -Prompt "$Message"
         $Variable = $Variable.Trim()
     }

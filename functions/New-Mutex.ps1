@@ -1,5 +1,4 @@
-function New-Mutex
-{
+function New-Mutex {
     <#
 	.SYNOPSIS
 	Create a Mutex
@@ -36,30 +35,25 @@ function New-Mutex
             Mandatory = $true
         )]
         [ValidateNotNullOrEmpty()]
-        [string]    $MutexName
+        [string]$MutexName
     )
 
     $MutexWasCreated = $false
     $Mutex = $Null
     Write-Host "Waiting to acquire lock [$MutexName]..." -ForegroundColor DarkGray
     [void][System.Reflection.Assembly]::LoadWithPartialName('System.Threading')
-    try
-    {
+    try {
         $Mutex = [System.Threading.Mutex]::OpenExisting($MutexName)
     }
-    catch
-    {
+    catch {
         $Mutex = New-Object System.Threading.Mutex($true, $MutexName, [ref]$MutexWasCreated)
     }
-    try
-    {
-        if (!$MutexWasCreated)
-        {
+    try {
+        if (!$MutexWasCreated) {
             $Mutex.WaitOne() | Out-Null 
         } 
     }
-    catch
-    { 
+    catch { 
     }
     Write-Host "Lock [$MutexName] acquired. Executing..." -ForegroundColor DarkGray
     Write-Output ([PSCustomObject]@{ Name = $MutexName; Mutex = $Mutex })

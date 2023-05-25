@@ -1,5 +1,4 @@
-function Send-Mail
-{
+function Send-Mail {
     <#
     .SYNOPSIS
     Send mail
@@ -40,51 +39,52 @@ function Send-Mail
     .NOTES
     General notes
     #>
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $SMTPserver,
+        [string]$SMTPserver,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $SMTPport,
+        [string]$SMTPport,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $MailTo,
+        [string]$MailTo,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $MailFrom,
+        [string]$MailFrom,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $MailFromName,
+        [string]$MailFromName,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $MailSubject,
+        [string]$MailSubject,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $MailBody,
+        [string]$MailBody,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $SMTPuser,
+        [string]$SMTPuser,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $SMTPpass
+        [string]$SMTPpass
     )
 
     $StartInfo = New-Object System.Diagnostics.ProcessStartInfo

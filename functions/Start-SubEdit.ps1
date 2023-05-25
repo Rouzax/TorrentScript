@@ -1,5 +1,4 @@
-function Start-SubEdit
-{
+function Start-SubEdit {
     <#
     .SYNOPSIS
     Start Subtitle Edit
@@ -19,31 +18,28 @@ function Start-SubEdit
     .NOTES
     General notes
     #>
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $Source,
+        [string]$Source,
 
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $Files
+        [string]$Files
     )
 
     # Make sure needed functions are available otherwise try to load them.
     $commands = 'Write-HTMLLog'
-    foreach ($commandName in $commands)
-    {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
-        {
-            Try
-            {
+    foreach ($commandName in $commands) {
+        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
+            Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
             }
-            Catch
-            {
+            Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -64,15 +60,13 @@ function Start-SubEdit
     $stdout = $Process.StandardOutput.ReadToEnd()
     $stderr = $Process.StandardError.ReadToEnd()
     $Process.WaitForExit()
-    if ($Process.ExitCode -gt 1)
-    {
+    if ($Process.ExitCode -gt 1) {
         Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
         Write-HTMLLog -Column1 'Error:' -Column2 $stderr -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "SubEdit Error: $DownloadLabel - $DownloadName"
     }
-    else
-    {
+    else {
         Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
     }
 }

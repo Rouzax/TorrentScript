@@ -1,5 +1,4 @@
-function Stop-Script
-{
+function Stop-Script {
     <#
     .SYNOPSIS
     Stops the script and removes Mutex
@@ -16,27 +15,23 @@ function Stop-Script
     .NOTES
     General notes
     #>
-
+    [CmdletBinding()]
     Param(
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $ExitReason
+        [string]$ExitReason
     )  
     
     # Make sure needed functions are available otherwise try to load them.
     $commands = 'Write-HTMLLog', 'Send-Mail', 'Remove-Mutex'
-    foreach ($commandName in $commands)
-    {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
-        {
-            Try
-            {
+    foreach ($commandName in $commands) {
+        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
+            Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
             }
-            Catch
-            {
+            Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }

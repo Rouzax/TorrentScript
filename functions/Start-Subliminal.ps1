@@ -1,5 +1,4 @@
-function Start-Subliminal
-{
+function Start-Subliminal {
     <#
     .SYNOPSIS
     Start Subliminal to download subs
@@ -16,26 +15,23 @@ function Start-Subliminal
     .NOTES
     General notes
     #>
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $true
         )] 
-        [string]    $Source
+        [string]$Source
     )
 
     # Make sure needed functions are available otherwise try to load them.
     $commands = 'Write-HTMLLog'
-    foreach ($commandName in $commands)
-    {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
-        {
-            Try
-            {
+    foreach ($commandName in $commands) {
+        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
+            Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
             }
-            Catch
-            {
+            Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -58,36 +54,28 @@ function Start-Subliminal
     $Process.WaitForExit()
     # Write-Host $stdout
     # Write-Host $stderr
-    if ($stdout -match '(\d+)(?=\s*video collected)')
-    {
+    if ($stdout -match '(\d+)(?=\s*video collected)') {
         $VideoCollected = $Matches.0
     }
-    if ($stdout -match '(\d+)(?=\s*video ignored)')
-    {
+    if ($stdout -match '(\d+)(?=\s*video ignored)') {
         $VideoIgnored = $Matches.0
     }
-    if ($stdout -match '(\d+)(?=\s*error)')
-    {
+    if ($stdout -match '(\d+)(?=\s*error)') {
         $VideoError = $Matches.0
     }
-    if ($stdout -match '(\d+)(?=\s*subtitle)')
-    {
+    if ($stdout -match '(\d+)(?=\s*subtitle)') {
         $SubsDownloaded = $Matches.0
     }
-    if ($stdout -match 'Some providers have been discarded due to unexpected errors')
-    {
+    if ($stdout -match 'Some providers have been discarded due to unexpected errors') {
         $SubliminalExitCode = 1
     }
-    if ($SubliminalExitCode -gt 0)
-    {
+    if ($SubliminalExitCode -gt 0) {
         Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
         Write-HTMLLog -Column1 'Error:' -Column2 $stderr -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
     }
-    else
-    {
-        if ($SubsDownloaded -gt 0)
-        {
+    else {
+        if ($SubsDownloaded -gt 0) {
             # Write-HTMLLog -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
             Write-HTMLLog -Column1 'Collected:' -Column2 "$VideoCollected Videos"
             Write-HTMLLog -Column1 'Ignored:' -Column2 "$VideoIgnored Videos"
@@ -95,8 +83,7 @@ function Start-Subliminal
             Write-HTMLLog -Column1 'Downloaded:' -Column2 "$SubsDownloaded Subtitles"
             Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
         }
-        else
-        {
+        else {
             Write-HTMLLog -Column1 'Result:' -Column2 'No subs downloaded with Subliminal'
         }
     }

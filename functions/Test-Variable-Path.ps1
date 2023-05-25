@@ -1,5 +1,4 @@
-function Test-Variable-Path
-{
+function Test-Variable-Path {
     <#
     .SYNOPSIS
     Test path to variables
@@ -19,19 +18,19 @@ function Test-Variable-Path
     .NOTES
     General notes
     #>
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $Path,
+        [string]$Path,
         
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $Name
+        [string]$Name
     )
-    if (!(Test-Path -LiteralPath  $Path))
-    {
+    if (!(Test-Path -LiteralPath  $Path)) {
         Write-Host "Cannot find: $Path" -ForegroundColor Red
         Write-Host "As defined in variable: $Name" -ForegroundColor Red
         Write-Host 'Will now exit!' -ForegroundColor Red

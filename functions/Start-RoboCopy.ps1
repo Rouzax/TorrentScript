@@ -1,5 +1,4 @@
-function Start-RoboCopy
-{
+function Start-RoboCopy {
     <#
     .SYNOPSIS
     RoboCopy wrapper
@@ -17,36 +16,33 @@ function Start-RoboCopy
     Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination' -File '*.*'
     Start-RoboCopy -Source 'C:\Temp\Source' -Destination 'C:\Temp\Destination' -File 'file.ext'
     #>
+    [CmdletBinding()]
     param(
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $Source,
+        [string]$Source,
         
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $Destination,
+        [string]$Destination,
         
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $File
+        [string]$File
     )
 
     # Make sure needed functions are available otherwise try to load them.
     $commands = 'Write-HTMLLog', 'Stop-Script', 'Format-Size'
-    foreach ($commandName in $commands)
-    {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue))
-        {
-            Try
-            {
+    foreach ($commandName in $commands) {
+        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
+            Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
             }
-            Catch
-            {
+            Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -54,12 +50,10 @@ function Start-RoboCopy
     }
 
     # Start
-    if ($File -ne '*.*')
-    {
+    if ($File -ne '*.*') {
         $options = @('/R:1', '/W:1', '/J', '/NP', '/NP', '/NJH', '/NFL', '/NDL', '/MT8')
     }
-    elseif ($File -eq '*.*')
-    {
+    elseif ($File -eq '*.*') {
         $options = @('/R:1', '/W:1', '/E', '/J', '/NP', '/NJH', '/NFL', '/NDL', '/MT8')
     }
     
@@ -67,26 +61,21 @@ function Start-RoboCopy
  
     # executing unrar command
     Write-HTMLLog -Column1 'Starting:' -Column2 'Copy files'
-    try
-    {
+    try {
         # executing Robocopy command
         $Output = robocopy @cmdArgs
     }
-    catch
-    {
+    catch {
         Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
         Write-Host 'RoboCopy not found' -ForegroundColor Red
         exit 1
     }
 
   
-    foreach ($line in $Output)
-    {
-        switch -Regex ($line)
-        {
+    foreach ($line in $Output) {
+        switch -Regex ($line) {
             # Dir metrics
-            '^\s+Dirs\s:\s*'
-            {
+            '^\s+Dirs\s:\s*' {
                 # Example:  Dirs :        35         0         0         0         0         0
                 $dirs = $_.Replace('Dirs :', '').Trim()
                 # Now remove the white space between the values.'
@@ -98,8 +87,7 @@ function Start-RoboCopy
                 $FailedDirs = $dirs[4]
             }
             # File metrics
-            '^\s+Files\s:\s[^*]'
-            {
+            '^\s+Files\s:\s[^*]' {
                 # Example:  Files :      8318         0      8318         0         0         0
                 $files = $_.Replace('Files :', '').Trim()
                 # Now remove the white space between the values.'
@@ -111,8 +99,7 @@ function Start-RoboCopy
                 $FailedFiles = $files[4]
             }
             # Byte metrics
-            '^\s+Bytes\s:\s*'
-            {
+            '^\s+Bytes\s:\s*' {
                 # Example:   Bytes :   1.607 g         0   1.607 g         0         0         0
                 $bytes = $_.Replace('Bytes :', '').Trim()
                 # Now remove the white space between the values.'
@@ -123,25 +110,20 @@ function Start-RoboCopy
                 $counter = 0
                 $tempByteArray = 0, 0, 0, 0, 0, 0
                 $tempByteArrayCounter = 0
-                foreach ($column in $bytes)
-                {
-                    if ($column -eq 'k')
-                    {
-                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1])* 1024)
+                foreach ($column in $bytes) {
+                    if ($column -eq 'k') {
+                        $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1024)
                         $counter += 1
                     }
-                    elseif ($column -eq 'm')
-                    {
+                    elseif ($column -eq 'm') {
                         $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1048576)
                         $counter += 1
                     }
-                    elseif ($column -eq 'g')
-                    {
+                    elseif ($column -eq 'g') {
                         $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1073741824)
                         $counter += 1
                     }
-                    else
-                    {
+                    else {
                         $tempByteArray[$tempByteArrayCounter] = $column
                         $counter += 1
                         $tempByteArrayCounter += 1
@@ -154,8 +136,7 @@ function Start-RoboCopy
                 # array columns 2,3, and 5 are available, but not being used currently.
             }
             # Speed metrics
-            '^\s+Speed\s:.*sec.$'
-            {
+            '^\s+Speed\s:.*sec.$' {
                 # Example:   Speed :             120.816 Bytes/min.
                 $speed = $_.Replace('Speed :', '').Trim()
                 $speed = $speed.Replace('Bytes/sec.', '').Trim()
@@ -166,8 +147,7 @@ function Start-RoboCopy
     }
 
 
-    if ($FailedDirs -gt 0 -or $FailedFiles -gt 0)
-    {
+    if ($FailedDirs -gt 0 -or $FailedFiles -gt 0) {
         Write-HTMLLog -Column1 'Dirs' -Column2 "$TotalDirs Total" -ColorBg 'Error'
         Write-HTMLLog -Column1 'Dirs' -Column2 "$FailedDirs Failed" -ColorBg 'Error'
         Write-HTMLLog -Column1 'Files:' -Column2 "$TotalFiles Total" -ColorBg 'Error'
@@ -177,8 +157,7 @@ function Start-RoboCopy
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName" 
     }
-    else
-    {
+    else {
         Write-HTMLLog -Column1 'Dirs:' -Column2 "$CopiedDirs Copied"
         Write-HTMLLog -Column1 'Files:' -Column2 "$CopiedFiles Copied"
         Write-HTMLLog -Column1 'Size:' -Column2 "$CopiedSize"

@@ -1,5 +1,4 @@
-function Format-Table
-{
+function Format-Table {
     <#
     .SYNOPSIS
     Starts and stops Log file
@@ -17,15 +16,15 @@ function Format-Table
     .NOTES
     General notes
     #>
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $false
         )]
-        [switch]    $Start
+        [switch]$Start
     )
 
-    if ($Start)
-    {
+    if ($Start) {
         $global:Log = @()
         $global:Log += "<table border=`"0`" align=`"center`" cellspacing=`"0`""
         $global:Log += "<table border=`"0`" align=`"center`" cellspacing=`"0`""
@@ -34,15 +33,13 @@ function Format-Table
         $global:Log += "<col width=`"500`">"
         $global:Log += '<tbody>'
     }
-    else
-    {
+    else {
         $global:Log += '</tbody>'
         $global:Log += '</table>'
     }
 }
 
-Function Write-HTMLLog
-{
+Function Write-HTMLLog {
     <#
     .SYNOPSIS
     Add line to in memory log
@@ -75,52 +72,49 @@ Function Write-HTMLLog
     .NOTES
     General notes
     #>
+    [CmdletBinding()]
     Param(
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $Column1,
+        [string]$Column1,
 
         [Parameter(
             Mandatory = $false
         )]
-        [string]    $Column2,
+        [string]$Column2,
 
         [Parameter(
             Mandatory = $false
         )]
-        [switch]    $Header,
+        [switch]$Header,
 
         [Parameter(
             Mandatory = $false
         )]
         [ValidateSet(
-            'Success', 'Error'
+            'Success', 
+            'Error'
         )]
-        [string]    $ColorBg
+        [string]$ColorBg
     )
 
     $global:Log += '<tr>'
-    if ($Header)
-    {
+    if ($Header) {
         $global:Log += "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
     }
-    else
-    {
-        if ($ColorBg -eq '')
-        {
+    else {
+        if ($ColorBg -eq '') {
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
             $global:Log += '</tr>'
         }
-        elseif ($ColorBg -eq 'Success')
-        {
+        elseif ($ColorBg -eq 'Success') {
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
             $global:Log += '</tr>'  
         }
-        elseif ($ColorBg -eq 'Error')
-        {
+        elseif ($ColorBg -eq 'Error') {
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
             $global:Log += '</tr>'  
@@ -130,8 +124,7 @@ Function Write-HTMLLog
 }
 
 
-function Write-Log
-{
+function Write-Log {
     <#
     .SYNOPSIS
     Write log to disk
@@ -148,11 +141,12 @@ function Write-Log
     .NOTES
     General notes
     #>
+    [CmdletBinding()]
     param (
         [Parameter(
             Mandatory = $true
         )]
-        [string]    $LogFile
+        [string]$LogFile
     )
     Set-Content -LiteralPath $LogFile -Value $global:Log
 }

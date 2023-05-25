@@ -1,5 +1,4 @@
-function Format-Size()
-{
+function Format-Size() {
     <#
     .SYNOPSIS
     Takes bytes and converts it to KB.MB,GB,TB,PB
@@ -26,32 +25,25 @@ function Format-Size()
             Mandatory = $true, 
             ValueFromPipeline = $true
         )]
-        [double]    $SizeInBytes
+        [double]$SizeInBytes
     )
-    switch ([math]::Max($SizeInBytes, 0))
-    {
-        { $_ -ge 1PB }
-        {
+    switch ([math]::Max($SizeInBytes, 0)) {
+        { $_ -ge 1PB } {
             '{0:N2} PB' -f ($SizeInBytes / 1PB); break
         }
-        { $_ -ge 1TB }
-        {
+        { $_ -ge 1TB } {
             '{0:N2} TB' -f ($SizeInBytes / 1TB); break
         }
-        { $_ -ge 1GB }
-        {
+        { $_ -ge 1GB } {
             '{0:N2} GB' -f ($SizeInBytes / 1GB); break
         }
-        { $_ -ge 1MB }
-        {
+        { $_ -ge 1MB } {
             '{0:N2} MB' -f ($SizeInBytes / 1MB); break
         }
-        { $_ -ge 1KB }
-        {
+        { $_ -ge 1KB } {
             '{0:N2} KB' -f ($SizeInBytes / 1KB); break
         }
-        default
-        {
+        default {
             "$SizeInBytes Bytes"
         }
     }

@@ -1,5 +1,4 @@
-function Remove-Mutex
-{
+function Remove-Mutex {
     <#
 	.SYNOPSIS
 	Removes a previously created Mutex
@@ -20,16 +19,14 @@ function Remove-Mutex
             Mandatory = $true
         )]
         [ValidateNotNull()]
-        [PSObject]  $MutexObject
+        [PSObject]$MutexObject
     )
 
     # $MutexObject | fl * | Out-String | Write-Host
     Write-Host "Releasing lock [$($MutexObject.Name)]..." -ForegroundColor DarkGray
-    try
-    {
+    try {
         [void]$MutexObject.Mutex.ReleaseMutex() 
     }
-    catch
-    { 
+    catch { 
     }
 } # Remove-Mutex
