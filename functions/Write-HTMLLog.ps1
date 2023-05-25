@@ -93,8 +93,7 @@ Function Write-HTMLLog {
             Mandatory = $false
         )]
         [ValidateSet(
-            'Success', 
-            'Error'
+            'Success', 'Error'
         )]
         [string]$ColorBg
     )
