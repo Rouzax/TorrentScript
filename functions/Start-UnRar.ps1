@@ -31,8 +31,7 @@ function Start-UnRar {
             Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
-            }
-            Catch {
+            } Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -62,8 +61,7 @@ function Start-UnRar {
         Write-HTMLLog -Column1 'Error:' -Column2 $stderr -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Unrar Error: $DownloadLabel - $DownloadName"
-    }
-    else {
+    } else {
         Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
     }
 }

@@ -41,8 +41,7 @@ function Start-RoboCopy {
             Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
-            }
-            Catch {
+            } Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -52,8 +51,7 @@ function Start-RoboCopy {
     # Start
     if ($File -ne '*.*') {
         $options = @('/R:1', '/W:1', '/J', '/NP', '/NP', '/NJH', '/NFL', '/NDL', '/MT8')
-    }
-    elseif ($File -eq '*.*') {
+    } elseif ($File -eq '*.*') {
         $options = @('/R:1', '/W:1', '/E', '/J', '/NP', '/NJH', '/NFL', '/NDL', '/MT8')
     }
     
@@ -64,8 +62,7 @@ function Start-RoboCopy {
     try {
         # executing Robocopy command
         $Output = robocopy @cmdArgs
-    }
-    catch {
+    } catch {
         Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
         Write-Host 'RoboCopy not found' -ForegroundColor Red
         exit 1
@@ -114,16 +111,13 @@ function Start-RoboCopy {
                     if ($column -eq 'k') {
                         $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1024)
                         $counter += 1
-                    }
-                    elseif ($column -eq 'm') {
+                    } elseif ($column -eq 'm') {
                         $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1048576)
                         $counter += 1
-                    }
-                    elseif ($column -eq 'g') {
+                    } elseif ($column -eq 'g') {
                         $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1073741824)
                         $counter += 1
-                    }
-                    else {
+                    } else {
                         $tempByteArray[$tempByteArrayCounter] = $column
                         $counter += 1
                         $tempByteArrayCounter += 1
@@ -156,8 +150,7 @@ function Start-RoboCopy {
         Write-HTMLLog -Column1 'Size:' -Column2 "$FailedSize Failed" -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName" 
-    }
-    else {
+    } else {
         Write-HTMLLog -Column1 'Dirs:' -Column2 "$CopiedDirs Copied"
         Write-HTMLLog -Column1 'Files:' -Column2 "$CopiedFiles Copied"
         Write-HTMLLog -Column1 'Size:' -Column2 "$CopiedSize"

@@ -37,8 +37,7 @@ Function Get-Input {
             $Variable = Read-Host -Prompt "$Message"
             $Variable = $Variable.Trim()
         }
-    }
-    else {
+    } else {
         $Variable = Read-Host -Prompt "$Message"
         $Variable = $Variable.Trim()
     }

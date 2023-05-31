@@ -30,8 +30,7 @@ function Import-Radarr {
             Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
-            }
-            Catch {
+            } Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -53,8 +52,7 @@ function Import-Radarr {
     Write-HTMLLog -Column1 '***  Radarr Import  ***' -Header
     try {
         $MoviesScanJob = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command" -Method Post -Body $Body -Headers $headers
-    }
-    catch {
+    } catch {
         Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
@@ -65,8 +63,7 @@ function Import-Radarr {
         do {
             try {
                 $MoviesScanResult = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command/$($MoviesScanJob.id)" -Method Get -Headers $headers
-            }
-            catch {
+            } catch {
                 Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
                 Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
@@ -77,8 +74,7 @@ function Import-Radarr {
         if ($MoviesScanResult.status -eq 'completed') {
             if ($MoviesScanResult.result -eq 'successful') {
                 Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'         
-            }
-            else {
+            } else {
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error' 
                 Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
             }
@@ -95,8 +91,7 @@ function Import-Radarr {
             Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error' 
             Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"
         }
-    }
-    else {
+    } else {
         Write-HTMLLog -Column1 'Radarr:' -Column2 $MoviesScanJob.status -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Radarr Error: $DownloadLabel - $DownloadName"

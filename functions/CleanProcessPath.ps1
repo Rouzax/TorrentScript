@@ -19,8 +19,7 @@ function CleanProcessPath {
             Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
-            }
-            Catch {
+            } Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -30,14 +29,12 @@ function CleanProcessPath {
 
     if ($NoCleanUp) {
         Write-HTMLLog -Column1 'Cleanup' -Column2 'NoCleanUp switch was given at command line, leaving files'
-    }
-    else {
+    } else {
         try {
-            If (Test-Path -LiteralPath  $ProcessPathFull) {
+            If (Test-Path -LiteralPath $ProcessPathFull) {
                 Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
             }
-        }
-        catch {
+        } catch {
             Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
             Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         }

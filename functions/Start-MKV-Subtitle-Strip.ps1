@@ -34,8 +34,7 @@ function Start-MKV-Subtitle-Strip {
             Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
-            }
-            Catch {
+            } Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -74,16 +73,13 @@ function Start-MKV-Subtitle-Strip {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
-            }
-            elseif ($Process.ExitCode -eq 1) {
+            } elseif ($Process.ExitCode -eq 1) {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
-            }
-            elseif ($Process.ExitCode -eq 0) {
+            } elseif ($Process.ExitCode -eq 0) {
                 $fileMetadata = $stdout | ConvertFrom-Json
-            }
-            else {
+            } else {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
@@ -125,8 +121,7 @@ function Start-MKV-Subtitle-Strip {
                         # Handle multiple subtitles of same language, if exist append ID to file 
                         if ("$($episode.FileName).$($FileTrack.properties.language).srt" -in $SubNamesToKeep) {
                             $prefix = "$($FileTrack.id).$($FileTrack.properties.language)"
-                        }
-                        else {
+                        } else {
                             $prefix = "$($FileTrack.properties.language)"
                         }
     
@@ -138,8 +133,7 @@ function Start-MKV-Subtitle-Strip {
 
                         # Add subtitle ID to for MKV remux
                         $SubIDsToExtract += $FileTrack.id
-                    }
-                    else {
+                    } else {
                         $SubIDsToRemove += $FileTrack.id
                     }
                 }
@@ -170,17 +164,14 @@ function Start-MKV-Subtitle-Strip {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvextract:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
-            }
-            elseif ($Process.ExitCode -eq 1) {
+            } elseif ($Process.ExitCode -eq 1) {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvextract:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
-            }
-            elseif ($Process.ExitCode -eq 0) {
+            } elseif ($Process.ExitCode -eq 0) {
                 $SubsExtracted = $true
                 # Write-HTMLLog -Column1 "Extracted:" -Column2 "$($SubsToExtract.count) Subtitles"
-            }
-            else {
+            } else {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvextract:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Unknown' -ColorBg 'Error'
@@ -209,18 +200,15 @@ function Start-MKV-Subtitle-Strip {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
-            }
-            elseif ($Process.ExitCode -eq 1) {
+            } elseif ($Process.ExitCode -eq 1) {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
-            }
-            elseif ($Process.ExitCode -eq 0) {
+            } elseif ($Process.ExitCode -eq 0) {
                 # Overwrite original mkv after successful remux
                 Move-Item -Path $TmpMkvPath -Destination $($episode.FilePath) -Force
                 # Write-HTMLLog -Column1 "Removed:" -Column2 "$($SubIDsToRemove.Count) unwanted subtitle languages"
-            }
-            else {
+            } else {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
                 Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
@@ -252,8 +240,7 @@ function Start-MKV-Subtitle-Strip {
             Write-HTMLLog -Column1 'Subtitles:' -Column2 "$TotalSubsToRemove Removed"
         }
         Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
-    }
-    else {
+    } else {
         Write-HTMLLog -Column1 'Result:' -Column2 'No SRT subs found in MKV'
     }
 }

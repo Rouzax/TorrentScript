@@ -32,8 +32,7 @@ function Format-Table {
         $global:Log += "<col width=`"125`">"
         $global:Log += "<col width=`"500`">"
         $global:Log += '<tbody>'
-    }
-    else {
+    } else {
         $global:Log += '</tbody>'
         $global:Log += '</table>'
     }
@@ -101,19 +100,16 @@ Function Write-HTMLLog {
     $global:Log += '<tr>'
     if ($Header) {
         $global:Log += "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
-    }
-    else {
+    } else {
         if ($ColorBg -eq '') {
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
             $global:Log += '</tr>'
-        }
-        elseif ($ColorBg -eq 'Success') {
+        } elseif ($ColorBg -eq 'Success') {
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
             $global:Log += '</tr>'  
-        }
-        elseif ($ColorBg -eq 'Error') {
+        } elseif ($ColorBg -eq 'Error') {
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
             $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
             $global:Log += '</tr>'  

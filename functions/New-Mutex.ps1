@@ -44,16 +44,14 @@ function New-Mutex {
     [void][System.Reflection.Assembly]::LoadWithPartialName('System.Threading')
     try {
         $Mutex = [System.Threading.Mutex]::OpenExisting($MutexName)
-    }
-    catch {
+    } catch {
         $Mutex = New-Object System.Threading.Mutex($true, $MutexName, [ref]$MutexWasCreated)
     }
     try {
         if (!$MutexWasCreated) {
             $Mutex.WaitOne() | Out-Null 
         } 
-    }
-    catch { 
+    } catch { 
     }
     Write-Host "Lock [$MutexName] acquired. Executing..." -ForegroundColor DarkGray
     Write-Output ([PSCustomObject]@{ Name = $MutexName; Mutex = $Mutex })

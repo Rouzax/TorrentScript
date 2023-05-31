@@ -30,8 +30,7 @@ function Start-Subliminal {
             Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
-            }
-            Catch {
+            } Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -73,8 +72,7 @@ function Start-Subliminal {
         Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
         Write-HTMLLog -Column1 'Error:' -Column2 $stderr -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
-    }
-    else {
+    } else {
         if ($SubsDownloaded -gt 0) {
             # Write-HTMLLog -Column1 "Downloaded:" -Column2 "$SubsDownloaded Subtitles"
             Write-HTMLLog -Column1 'Collected:' -Column2 "$VideoCollected Videos"
@@ -82,8 +80,7 @@ function Start-Subliminal {
             Write-HTMLLog -Column1 'Error:' -Column2 "$VideoError Videos"
             Write-HTMLLog -Column1 'Downloaded:' -Column2 "$SubsDownloaded Subtitles"
             Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
-        }
-        else {
+        } else {
             Write-HTMLLog -Column1 'Result:' -Column2 'No subs downloaded with Subliminal'
         }
     }

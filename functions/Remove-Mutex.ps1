@@ -26,7 +26,6 @@ function Remove-Mutex {
     Write-Host "Releasing lock [$($MutexObject.Name)]..." -ForegroundColor DarkGray
     try {
         [void]$MutexObject.Mutex.ReleaseMutex() 
-    }
-    catch { 
+    } catch { 
     }
 } # Remove-Mutex

@@ -31,8 +31,7 @@ function Import-Medusa {
             Try {
                 . $PSScriptRoot\$commandName.ps1
                 Write-Host "$commandName Function loaded." -ForegroundColor Green
-            }
-            Catch {
+            } Catch {
                 Write-Error -Message "Failed to import $commandName function: $_"
                 exit 1
             }
@@ -58,8 +57,7 @@ function Import-Medusa {
     Write-HTMLLog -Column1 '***  Medusa Import  ***' -Header
     try {
         $response = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess" -Method Post -Body $Body -Headers $headers
-    }
-    catch {
+    } catch {
         Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
@@ -70,8 +68,7 @@ function Import-Medusa {
         do {
             try {
                 $status = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess/$($response.queueItem.identifier)" -Method Get -Headers $headers
-            }
-            catch {
+            } catch {
                 Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
                 Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
@@ -92,19 +89,16 @@ function Import-Medusa {
                 }
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error' 
                 Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
-            }
-            else {
+            } else {
                 Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'    
             }
-        }
-        else {
+        } else {
             Write-HTMLLog -Column1 'Medusa:' -Column2 $status.success -ColorBg 'Error' 
             Write-HTMLLog -Column1 'Medusa:' -Column2 "Import Timeout: ($MedusaTimeOutMinutes) minutes" -ColorBg 'Error' 
             Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error' 
             Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
         }
-    }
-    else {
+    } else {
         Write-HTMLLog -Column1 'Medusa:' -Column2 $response.status -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
         Stop-Script -ExitReason "Medusa Error: $DownloadLabel - $DownloadName"
