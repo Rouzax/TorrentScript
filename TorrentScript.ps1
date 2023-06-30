@@ -91,8 +91,8 @@ $Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1 -ErrorAction S
 # Dot source the files
 ForEach ($import in @($Functions)) {
     Try {
-        # Lightweight alternative to dotsourcing a function script
-        . ([ScriptBlock]::Create([System.Io.File]::ReadAllText($import)))
+        # dotsourcing a function script
+        .$import.fullname
     } Catch {
         Write-Error -Message "Failed to import function $($import.fullname): $_"
     }

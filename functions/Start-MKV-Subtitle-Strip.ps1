@@ -118,21 +118,36 @@ function Start-MKV-Subtitle-Strip {
                     # Check is subtitle is in $WantedLanguages list
                     elseif ($FileTrack.properties.language -in $WantedLanguages) {
 
-                        # Handle multiple subtitles of same language, if exist append ID to file 
-                        if ("$($episode.FileName).$($FileTrack.properties.language).srt" -in $SubNamesToKeep) {
-                            $prefix = "$($FileTrack.id).$($FileTrack.properties.language)"
-                        } else {
+                        # Handle multiple subtitles of same language, if exist skip duplicates of same language 
+                        if ("$($episode.FileName).$($FileTrack.properties.language).srt" -notin $SubNamesToKeep) {
                             $prefix = "$($FileTrack.properties.language)"
-                        }
-    
-                        # Add Subtitle name and ID to be extracted
-                        $SubsToExtract += "`"$($FileTrack.id):$($episode.FileRoot)\$($episode.FileName).$($prefix).srt`""
-                        
-                        # Keep track of subtitle file names that will be extracted to handle possible duplicates
-                        $SubNamesToKeep += "$($episode.FileName).$($prefix).srt"
 
-                        # Add subtitle ID to for MKV remux
-                        $SubIDsToExtract += $FileTrack.id
+                            # Add Subtitle name and ID to be extracted
+                            $SubsToExtract += "`"$($FileTrack.id):$($episode.FileRoot)\$($episode.FileName).$($prefix).srt`""
+                            
+                            # Keep track of subtitle file names that will be extracted to handle possible duplicates
+                            $SubNamesToKeep += "$($episode.FileName).$($prefix).srt"
+    
+                            # Add subtitle ID to for MKV remux
+                            $SubIDsToExtract += $FileTrack.id
+                        }
+
+                        # Handle multiple subtitles of same language, if exist append ID to file 
+                        # if ("$($episode.FileName).$($FileTrack.properties.language).srt" -in $SubNamesToKeep) {
+                        #     $prefix = "$($FileTrack.id).$($FileTrack.properties.language)"
+                        # } else {
+                        #     $prefix = "$($FileTrack.properties.language)"
+                        # }
+    
+                        # # Add Subtitle name and ID to be extracted
+                        # $SubsToExtract += "`"$($FileTrack.id):$($episode.FileRoot)\$($episode.FileName).$($prefix).srt`""
+                        
+                        # # Keep track of subtitle file names that will be extracted to handle possible duplicates
+                        # $SubNamesToKeep += "$($episode.FileName).$($prefix).srt"
+
+                        # # Add subtitle ID to for MKV remux
+                        # $SubIDsToExtract += $FileTrack.id
+                        
                     } else {
                         $SubIDsToRemove += $FileTrack.id
                     }
