@@ -46,7 +46,10 @@ function Stop-Script {
       
     Format-Table
     Write-Log -LogFile $LogFilePath
-    Send-Mail -SMTPserver $SMTPserver -SMTPport $SMTPport -MailTo $MailTo -MailFrom $MailFrom -MailFromName $MailFromName -MailSubject $ExitReason -MailBody $LogFilePath -SMTPuser $SMTPuser -SMTPpass $SMTPpass
+    # Handle Empty Download Label
+    if ($DownloadLabel -ne 'NoMail') {
+        Send-Mail -SMTPserver $SMTPserver -SMTPport $SMTPport -MailTo $MailTo -MailFrom $MailFrom -MailFromName $MailFromName -MailSubject $ExitReason -MailBody $LogFilePath -SMTPuser $SMTPuser -SMTPpass $SMTPpass
+    }
     
     # Clean up the Mutex
     Remove-Mutex -MutexObject $ScriptMutex
