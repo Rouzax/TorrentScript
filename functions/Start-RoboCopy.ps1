@@ -102,8 +102,8 @@ function Start-RoboCopy {
                 # Now remove the white space between the values.'
                 $bytes = $bytes -split '\s+'
     
-                # The raw text from the log file contains a k,m,or g after the non zero numers.
-                # This will be used as a multiplier to determin the size in kb.
+                # The raw text from the log file contains a k,m,or g after the non zero numbers.
+                # This will be used as a multiplier to determine the size in kb.
                 $counter = 0
                 $tempByteArray = 0, 0, 0, 0, 0, 0
                 $tempByteArrayCounter = 0
@@ -134,6 +134,8 @@ function Start-RoboCopy {
                 # Example:   Speed :             120.816 Bytes/min.
                 $speed = $_.Replace('Speed :', '').Trim()
                 $speed = $speed.Replace('Bytes/sec.', '').Trim()
+                # Remove any dots in the number
+                $speed = $speed.Replace('.', '').Trim()
                 # Assign the appropriate column to values.
                 $speed = Format-Size -SizeInBytes $speed
             }
