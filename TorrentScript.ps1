@@ -231,7 +231,7 @@ if ($RarFile) {
 
 # Starting Post Processing for Movies and TV Shows
 if ($DownloadLabel -eq $TVLabel) {
-    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv'
+    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" }
     $MKVCount = $MKVFiles.Count
     if ($MKVCount -gt 0) {
         $MKVFile = $true 
@@ -272,7 +272,7 @@ if ($DownloadLabel -eq $TVLabel) {
     CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 } elseif ($DownloadLabel -eq $MovieLabel) {
-    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv'
+    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" }
     $MKVCount = $MKVFiles.Count
     if ($MKVCount -gt 0) {
         $MKVFile = $true 

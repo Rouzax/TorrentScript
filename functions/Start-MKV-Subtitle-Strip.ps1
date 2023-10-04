@@ -48,7 +48,7 @@ function Start-MKV-Subtitle-Strip {
     $TotalSubsToRemove = 0
 
     Write-HTMLLog -Column1 '***  Extract srt files from MKV  ***' -Header
-    Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.mkv' | ForEach-Object {
+    Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" } | ForEach-Object {
         Get-ChildItem -LiteralPath $_.FullName | ForEach-Object {
             $fileName = $_.BaseName
             $filePath = $_.FullName
@@ -97,7 +97,7 @@ function Start-MKV-Subtitle-Strip {
         }
     }
 
-    # Exctract wanted SRT subtitles
+    # Extract wanted SRT subtitles
     $episodes | ForEach-Object {
         $episode = $_
         $SubIDsToExtract = @()
