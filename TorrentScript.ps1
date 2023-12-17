@@ -67,6 +67,7 @@ $RadarrHost = $Config.Radarr.Host
 $RadarrPort = $Config.Radarr.Port
 $RadarrApiKey = $Config.Radarr.APIKey
 $RadarrTimeOutMinutes = $Config.Radarr.TimeOutMinutes
+$RadarrRemotePath = $Config.Radarr.RadarrRemotePath
 
 # Mail Settings
 $MailTo = $Config.Mail.To
@@ -306,8 +307,15 @@ if ($DownloadLabel -eq $TVLabel) {
         }
     }
 
+    # Get the correct remote Radarr file path, if script is not running on local machine to Radarr
+    # Get the common prefix length between the paths
+    $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
+    
+    # Remove the common prefix and append the RadarrRemotePath
+    $RadarrPathFull = Join-Path $RadarrRemotePath ($ProcessPathFull.Substring($prefixLength))
+    
     # Call Radarr to Post Process
-    Import-Radarr -Source $ProcessPathFull
+    Import-Radarr -Source $RadarrPathFull
     CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
     Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
