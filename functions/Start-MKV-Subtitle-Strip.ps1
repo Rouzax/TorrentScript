@@ -24,7 +24,7 @@ function Start-MKV-Subtitle-Strip {
         [Parameter(
             Mandatory = $true
         )]
-        [string]$Source
+        $Source
     )
 
     # Make sure needed functions are available otherwise try to load them.
@@ -47,7 +47,7 @@ function Start-MKV-Subtitle-Strip {
     $TotalSubsToExtract = 0
     $TotalSubsToRemove = 0
 
-    Write-HTMLLog -Column1 '***  Extract srt files from MKV  ***' -Header
+    Write-HTMLLog -Column1 '***  Extract srt files from Video Container  ***' -Header
     Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" } | ForEach-Object {
         Get-ChildItem -LiteralPath $_.FullName | ForEach-Object {
             $fileName = $_.BaseName
@@ -109,7 +109,7 @@ function Start-MKV-Subtitle-Strip {
             $FileTrack = $_
             if ($FileTrack.id) {
                 # Check if subtitle is srt
-                if ($FileTrack.type -eq 'subtitles' -and $FileTrack.codec -eq 'SubRip/SRT') {
+                if ($FileTrack.type -eq 'subtitles' -and ($FileTrack.codec -eq 'SubRip/SRT' -or $FileTrack.codec -eq 'Timed Text')) {
                     
                     # Check to see if track_name is part of $SubtitleNamesToRemove list
                     if ($null -ne ($SubtitleNamesToRemove | Where-Object { $FileTrack.properties.track_name -match $_ })) {

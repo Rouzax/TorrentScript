@@ -61,6 +61,7 @@ $MedusaHost = $Config.Medusa.Host
 $MedusaPort = $Config.Medusa.Port
 $MedusaApiKey = $Config.Medusa.APIKey
 $MedusaTimeOutMinutes = $Config.Medusa.TimeOutMinutes
+$MedusaRemotePath = $Config.Medusa.MedusaRemotePath
 
 # Import Radarr Settings
 $RadarrHost = $Config.Radarr.Host
@@ -231,15 +232,20 @@ if ($RarFile) {
 
 
 # Starting Post Processing for Movies and TV Shows
-if ($DownloadLabel -eq $TVLabel) {
-    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" }
-    $MKVCount = $MKVFiles.Count
-    if ($MKVCount -gt 0) {
-        $MKVFile = $true 
+if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
+    $mp4Files = @(Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mp4' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
+    if ($mp4Files.Count -gt 0) {
+        Start-MP4-2-MKV-Remux -VideoFileObjects $mp4Files
+    } 
+
+    $mkvFiles = @(Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
+    $allVideoFilesCount = $mkvFiles.Count
+    if ($allVideoFilesCount -gt 0) {
+        $VideoContainer = $true 
     } else {
-        $MKVFile = $false 
+        $VideoContainer = $false 
     }
-    if ($MKVFile) {
+    if ($VideoContainer) {
         # Download any missing subs
         Start-Subliminal -Source $ProcessPathFull
         
@@ -250,7 +256,7 @@ if ($DownloadLabel -eq $TVLabel) {
         Start-SubEdit -File '*.srt' -Source $ProcessPathFull
       
         Write-HTMLLog -Column1 '***  MKV Files  ***' -Header
-        foreach ($Mkv in $MKVFiles) {
+        foreach ($Mkv in $mkvFiles) {
             Write-HTMLLog -Column1 ' ' -Column2 $Mkv.name
         }
         $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.srt'
@@ -267,59 +273,32 @@ if ($DownloadLabel -eq $TVLabel) {
             Write-HTMLLog -Column1 'File:' -Column2 $File.name
         }
     }
-
-    # Call Medusa to Post Process
-    Import-Medusa -Source $ProcessPathFull
-    CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
-    Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
-} elseif ($DownloadLabel -eq $MovieLabel) {
-    $MKVFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" }
-    $MKVCount = $MKVFiles.Count
-    if ($MKVCount -gt 0) {
-        $MKVFile = $true 
-    } else {
-        $MKVFile = $false 
-    }
-    if ($MKVFile) {
-        # Download any missing subs
-        Start-Subliminal -Source $ProcessPathFull
-
-        # Extract wanted subtitles and rename
-        Start-MKV-Subtitle-Strip $ProcessPathFull
-          
-        # Clean up Subs
-        Start-SubEdit -File '*.srt' -Source $ProcessPathFull
-        
-        Write-HTMLLog -Column1 '***  MKV Files  ***' -Header
-        foreach ($Mkv in $MKVFiles) {
-            Write-HTMLLog -Column1 ' ' -Column2 $Mkv.name
-        }
-        Write-HTMLLog -Column1 '***  Subtitle Files  ***' -Header
-        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.srt'
-        foreach ($Srt in $SrtFiles) {
-            Write-HTMLLog -Column1 ' ' -Column2 $srt.name
-        }
-    } else {
-        Write-HTMLLog -Column1 '***  Files  ***' -Header
-        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.*'
-        foreach ($File in $Files) {
-            Write-HTMLLog -Column1 'File:' -Column2 $File.name
-        }
-    }
-
-    # Get the correct remote Radarr file path, if script is not running on local machine to Radarr
+    
     # Get the common prefix length between the paths
     $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
     
-    # Remove the common prefix and append the RadarrRemotePath
-    $RadarrPathFull = Join-Path $RadarrRemotePath ($ProcessPathFull.Substring($prefixLength))
+    if ($DownloadLabel -eq $TVLabel) {
+        # Get the correct remote Medusa file path, if script is not running on local machine to Medusa
+        # Remove the common prefix and append the MedusaRemotePath
+        $MedusaPathFull = Join-Path $MedusaRemotePath ($ProcessPathFull.Substring($prefixLength))
+        # Call Medusa to Post Process
+        Import-Medusa -Source $MedusaPathFull
+        CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
+        Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
+    } elseif ($DownloadLabel -eq $MovieLabel) {
+        # Get the correct remote Radarr file path, if script is not running on local machine to Radarr
+        # Get the common prefix length between the paths
+        $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
+        # Remove the common prefix and append the RadarrRemotePath
+        $RadarrPathFull = Join-Path $RadarrRemotePath ($ProcessPathFull.Substring($prefixLength))
     
-    # Call Radarr to Post Process
-    Import-Radarr -Source $RadarrPathFull
-    CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
-    Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
+        # Call Radarr to Post Process
+        Import-Radarr -Source $RadarrPathFull
+        CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
+        Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
+    }
+    
 }
-
 # Reached the end of script
 Write-HTMLLog -Column1 '***  Post Process General Download  ***' -Header
 $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.*'
