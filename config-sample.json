@@ -46,6 +46,12 @@
             "alpha2": "nl"
         }
     ],
+    "qBittorrent": {
+        "Host": "localhost",
+        "Port": "8081",
+        "User": "admin",
+        "Password": "adminadmin"
+    },
     "Medusa": {
         "Host": "localhost",
         "Port": "8081",

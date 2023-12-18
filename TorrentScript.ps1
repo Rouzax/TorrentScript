@@ -56,6 +56,13 @@ $SubtitleEditPath = $Config.Tools.SubtitleEditPath
 $SubliminalPath = $Config.Tools.SubliminalPath
 $MailSendPath = $Config.Tools.MailSendPath
 
+# Import qBittorrent Settings
+$qBittorrentHost = $Config.qBittorrent.Host
+$qBittorrentPort = $Config.qBittorrent.Port
+$qBittorrentUser = $Config.qBittorrent.User
+$qBittorrentPassword = $Config.qBittorrent.Password
+
+
 # Import Medusa Settings
 $MedusaHost = $Config.Medusa.Host
 $MedusaPort = $Config.Medusa.Port
@@ -125,7 +132,13 @@ if ($PSBoundParameters.ContainsKey('DownloadLabel')) {
     Write-Host "Download Label is defined"
     # Handle empty Torrent Label
 } else {
-    $DownloadLabel = Get-Input -Message 'Download Label'
+    $QBcategories = Get-QBittorrentCategories -qBittorrentUrl $($qBittorrentHost + ":" + $qBittorrentPort) -username $qBittorrentUser -password $qBittorrentPassword
+    if ($QBcategories) {
+        $Categories = $($QBcategories.PSObject.Properties.Value.name)
+        $DownloadLabel = Select-MenuOption -MenuOptions $Categories -MenuQuestion "Torrent Label"
+    } else {
+        $DownloadLabel = Get-Input -Message 'Download Label'
+    }
 }
 
 # Handle Empty Download Label
