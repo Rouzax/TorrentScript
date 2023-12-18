@@ -51,13 +51,13 @@
         "Port": "8081",
         "APIKey": "4D5F5811CBE94B7299174D739DEC497E",
         "TimeOutMinutes": "15",
-        "MedusaRemotePath": "C:\\TEMP\\Torrent\\Medusa"
+        "RemotePath": "C:\\TEMP\\Torrent\\Medusa"
     },
     "Radarr": {
         "Host": "localhost",
         "Port": "7878",
         "APIKey": "90E0C5B2A1F94D5D81E7D4D5AB62F67E",
         "TimeOutMinutes": "15",
-        "RadarrRemotePath": "C:\\TEMP\\Torrent\\Radarr"
+        "RemotePath": "C:\\TEMP\\Torrent\\Radarr"
     }
 }

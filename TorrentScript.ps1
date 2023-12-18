@@ -61,14 +61,14 @@ $MedusaHost = $Config.Medusa.Host
 $MedusaPort = $Config.Medusa.Port
 $MedusaApiKey = $Config.Medusa.APIKey
 $MedusaTimeOutMinutes = $Config.Medusa.TimeOutMinutes
-$MedusaRemotePath = $Config.Medusa.MedusaRemotePath
+$MedusaRemotePath = $Config.Medusa.RemotePath
 
 # Import Radarr Settings
 $RadarrHost = $Config.Radarr.Host
 $RadarrPort = $Config.Radarr.Port
 $RadarrApiKey = $Config.Radarr.APIKey
 $RadarrTimeOutMinutes = $Config.Radarr.TimeOutMinutes
-$RadarrRemotePath = $Config.Radarr.RadarrRemotePath
+$RadarrRemotePath = $Config.Radarr.RemotePath
 
 # Mail Settings
 $MailTo = $Config.Mail.To
@@ -276,7 +276,7 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     
     # Get the common prefix length between the paths
     $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
-    
+
     if ($DownloadLabel -eq $TVLabel) {
         # Get the correct remote Medusa file path, if script is not running on local machine to Medusa
         # Remove the common prefix and append the MedusaRemotePath
