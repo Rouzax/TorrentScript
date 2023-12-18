@@ -47,7 +47,7 @@
         }
     ],
     "qBittorrent": {
-        "Host": "localhost",
+        "Host": "http://localhost",
         "Port": "8080",
         "User": "admin",
         "Password": "adminadmin"
