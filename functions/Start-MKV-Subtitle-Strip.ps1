@@ -221,7 +221,7 @@ function Start-MKV-Subtitle-Strip {
                 Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
             } elseif ($Process.ExitCode -eq 0) {
                 # Overwrite original mkv after successful remux
-                Move-Item -Path $TmpMkvPath -Destination $($episode.FilePath) -Force
+                Move-Item -LiteralPath $TmpMkvPath -Destination $($episode.FilePath) -Force
                 # Write-HTMLLog -Column1 "Removed:" -Column2 "$($SubIDsToRemove.Count) unwanted subtitle languages"
             } else {
                 Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
@@ -243,7 +243,7 @@ function Start-MKV-Subtitle-Strip {
                 $ReplacementWasMade = $FileName -cne $FileNameNew
                 if ($ReplacementWasMade) {
                     $Destination = Join-Path -Path $FileDirectory -ChildPath $FileNameNew
-                    Move-Item -Path $FilePath -Destination $Destination -Force
+                    Move-Item -LiteralPath $FilePath -Destination $Destination -Force
                     break
                 }
             }

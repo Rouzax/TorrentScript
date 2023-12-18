@@ -38,7 +38,7 @@ $LogFileDateFormat = Get-Date -Format $Config.DateFormat
 # Temporary location of the files that are being processed, will be appended by the label and torrent name
 $ProcessPath = $Config.ProcessPath
 
-# Archive location of the log files of handeled donwloads
+# Archive location of the log files of handled downloads
 $LogArchivePath = $Config.LogArchivePath
 
 # Default download root path
