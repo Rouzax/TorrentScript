@@ -135,7 +135,11 @@ if ($PSBoundParameters.ContainsKey('DownloadLabel')) {
     $QBcategories = Get-QBittorrentCategories -qBittorrentUrl $($qBittorrentHost + ":" + $qBittorrentPort) -username $qBittorrentUser -password $qBittorrentPassword
     if ($QBcategories) {
         $Categories = $($QBcategories.PSObject.Properties.Value.name)
+        $Categories += "[Enter you own]"
         $DownloadLabel = Select-MenuOption -MenuOptions $Categories -MenuQuestion "Torrent Label"
+        if ($DownloadLabel -eq "[Enter you own]") {
+            $DownloadLabel = Get-Input -Message 'Download Label'
+        }
     } else {
         $DownloadLabel = Get-Input -Message 'Download Label'
     }
