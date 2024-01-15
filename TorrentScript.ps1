@@ -1,25 +1,54 @@
+<#
+.SYNOPSIS
+This script performs various tasks related to torrent downloads, including unraring, post-processing for movies and TV shows and any other QBittorrent download, and sending notifications.
+
+.DESCRIPTION
+This script is designed to handle the post-processing of torrent downloads. It supports unraring, renaming, and organizing files based on certain criteria. Additionally, it can communicate with Medusa and Radarr for further post-processing.
+
+.PARAMETER DownloadPath
+Specifies the path of the downloaded files.
+
+.PARAMETER DownloadLabel
+Specifies the label associated with the downloaded files.
+
+.PARAMETER TorrentHash
+Specifies the torrent hash, required for Radarr.
+
+.PARAMETER NoCleanUp
+Indicates whether to skip the cleanup process in the Temp Process folder.
+#>
+
 [CmdletBinding()]
 param(
-    [Parameter(
-        mandatory = $false
-    )]
-    [string]$DownloadPath, 
+    [Parameter(Mandatory = $false)]
+    [string]$DownloadPath,
 
-    [Parameter(
-        mandatory = $false
-    )]
+    [Parameter(Mandatory = $false)]
     [string]$DownloadLabel,
 
-    [Parameter(
-        mandatory = $false
-    )]
-    [string]$TorrentHash,       
+    [Parameter(Mandatory = $false)]
+    [string]$TorrentHash,
 
-    [Parameter(
-        Mandatory = $false
-    )]
+    [Parameter(Mandatory = $false)]
     [switch]$NoCleanUp
 )
+
+Write-Host 'Loading Powershell Modules, this might take a while' -ForegroundColor DarkYellow
+# Load required modules
+$modules = @("WriteAscii", "Send-MailKitMessage")
+foreach ($module in $modules) {
+    Load-Module -ModuleName $module
+}
+Write-Host 'All checks done' -ForegroundColor DarkYellow
+
+#* Start of script
+Clear-Host
+$ScriptTitle = "Torrent Script"
+try {
+    Write-Ascii $ScriptTitle -ForegroundColor DarkYellow
+} catch {
+    Write-Host $ScriptTitle -ForegroundColor DarkYellow
+}
 
 # User Variables
 try {
@@ -101,43 +130,38 @@ $Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1 -ErrorAction S
 ForEach ($import in @($Functions)) {
     Try {
         # dotsourcing a function script
-        .$import.fullname
+        .$import.FullName
     } Catch {
-        Write-Error -Message "Failed to import function $($import.fullname): $_"
+        Write-Error -Message "Failed to import function $($import.FullName): $_"
     }
 }
 
 # Test additional programs
-Test-Variable-Path -Path $WinRarPath -Name 'WinRarPath'
-Test-Variable-Path -Path $MKVMergePath -Name 'MKVMergePath'
-Test-Variable-Path -Path $MKVExtractPath -Name 'MKVExtractPath'
-Test-Variable-Path -Path $SubtitleEditPath -Name 'SubtitleEditPath'
-Test-Variable-Path -Path $SubliminalPath -Name 'SubliminalPath'
-Test-Variable-Path -Path $MailSendPath -Name 'MailSendPath'
-
-# Get input if no parameters defined
-# Build the download Location, this is the Download Root Path added with the Download name
-if ($PSBoundParameters.ContainsKey('DownloadPath')) {
-    Write-Host "Download Path is defined"
-} else {
-    $DownloadPath = Get-Input -Message 'Download Name' -Required
-    $DownloadPath = Join-Path -Path $DownloadRootPath -ChildPath $DownloadPath 
+$Tools = @($WinRarPath, $MKVMergePath, $MKVExtractPath, $SubtitleEditPath, $SubliminalPath, $MailSendPath)
+foreach ($Tool in $Tools) {
+    Test-Variable-Path -Path $Tool
 }
 
-# Download Name
+#* Get input if no parameters defined
+# Build the download Location, this is the Download Root Path added with the Download name
+if (-not $PSBoundParameters.ContainsKey('DownloadPath')) {
+    # Handle no Download Path given as parameter
+    $DownloadName = Get-Input -Message 'Download Name' -Required
+    $DownloadPath = Join-Path -Path $DownloadRootPath -ChildPath $DownloadName 
+}
+
+# Get Download Name from Download Path
 $DownloadName = Split-Path -Path $DownloadPath -Leaf
 
 # Download Label
-if ($PSBoundParameters.ContainsKey('DownloadLabel')) {
-    Write-Host "Download Label is defined"
-    # Handle empty Torrent Label
-} else {
+if (-not $PSBoundParameters.ContainsKey('DownloadLabel')) {
+    #  Handle no Download Path given as parameter
     $QBcategories = Get-QBittorrentCategories -qBittorrentUrl $($qBittorrentHost + ":" + $qBittorrentPort) -username $qBittorrentUser -password $qBittorrentPassword
     if ($QBcategories) {
         $Categories = $($QBcategories.PSObject.Properties.Value.name)
-        $Categories += "[Enter you own]"
+        $Categories += "[Enter your own]"
         $DownloadLabel = Select-MenuOption -MenuOptions $Categories -MenuQuestion "Torrent Label"
-        if ($DownloadLabel -eq "[Enter you own]") {
+        if ($DownloadLabel -eq "[Enter your own]") {
             $DownloadLabel = Get-Input -Message 'Download Label'
         }
     } else {
@@ -215,8 +239,7 @@ if ($Folder) {
 }
 
 # Find rar files
-$RarCount = $RarFilePaths.Count
-if ($RarCount -gt 0) {
+if ($RarFilePaths.Count -gt 0) {
     $RarFile = $true 
 } else {
     $RarFile = $false 
@@ -252,12 +275,11 @@ if ($RarFile) {
 if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     $mp4Files = @(Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mp4' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
     if ($mp4Files.Count -gt 0) {
-        Start-MP4-2-MKV-Remux -VideoFileObjects $mp4Files
+        Start-MP4ToMKVRemux -VideoFileObjects $mp4Files
     } 
 
     $mkvFiles = @(Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
-    $allVideoFilesCount = $mkvFiles.Count
-    if ($allVideoFilesCount -gt 0) {
+    if ($mkvFiles.Count -gt 0) {
         $VideoContainer = $true 
     } else {
         $VideoContainer = $false 
@@ -267,7 +289,7 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
         Start-Subliminal -Source $ProcessPathFull
         
         # Remove unwanted subtitle languages and extract wanted subtitles and rename
-        Start-MKV-Subtitle-Strip $ProcessPathFull
+        Start-MKVSubtitleStrip $ProcessPathFull
   
         # Clean up Subs
         Start-SubEdit -File '*.srt' -Source $ProcessPathFull

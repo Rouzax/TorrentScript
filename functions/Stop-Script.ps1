@@ -1,30 +1,25 @@
 function Stop-Script {
     <#
     .SYNOPSIS
-    Stops the script and removes Mutex
+    Stops the script, removes Mutex and send log file.
     
     .DESCRIPTION
-    Stops the script and removes the Mutex
+    Stops the script and removes the Mutex.
     
     .PARAMETER ExitReason
-    Reason for exit
+    Reason for exit.
     
     .EXAMPLE
-    An example
-    
-    .NOTES
-    General notes
+    Stop-Script -ExitReason "Script completed successfully."
     #>
     [CmdletBinding()]
     Param(
-        [Parameter(
-            Mandatory = $true
-        )]
+        [Parameter(Mandatory = $true)]
         [string]$ExitReason
     )  
     
     # Make sure needed functions are available otherwise try to load them.
-    $commands = 'Write-HTMLLog', 'Send-Mail', 'Remove-Mutex'
+    $commands = 'Write-HTMLLog', 'Send-HtmlMail', 'Remove-Mutex'
     foreach ($commandName in $commands) {
         if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
             Try {
@@ -48,7 +43,17 @@ function Stop-Script {
     Write-Log -LogFile $LogFilePath
     # Handle Empty Download Label
     if ($DownloadLabel -ne 'NoMail') {
-        Send-Mail -SMTPserver $SMTPserver -SMTPport $SMTPport -MailTo $MailTo -MailFrom $MailFrom -MailFromName $MailFromName -MailSubject $ExitReason -MailBody $LogFilePath -SMTPuser $SMTPuser -SMTPpass $SMTPpass
+        try {
+            $HTMLBody = Get-Content -Path $LogFilePath -Raw -ErrorAction Stop
+        } catch {
+            # Handle errors
+            $errorMessage = $_.Exception.Message
+            Write-Host "Error reading HTML content from file: $errorMessage"
+            # Exit the script
+            return
+        }
+        # Send-Mail -SMTPserver $SMTPserver -SMTPport $SMTPport -MailTo $MailTo -MailFrom $MailFrom -MailFromName $MailFromName -MailSubject $ExitReason -MailBody $LogFilePath -SMTPuser $SMTPuser -SMTPpass $SMTPpass
+        Send-HtmlMail -SMTPServer $SMTPServer -SMTPServerPort $SMTPport -SmtpUser $SMTPuser -SmtpPassword $SMTPpass -To $MailTo -From "$MailFromName <$MailFrom>" -Subject $ExitReason -HTMLBody $HTMLBody
     }
     
     # Clean up the Mutex

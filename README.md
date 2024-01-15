@@ -71,4 +71,3 @@ The following external tools need to be available and the path defined in the `c
  - [MKVExtract](https://mkvtoolnix.download/)
  - [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
  - [Subliminal](https://github.com/Diaoul/subliminal)
- - [MailSend](https://github.com/muquit/mailsend-go)

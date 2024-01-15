@@ -1,4 +1,4 @@
-function Start-MP4-2-MKV-Remux {
+function Start-MP4ToMKVRemux {
     <#
     .SYNOPSIS
     Converts MP4 video files to MKV format using mkvmerge.
@@ -10,7 +10,7 @@ function Start-MP4-2-MKV-Remux {
     Specifies the MP4 video file(s) to be converted to MKV format.
 
     .EXAMPLE
-    Start-MP4-2-MKV-Remux -VideoFileObjects "C:\Videos\example.mp4"
+    Start-MP4ToMKVRemux -VideoFileObjects "C:\Videos\example.mp4"
     Remuxes the specified MP4 file to MKV format.
 
     .OUTPUTS

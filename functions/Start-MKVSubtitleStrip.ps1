@@ -1,4 +1,4 @@
-function Start-MKV-Subtitle-Strip {
+function Start-MKVSubtitleStrip {
     <#
     .SYNOPSIS
     Extract wanted SRT subtitles from MKVs in root folder and remux MKVs to strip out unwanted subtitle languages
@@ -9,7 +9,7 @@ function Start-MKV-Subtitle-Strip {
     .PARAMETER Source
     Defines the root folder to start the search for MKV files 
     .EXAMPLE
-    Start-MKV-Subtitle-Strip 'C:\Temp\Source'
+    Start-MKVSubtitleStrip 'C:\Temp\Source'
 	.OUTPUTS
     SRT files of the desired languages
     file.en.srt
