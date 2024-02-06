@@ -1,58 +1,62 @@
+<#
+.SYNOPSIS
+    Creates or opens a named mutex to control access to a shared resource.
+.DESCRIPTION
+    The New-Mutex function creates or opens a named mutex, providing a simple mechanism 
+    for interprocess synchronization. It allows a script or function to acquire and release 
+    a lock on a specified mutex, ensuring exclusive access to a shared resource.
+.PARAMETER MutexName
+    Specifies the name of the mutex. This parameter is mandatory and must be a non-null, 
+    non-empty string.
+.OUTPUTS 
+    Returns a PSObject containing information about the created or opened mutex. 
+    The PSObject includes the MutexName and the Mutex object itself.
+.EXAMPLE
+    PS C:\> $myMutex = New-Mutex -MutexName "MyMutex"
+    PS C:\> # Perform actions requiring exclusive access to the shared resource
+    PS C:\> Remove-Mutex -MutexObject $myMutex
+
+    This example creates a new mutex named "MyMutex," acquires the lock, performs 
+    actions requiring exclusive access, releases the lock, and continues with 
+    other script or function logic.
+#>
+
 function New-Mutex {
-    <#
-	.SYNOPSIS
-	Create a Mutex
-	.DESCRIPTION
-	This function attempts to get a lock to a mutex with a given name. If a lock
-	cannot be obtained this function waits until it can.
-
-	Using mutexes, multiple scripts/processes can coordinate exclusive access
-	to a particular work product. One script can create the mutex then go about
-	doing whatever work is needed, then release the mutex at the end. All other
-	scripts will wait until the mutex is released before they too perform work
-	that only one at a time should be doing.
-
-	This function outputs a PSObject with the following NoteProperties:
-
-		Name
-		Mutex
-
-	Use this object in a followup call to Remove-Mutex once done.
-	.PARAMETER MutexName
-	The name of the mutex to create.
-	.INPUTS
-	None. You cannot pipe objects to this function.
-	.OUTPUTS
-	PSObject
-	#Requires -Version 2.0
-	#>
     [CmdletBinding()]
     [OutputType(
         [PSObject]
     )]
     Param(
-        [Parameter(
-            Mandatory = $true
-        )]
+        [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [string]$MutexName
     )
 
+    # Variables for tracking mutex status
     $MutexWasCreated = $false
-    $Mutex = $Null
+    $Mutex = $null
+
     Write-Host "Waiting to acquire lock [$MutexName]..." -ForegroundColor DarkGray
+    
+    # Attempt to open an existing mutex or create a new one
     [void][System.Reflection.Assembly]::LoadWithPartialName('System.Threading')
     try {
         $Mutex = [System.Threading.Mutex]::OpenExisting($MutexName)
     } catch {
         $Mutex = New-Object System.Threading.Mutex($true, $MutexName, [ref]$MutexWasCreated)
     }
+
+    # Acquire the lock if the mutex was created successfully
     try {
         if (!$MutexWasCreated) {
             $Mutex.WaitOne() | Out-Null 
         } 
     } catch { 
+        # Handle any errors during mutex acquisition
     }
+
     Write-Host "Lock [$MutexName] acquired. Executing..." -ForegroundColor DarkGray
+
+    # Output a PSObject with mutex information
     Write-Output ([PSCustomObject]@{ Name = $MutexName; Mutex = $Mutex })
-} # New-Mutex
+} 

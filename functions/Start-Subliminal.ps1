@@ -1,58 +1,92 @@
+<#
+.SYNOPSIS
+	Starts the Subliminal process to download missing subtitles for videos.
+.DESCRIPTION
+	This function initiates the Subliminal process to download subtitles for the specified video source.
+.PARAMETER Source
+	The path or URL of the video source for which subtitles are to be downloaded.
+.PARAMETER OpenSubUser
+	The username for accessing OpenSubtitles.org.
+.PARAMETER OpenSubPass
+	The password for accessing OpenSubtitles.org.
+.PARAMETER omdbAPI
+	The API key for accessing the OMDB API.
+.PARAMETER WantedLanguages
+	An array of language codes (e.g., "eng", "dut") for the desired subtitles.
+.PARAMETER SubliminalPath
+	The path to the Subliminal executable.
+.OUTPUTS 
+	Outputs a log with details of the Subliminal process, including the number of videos collected,
+	ignored, errors, and subtitles downloaded.
+.EXAMPLE
+	Start-Subliminal -Source "C:\Videos\Sample.mp4" -OpenSubUser "user" -OpenSubPass "Password123"
+		-omdbAPI "2028C39D" -WantedLanguages @("eng", "dut") -SubliminalPath "C:\Subliminal\subliminal.exe"
+#>
 function Start-Subliminal {
-    <#
-    .SYNOPSIS
-    Start Subliminal to download subs
-    
-    .DESCRIPTION
-    Start Subliminal to download needed subtitles
-    
-    .PARAMETER Source
-    Path to files that need subtitles
-    
-    .EXAMPLE
-    Start-Subliminal -Source 'C:\Temp\Episode'
-    
-    .NOTES
-    General notes
-    #>
     [CmdletBinding()]
     param (
-        [Parameter(
-            Mandatory = $true
-        )] 
-        [string]$Source
+        [Parameter(Mandatory = $true)] 
+        [string]$Source,
+
+        [Parameter(Mandatory = $true)] 
+        [string]$OpenSubUser,
+
+        [Parameter(Mandatory = $true)] 
+        [string]$OpenSubPass,
+
+        [Parameter(Mandatory = $true)] 
+        [string]$omdbAPI,
+
+        [Parameter(Mandatory = $true)]
+        [array]$WantedLanguages,  
+
+        [Parameter(Mandatory = $true)] 
+        [string]$SubliminalPath
+
     )
 
     # Make sure needed functions are available otherwise try to load them.
-    $commands = 'Write-HTMLLog'
-    foreach ($commandName in $commands) {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
-            Try {
-                . $PSScriptRoot\$commandName.ps1
-                Write-Host "$commandName Function loaded." -ForegroundColor Green
-            } Catch {
-                Write-Error -Message "Failed to import $commandName function: $_"
+    $functionsToLoad = @('Write-HTMLLog')
+    foreach ($functionName in $functionsToLoad) {
+        if (-not (Get-Command $functionName -ErrorAction SilentlyContinue)) {
+            try {
+                . "$PSScriptRoot\$functionName.ps1"
+                Write-Host "$functionName function loaded." -ForegroundColor Green
+            } catch {
+                Write-Error "Failed to import $functionName function: $_"
                 exit 1
             }
         }
     }
-    # Start
 
+    # Start Subliminal process
     Write-HTMLLog -Column1 '***  Download missing Subtitles  ***' -Header
+
+    # Initialize arguments with common parameters
+    $arguments = @('--opensubtitles', $OpenSubUser, $OpenSubPass, "--omdb $omdbAPI", 'download', '-r omdb', '-p opensubtitles')
+
+    # Add language parameters to the arguments array
+    foreach ($lang in $WantedLanguages) {
+        $arguments += '-l', $lang
+    }
+
+    # Add the source parameter at the end
+    $arguments += "`"$Source`""
+    
     $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
     $StartInfo.FileName = $SubliminalPath
     $StartInfo.RedirectStandardError = $true
     $StartInfo.RedirectStandardOutput = $true
     $StartInfo.UseShellExecute = $false
-    $StartInfo.Arguments = @('--opensubtitles', $OpenSubUser, $OpenSubPass, "--omdb $omdbAPI", 'download', '-r omdb', '-p opensubtitles', '-l eng', '-l nld', "`"$Source`"")
+    $StartInfo.Arguments = $StartInfo.Arguments = $arguments
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
     $stdout = $Process.StandardOutput.ReadToEnd()
     $stderr = $Process.StandardError.ReadToEnd()
     $Process.WaitForExit()
-    # Write-Host $stdout
-    # Write-Host $stderr
+
+    # Process Subliminal output
     if ($stdout -match '(\d+)(?=\s*video collected)') {
         $VideoCollected = $Matches.0
     }
@@ -68,6 +102,8 @@ function Start-Subliminal {
     if ($stdout -match 'Some providers have been discarded due to unexpected errors') {
         $SubliminalExitCode = 1
     }
+
+    # Check for errors and log results
     if ($SubliminalExitCode -gt 0) {
         Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
         Write-HTMLLog -Column1 'Error:' -Column2 $stderr -ColorBg 'Error'

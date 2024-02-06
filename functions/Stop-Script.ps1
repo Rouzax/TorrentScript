@@ -1,17 +1,18 @@
+<#
+.SYNOPSIS
+    Stop-Script function stops the script execution, logs the execution time, and sends an email notification.
+.DESCRIPTION
+    This function is designed to stop script execution, record the execution time, and send an email notification.
+.PARAMETER ExitReason
+    Mandatory parameter specifying the reason for stopping the script.
+.EXAMPLE
+    Stop-Script -ExitReason "Script completed successfully"
+    Stops the script, logs execution time, and sends an email with the specified exit reason.
+.NOTES
+    This functions relies heavily on variables that have been set in the main script, 
+    they are not passed as parameters to this functions
+#>
 function Stop-Script {
-    <#
-    .SYNOPSIS
-    Stops the script, removes Mutex and send log file.
-    
-    .DESCRIPTION
-    Stops the script and removes the Mutex.
-    
-    .PARAMETER ExitReason
-    Reason for exit.
-    
-    .EXAMPLE
-    Stop-Script -ExitReason "Script completed successfully."
-    #>
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory = $true)]
@@ -19,14 +20,14 @@ function Stop-Script {
     )  
     
     # Make sure needed functions are available otherwise try to load them.
-    $commands = 'Write-HTMLLog', 'Send-HtmlMail', 'Remove-Mutex'
-    foreach ($commandName in $commands) {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
-            Try {
-                . $PSScriptRoot\$commandName.ps1
-                Write-Host "$commandName Function loaded." -ForegroundColor Green
-            } Catch {
-                Write-Error -Message "Failed to import $commandName function: $_"
+    $functionsToLoad = @('Write-HTMLLog', 'Send-HtmlMail', 'Remove-Mutex')
+    foreach ($functionName in $functionsToLoad) {
+        if (-not (Get-Command $functionName -ErrorAction SilentlyContinue)) {
+            try {
+                . "$PSScriptRoot\$functionName.ps1"
+                Write-Host "$functionName function loaded." -ForegroundColor Green
+            } catch {
+                Write-Error "Failed to import $functionName function: $_"
                 exit 1
             }
         }
@@ -34,10 +35,10 @@ function Stop-Script {
     # Start
 
     # Stop the Stopwatch
-    $StopWatch.Stop()
+    $ScriptTimer.Stop()
 
-    Write-HTMLLog -Column1 '***  Script Exection time  ***' -Header
-    Write-HTMLLog -Column1 'Time Taken:' -Column2 $($StopWatch.Elapsed.ToString('mm\:ss'))
+    Write-HTMLLog -Column1 '***  Script Execution time  ***' -Header
+    Write-HTMLLog -Column1 'Time Taken:' -Column2 $($ScriptTimer.Elapsed.ToString('mm\:ss'))
       
     Format-Table
     Write-Log -LogFile $LogFilePath

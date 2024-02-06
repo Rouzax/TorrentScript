@@ -55,7 +55,7 @@ powershell "C:\Scripts\TorrentScript\TorrentScript.ps1" -DownloadPath '%R' -Down
 Other important setting is that for each torrent a new Folder needs to be created.
 ![qBittorrent Folder settings page](https://i.imgur.com/Uq6bOBP.png)
 
-Within Radarr you need to set up Remote Path Mapping to an emtpy folder, otherwise Radarr will pick up to downloads directly from qbittorent
+Within Radarr you need to set up Remote Path Mapping to an empty folder, otherwise Radarr will pick up to downloads directly from qbittorent
 
 Example:
 - qBittorent root download path = C:\Torrent\Downloads\

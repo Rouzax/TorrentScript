@@ -1,26 +1,20 @@
-function Format-Table {
-    <#
-    .SYNOPSIS
+<#
+.SYNOPSIS
     Starts and stops Log file
-    
-    .DESCRIPTION
-    Will either initiate the Log Variable in memory and open the HTML Table or clos the table
-    
-    .PARAMETER Start
+.DESCRIPTION
+    Will either initiate the Log Variable in memory and open the HTML Table or closes the table
+.PARAMETER Start
     If defined indicated to open the HTML Table, without it the HTML table will be closed
-    
-    .EXAMPLE
+.EXAMPLE
     Format-Table -Start
     Format-Table
-    
-    .NOTES
+.NOTES
     General notes
-    #>
+#>
+function Format-Table {
     [CmdletBinding()]
     param (
-        [Parameter(
-            Mandatory = $false
-        )]
+        [Parameter(Mandatory = $false)]
         [switch]$Start
     )
 
@@ -38,61 +32,44 @@ function Format-Table {
     }
 }
 
-Function Write-HTMLLog {
-    <#
-    .SYNOPSIS
+<#
+.SYNOPSIS
     Add line to in memory log
-    
-    .DESCRIPTION
+.DESCRIPTION
     Adds a line to the in memory log file and based on the parameters will do formating
-    
-    .PARAMETER Column1
+.PARAMETER Column1
     Text to be put in first column, mandatory
-    
-    .PARAMETER Column2
+.PARAMETER Column2
     Text to be put in the second column, not mandatory
-    
-    .PARAMETER Header
+.PARAMETER Header
     Define that the Text from the parameter Column1 should be treated as new Header in the log table.
     If switch is defined Column2 is ignored
-    
-    .PARAMETER ColorBg
+.PARAMETER ColorBg
     Background color of Table Cell, this is a switch indicating a Success or Error. If not defined the standard color will be used.
-    
     Success will get Green Table Cell color
     Error will get Red Table Cell Color
-    
-    .EXAMPLE
+.EXAMPLE
     Write-HTMLLog -Column1 '***  Header of the table  ***' -Header
     Write-HTMLLog -Column1 'Column1 Text' -Column2 'Column2 Text'
     Write-HTMLLog -Column1 'Exit Code:' -Column2 'Failed to do X' -ColorBg 'Error'
     Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
-    
-    .NOTES
-    General notes
-    #>
+#>
+Function Write-HTMLLog {
     [CmdletBinding()]
     Param(
-        [Parameter(
-            Mandatory = $true
-        )]
+        [Parameter(Mandatory = $true)]
         [string]$Column1,
 
-        [Parameter(
-            Mandatory = $false
-        )]
+        [Parameter(Mandatory = $false)]
         [string]$Column2,
 
-        [Parameter(
-            Mandatory = $false
-        )]
+        [Parameter(Mandatory = $false)]
         [switch]$Header,
 
-        [Parameter(
-            Mandatory = $false
-        )]
+        [Parameter(Mandatory = $false)]
         [ValidateSet(
-            'Success', 'Error'
+            'Success', 
+            'Error'
         )]
         [string]$ColorBg
     )
@@ -119,28 +96,20 @@ Function Write-HTMLLog {
 }
 
 
-function Write-Log {
-    <#
-    .SYNOPSIS
+<#
+.SYNOPSIS
     Write log to disk
-    
-    .DESCRIPTION
+.DESCRIPTION
     Takes the Global Variable that hold the log in memory and writes it to disk
-    
-    .PARAMETER LogFile
+.PARAMETER LogFile
     Log File including the Path to write
-    
-    .EXAMPLE
+.EXAMPLE
     Write-Log -LogFile 'C:\Temp\logfile.html'
-    
-    .NOTES
-    General notes
-    #>
+#>
+function Write-Log {
     [CmdletBinding()]
     param (
-        [Parameter(
-            Mandatory = $true
-        )]
+        [Parameter(Mandatory = $true)]
         [string]$LogFile
     )
     Set-Content -LiteralPath $LogFile -Value $global:Log

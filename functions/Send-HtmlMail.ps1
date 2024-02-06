@@ -1,40 +1,34 @@
 <#
 .SYNOPSIS
     Sends an HTML email using the specified SMTP server and credentials.
-
 .DESCRIPTION
-    This function sends an HTML email using the specified SMTP server, port, credentials,
-    recipient details, and email content.
-
+    This function sends an HTML email using the Send-MailKitMessage cmdlet. It requires the
+    SMTP server details, sender's and recipient's email addresses, subject, and HTML body.
 .PARAMETER SMTPServer
-    The SMTP server address.
-
+    Specifies the address of the SMTP server for sending the email.
 .PARAMETER SMTPServerPort
-    The SMTP server port.
-
+    Specifies the port number to be used when connecting to the SMTP server.
 .PARAMETER SmtpUser
-    The username for SMTP authentication.
-
+    Specifies the username for authenticating with the SMTP server.
 .PARAMETER SmtpPassword
-    The password for SMTP authentication.
-
+    Specifies the password for authenticating with the SMTP server.
 .PARAMETER To
-    The email address of the recipient(s). Multiple recipients should be separated by commas.
-
+    Specifies the email address of the recipient.
 .PARAMETER From
-    The sender's email address.
-
+    Specifies the email address of the sender.
 .PARAMETER Subject
-    The subject of the email.
-
+    Specifies the subject of the email.
 .PARAMETER HTMLBody
-    The HTML content of the email body.
-
+    Specifies the HTML content of the email body.
+.OUTPUTS 
+    None. The function does not return any objects.
 .EXAMPLE
-    Send-HtmlMail -SMTPServer 'smtp.example.com' -SMTPServerPort 587 -SmtpUser 'user@example.com'
-                  -SmtpPassword 'password' -To 'recipient@example.com' -From 'sender@example.com'
-                  -Subject 'Test Email' -HTMLBody '<p>This is a test email.</p>'
+    Send-HtmlMail -SMTPServer "smtp.example.com" -SMTPServerPort 587 -SmtpUser "user@example.com"
+    -SmtpPassword "P@ssw0rd" -To "recipient@example.com" -From "sender@example.com"
+    -Subject "Test Email" -HTMLBody "<p>This is a test email.</p>"
+    Sends a test email with HTML content.
 #>
+
 function Send-HtmlMail {
     [CmdletBinding()]
     param(
@@ -76,14 +70,6 @@ function Send-HtmlMail {
         "RecipientList"                  = $To
         "Subject"                        = $Subject
         "HTMLBody"                       = $HTMLBody
-    }
-
-
-
-    if (-not (Get-Module -Name Send-MailKitMessage -ListAvailable)) {
-        Install-Module -Name Send-MailKitMessage -AllowClobber -Force -Confirm:$false -Scope CurrentUser
-    } else {
-        Import-Module -Name Send-MailKitMessage    
     }
 
     # Send the email

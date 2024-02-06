@@ -1,23 +1,23 @@
-function Test-Variable-Path {
-    <#
-    .SYNOPSIS
-    Test path to variables
-    
-    .DESCRIPTION
-    Test path to
-    
-    .PARAMETER Path
-    File path to test if exist
-    
-    .EXAMPLE
+<#
+.SYNOPSIS
+    Test path to variables.
+.DESCRIPTION
+    This function tests the existence of a specified file path.
+.PARAMETER Path
+    Specifies the file path to be tested for existence.
+.INPUTS
+    Accepts a string representing the file path to be tested.
+.EXAMPLE
     Test-Variable-Path -Path 'c:\Windows\notepad.exe'
-    
-    .NOTES
-    General notes
-    #>
+    # Checks if the specified file path exists.
+#>
+function Test-Variable-Path {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true
+        )]
         [string]$Path
     )
     if (!(Test-Path -LiteralPath $Path)) {
