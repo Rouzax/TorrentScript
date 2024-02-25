@@ -286,7 +286,8 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     }
     if ($VideoContainer) {
         # Download any missing subs
-        Start-Subliminal -Source $ProcessPathFull
+        # Remove Subliminal for now as the OpenSubtitles API is closed
+        # Start-Subliminal -Source $ProcessPathFull
         
         # Remove unwanted subtitle languages and extract wanted subtitles and rename
         Start-MKVSubtitleStrip $ProcessPathFull
