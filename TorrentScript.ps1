@@ -33,6 +33,18 @@ param(
     [switch]$NoCleanUp
 )
 
+# Get function definition files.
+$Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1 -ErrorAction SilentlyContinue )
+# Dot source the files
+ForEach ($import in @($Functions)) {
+    Try {
+        # dotsourcing a function script
+        .$import.FullName
+    } Catch {
+        Write-Error -Message "Failed to import function $($import.FullName): $_"
+    }
+}
+
 Write-Host 'Loading Powershell Modules, this might take a while' -ForegroundColor DarkYellow
 # Load required modules
 $modules = @("WriteAscii", "Send-MailKitMessage")
@@ -123,18 +135,6 @@ $omdbAPI = $Config.OpenSub.omdbAPI
 # Language codes of subtitles to keep
 $WantedLanguages = $Config.WantedLanguages
 $SubtitleNamesToRemove = $Config.SubtitleNamesToRemove
-
-# Get function definition files.
-$Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1 -ErrorAction SilentlyContinue )
-# Dot source the files
-ForEach ($import in @($Functions)) {
-    Try {
-        # dotsourcing a function script
-        .$import.FullName
-    } Catch {
-        Write-Error -Message "Failed to import function $($import.FullName): $_"
-    }
-}
 
 # Test additional programs
 $Tools = @($WinRarPath, $MKVMergePath, $MKVExtractPath, $SubtitleEditPath, $SubliminalPath, $MailSendPath)
