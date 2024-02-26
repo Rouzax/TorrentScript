@@ -51,7 +51,7 @@ try {
 # Reading Language Code lookup
 try {
     $LanguageCodesPath = Join-Path $PSScriptRoot 'LanguageCodes.json'
-    $LanguageCodes = Get-Content $configPath -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    $LanguageCodes = Get-Content $LanguageCodesPath -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
 } catch {
     Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
     Write-Host 'Invalid LanguageCodes.json' -ForegroundColor Red
