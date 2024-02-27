@@ -9,8 +9,8 @@ Only 1 instance of the script will be running and if other downloads complete du
 Script will do the following:  
 1. Unpack or copy to Temporary Processing folder defined in config.json (copy from config-sample.json)
 2. If torrent label is TV show as defined in config.json Label
-    - Will strip all srt subtitle languages not in config.json WantedLanguages
-    - Extract all SRT subtitles in config.json WantedLanguages
+    - Will strip all srt subtitle languages not in config.json WantedLanguages from MKV
+    - Extract all SRT subtitles in config.json WantedLanguages from MKV
     - Will try to download missing subs from OpenSubtitles.com 
     - Renames all srt files from ISO 639-2 (3 letter codes) to ISO 639-1 (2 letter codes) as defined in LanguageCodes.json
     - Clean up the srt subtitles using [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
@@ -18,8 +18,8 @@ Script will do the following:
 	    - Fix Common errors.
      - Start Medusa Import
 3. If torrent label is Movie as defined in config.json Label
-    - Will strip all srt subtitle languages not in config.json WantedLanguages 
-    - Extract all SRT subtitles in config.json WantedLanguages
+    - Will strip all srt subtitle languages not in config.json WantedLanguages from MKV
+    - Extract all SRT subtitles in config.json WantedLanguages from MKV
     - Will try to download missing subs from OpenSubtitles.com 
     - Renames all srt files from ISO 639-2 (3 letter codes) to ISO 639-1 (2 letter codes) as defined in LanguageCodes.json
     - Clean up the srt subtitles using [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
