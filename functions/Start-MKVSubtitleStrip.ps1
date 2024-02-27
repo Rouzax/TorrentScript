@@ -19,8 +19,8 @@
     Specifies an array of subtitle names to be removed.
     Subtitles with matching names will be excluded from the extraction.
     Example: @("Forced")
-.PARAMETER LanguageCodes
-    Specifies an array of language code mappings.
+.PARAMETER LanguageCodeLookup
+    Specifies an Hashtable of language code mappings.
     Each item in the array should be a hashtable with 'alpha3' and 'alpha2' keys
     representing the three-letter and two-letter language codes, respectively.
     Example: @(@{alpha3="eng"; alpha2="en"}, @{alpha3="dut"; alpha2="nl"})
@@ -51,7 +51,7 @@ function Start-MKVSubtitleStrip {
         [array]$SubtitleNamesToRemove,
 
         [Parameter(Mandatory = $true)]
-        [Object]$LanguageCodes
+        [hashtable]$LanguageCodeLookup
     )
 
     # Make sure needed functions are available otherwise try to load them.
@@ -233,16 +233,6 @@ function Start-MKVSubtitleStrip {
    
     # Rename extracted subs to correct 2 county code based on $LanguageCodes
     if ($SubsExtracted) {
-        # Create a hashtable for efficient lookup
-        $LanguageCodeLookup = @{}
-        foreach ($code in $LanguageCodes.Values) {
-            $LanguageCodeLookup[$code['639-2']] = $code['639-1']
-    
-            if ($code.ContainsKey('639-2/B')) {
-                $LanguageCodeLookup[$code['639-2/B']] = $code['639-1']
-            }
-        }
-
         $SrtFiles = Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.srt'
 
         foreach ($srt in $SrtFiles) {
@@ -256,13 +246,10 @@ function Start-MKVSubtitleStrip {
             # Check if the language code exists in the lookup table
             if ($LanguageCodeLookup.ContainsKey($languageCode)) {
                 $SrtNameNew = $SrtName -replace "\.$languageCode\.srt$", ".$($LanguageCodeLookup[$languageCode]).srt"
-                if ($ChangedLanguages -notcontains $LanguageCodes.$($LanguageCodeLookup[$languageCode]).Name) {
-                    $ChangedLanguages += $LanguageCodes.$($LanguageCodeLookup[$languageCode]).Name
-                }
                 $Destination = Join-Path -Path $SrtDirectory -ChildPath $SrtNameNew
                 Move-Item -LiteralPath $SrtPath -Destination $Destination -Force
             } else {
-                Write-Host "Language code '$languageCode' not found in the lookup table."
+                Write-HTMLLog -Column2 "Language code $languageCode not found in the 3 letter lookup table." -ColorBg 'Error'
             }
         }
         if ($TotalSubsToExtract -gt 0) {
@@ -276,4 +263,3 @@ function Start-MKVSubtitleStrip {
         Write-HTMLLog -Column1 'Result:' -Column2 'No SRT subs found in MKV'
     }
 }
-Start-MKVSubtitleStrip -Source "D:\Temp\Torrent\PROCD\TV\Resident.Alien.S02E16.1080p.WEB.h264-GOSSIP" -MKVMergePath "C:\Program Files\MKVToolNix\mkvmerge.exe" -MKVExtractPath "C:\Program Files\MKVToolNix\mkvextract.exe" -WantedLanguages @("eng", "dut") -SubtitleNamesToRemove @("Forced") -LanguageCodes @{"en"=@{"639-1"="en";"639-2"="eng";"name"="English"}; "nl"=@{"639-1"="nl";"639-2"="nld";"639-2/B"="dut";"name"="Dutch"}}

@@ -15,11 +15,18 @@ function Test-Variable-Path {
     [CmdletBinding()]
     param (
         [Parameter(
-            Mandatory = $true,
+            Mandatory = $false,
             ValueFromPipeline = $true
         )]
         [string]$Path
     )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        Write-Host "Path cannot be empty or null." -ForegroundColor Red
+        Write-Host 'Will now exit!' -ForegroundColor Red
+        Exit 1
+    }
+
     if (!(Test-Path -LiteralPath $Path)) {
         Write-Host "Cannot find: $Path" -ForegroundColor Red
         Write-Host "As defined in config" -ForegroundColor Red

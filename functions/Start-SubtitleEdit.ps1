@@ -78,19 +78,30 @@ function Start-SubtitleEdit {
     $timeTakenRegex = "(\d+:\d+:\d+\.\d+)"
 
     # Extract information using regular expressions
-    $stdout -match $versionRegex
-    $version = $matches[1]
+    $matchResult = $stdout -match $versionRegex
+    if ($matchResult) {
+        $version = $matches[1]
+    }
 
-    $stdout -match $filesConvertedRegex
-    $filesConverted = $matches[1]
+    $matchResult = $stdout -match $filesConvertedRegex
+    if ($matchResult) {
+        $filesConverted = $matches[1]
+    }
 
-    $stdout -match $timeTakenRegex
-    $timeTaken = $matches[1]
+    $matchResult = $stdout -match $timeTakenRegex
+    if ($matchResult) {
+        $timeTaken = $matches[1]
+        # Convert the string to a TimeSpan object
+        $timeSpan = [TimeSpan]::Parse($timeTaken)
+        # Format the TimeSpan object as a string in a user-friendly way
+        $userFriendlyTime = $timeSpan.ToString("hh\:mm\:ss")
+    }
 
     switch ($process.ExitCode) {
         0 {
-            Write-HTMLLog -Column1 'Subtitle Edit version:' -Column2 $version
+            Write-HTMLLog -Column1 'SubtitleEdit:' -Column2 "V $version"
             Write-HTMLLog -Column1 'Subtitles:' -Column2 "$filesConverted Converted"
+            Write-HTMLLog -Column1 'Time Taken:' -Column2 $userFriendlyTime
             Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
         }
         default {

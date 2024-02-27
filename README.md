@@ -8,26 +8,20 @@ Only 1 instance of the script will be running and if other downloads complete du
 
 Script will do the following:  
 1. Unpack or copy to Temporary Processing folder defined in config.json (copy from config-sample.json)
-2. If torrent label is TV show as defined in JSON Label
-    - Start [Subliminal](https://github.com/Diaoul/subliminal) to see if there are missing subtitles we can download 
-    - Will strip all srt subtitle languages not in JSON WantedLanguages
-    - Extract all SRT subtitles in JSON WantedLanguages
-    - Rename all srt files from alpha3 to alpha2 codes as defined in JSON LanguageCodes
-	    - File.3.en.srt
-	    - File.en.srt
-	    - File.nl.srt
+2. If torrent label is TV show as defined in config.json Label
+    - Will strip all srt subtitle languages not in config.json WantedLanguages
+    - Extract all SRT subtitles in config.json WantedLanguages
+    - Will try to download missing subs from OpenSubtitles.com 
+    - Renames all srt files from ISO 639-2 (3 letter codes) to ISO 639-1 (2 letter codes) as defined in LanguageCodes.json
     - Clean up the srt subtitles using [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
      - Start Medusa Import
-3. If torrent label is Movie as defined in JSON Label
-    - Start [Subliminal](https://github.com/Diaoul/subliminal) to see if there are missing subtitles we can download
-    - Will strip all srt subtitle languages not in JSON WantedLanguages 
-    - Extract all SRT subtitles in JSON WantedLanguages
-    - Rename all srt files from alpha3 to alpha2 codes as defined in JSON LanguageCodes
-	    - File.3.en.srt
-	    - File.en.srt
-	    - File.nl.srt
+3. If torrent label is Movie as defined in config.json Label
+    - Will strip all srt subtitle languages not in config.json WantedLanguages 
+    - Extract all SRT subtitles in config.json WantedLanguages
+    - Will try to download missing subs from OpenSubtitles.com 
+    - Renames all srt files from ISO 639-2 (3 letter codes) to ISO 639-1 (2 letter codes) as defined in LanguageCodes.json
     - Clean up the srt subtitles using [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
 	    - Remove Hearing Impaired.
 	    - Fix Common errors.
@@ -70,4 +64,3 @@ The following external tools need to be available and the path defined in the `c
  - [MKVMerge](https://mkvtoolnix.download/)
  - [MKVExtract](https://mkvtoolnix.download/)
  - [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit)
- - [Subliminal](https://github.com/Diaoul/subliminal)

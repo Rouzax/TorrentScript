@@ -45,7 +45,7 @@ function Import-Radarr {
         [Parameter(Mandatory = $true)] 
         [int]$RadarrTimeOutMinutes,
 
-        [Parameter(Mandatory = $true)] 
+        [Parameter(Mandatory = $false)] 
         [string]$TorrentHash,
 
         [Parameter(Mandatory = $true)] 

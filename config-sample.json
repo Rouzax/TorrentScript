@@ -11,8 +11,7 @@
         "WinRarPath": "C:\\Program Files\\WinRAR\\rar.exe",
         "MKVMergePath": "C:\\Program Files\\MKVToolNix\\mkvmerge.exe",
         "MKVExtractPath": "C:\\Program Files\\MKVToolNix\\mkvextract.exe",
-        "SubtitleEditPath": "C:\\GitHub\\SubtitleEdit\\SubtitleEdit.exe",
-        "SubliminalPath": "C:\\GitHub\\subliminal\\Scripts\\subliminal.exe"
+        "SubtitleEditPath": "C:\\GitHub\\SubtitleEdit\\SubtitleEdit.exe"
     },
     "Mail": {
         "To": "user@mail.com",
@@ -26,7 +25,11 @@
     "OpenSub": {
         "User": "user",
         "Password": "Password123",
-        "omdbAPI": "2028C39D"
+        "API": "2028C39D",
+        "hearing_impaired" : "exclude",
+        "foreign_parts_only" : "exclude",
+        "machine_translated" : "exclude",
+        "ai_translated" : "include"
     },
     "WantedLanguages": [
         "eng",
@@ -34,16 +37,6 @@
     ],
     "SubtitleNamesToRemove": [
         "Forced"
-    ],
-    "LanguageCodes": [
-        {
-            "alpha3": "eng",
-            "alpha2": "en"
-        },
-        {
-            "alpha3": "dut",
-            "alpha2": "nl"
-        }
     ],
     "qBittorrent": {
         "Host": "http://localhost",

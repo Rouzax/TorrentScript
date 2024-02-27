@@ -33,12 +33,14 @@ function Get-Input {
 
     # Loop until a valid input is provided (if Required switch is used)
     while ($Required -and ($null -eq $UserInput -or $UserInput -eq '')) {
-        $UserInput = Read-Host -Prompt "Required | $Message"
+        Write-Host "Required | " -ForegroundColor DarkRed -NoNewline
+        $UserInput = Read-Host -Prompt $Message
         $UserInput = $UserInput.Trim()
     }
 
     # If Required switch is not used, get input without validation
     if (-not $Required) {
+        Write-Host "Optional | " -ForegroundColor DarkCyan -NoNewline
         $UserInput = Read-Host -Prompt "$Message"
         $UserInput = $UserInput.Trim()
     }

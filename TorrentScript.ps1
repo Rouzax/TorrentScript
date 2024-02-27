@@ -38,10 +38,22 @@ param(
     [switch]$NoCleanUp
 )
 
+# Get function definition files.
+$Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1 -ErrorAction SilentlyContinue )
+# Dot source the files
+ForEach ($import in @($Functions)) {
+    Try {
+        # dotsourcing a function script
+        .$import.FullName
+    } Catch {
+        Write-Error -Message "Failed to import function $($import.FullName): $_"
+    }
+}
+
 # User Variables
 try {
     $configPath = Join-Path $PSScriptRoot 'config.json'
-    $Config = Get-Content $configPath -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    $Config = Get-Content $configPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
 } catch {
     Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
     Write-Host 'Invalid config.json file' -ForegroundColor Red
@@ -51,12 +63,29 @@ try {
 # Reading Language Code lookup
 try {
     $LanguageCodesPath = Join-Path $PSScriptRoot 'LanguageCodes.json'
-    $LanguageCodes = Get-Content $LanguageCodesPath -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    $LanguageCodes = Get-Content $LanguageCodesPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    # Create a hashtable for language code lookup
+    $LanguageCodeLookup = @{}
+    foreach ($langCodeKey in $LanguageCodes.PSObject.Properties.Name) {
+        $langCode = $LanguageCodes.$langCodeKey
+        $639_2 = $langCode.'639-2'
+        $639_2_B = $langCode.'639-2/B'
+        $639_1 = $langCode.'639-1'
+    
+        if ($639_2) {
+            $LanguageCodeLookup[$639_2] = $639_1
+        }
+    
+        if ($639_2_B) {
+            $LanguageCodeLookup[$639_2_B] = $639_1
+        }
+    }
 } catch {
     Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
     Write-Host 'Invalid LanguageCodes.json' -ForegroundColor Red
     exit 1
 }
+
 
 # Log Date format
 $LogFileDateFormat = Get-Date -Format $Config.DateFormat
@@ -80,8 +109,6 @@ $WinRarPath = $Config.Tools.WinRarPath
 $MKVMergePath = $Config.Tools.MKVMergePath
 $MKVExtractPath = $Config.Tools.MKVExtractPath
 $SubtitleEditPath = $Config.Tools.SubtitleEditPath
-$SubliminalPath = $Config.Tools.SubliminalPath
-$MailSendPath = $Config.Tools.MailSendPath
 
 # Import qBittorrent Settings
 $qBittorrentHost = $Config.qBittorrent.Host
@@ -112,29 +139,21 @@ $SMTPport = $Config.Mail.SMTPport
 $SMTPuser = $Config.Mail.SMTPuser
 $SMTPpass = $Config.Mail.SMTPpass
 
-# OpenSubtitle User and Pass for Subliminal
+# OpenSubtitle User and Pass for OpenSubtitle.com
 $OpenSubUser = $Config.OpenSub.User
 $OpenSubPass = $Config.OpenSub.Password
-$omdbAPI = $Config.OpenSub.omdbAPI
+$OpenSubAPI = $Config.OpenSub.API
+$OpenSubHearing_impaired = $Config.OpenSub.hearing_impaired
+$OpenSubForeign_parts_only = $Config.OpenSub.foreign_parts_only
+$OpenSubMachine_translated = $Config.OpenSub.machine_translated
+$OpenSubAI_translated = $Config.OpenSub.ai_translated
 
 # Language codes of subtitles to keep
 $WantedLanguages = $Config.WantedLanguages
 $SubtitleNamesToRemove = $Config.SubtitleNamesToRemove
 
-# Get function definition files.
-$Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1 -ErrorAction SilentlyContinue )
-# Dot source the files
-ForEach ($import in @($Functions)) {
-    Try {
-        # dotsourcing a function script
-        .$import.FullName
-    } Catch {
-        Write-Error -Message "Failed to import function $($import.FullName): $_"
-    }
-}
-
 # Test additional programs
-$Tools = @($WinRarPath, $MKVMergePath, $MKVExtractPath, $SubtitleEditPath, $SubliminalPath, $MailSendPath)
+$Tools = @($WinRarPath, $MKVMergePath, $MKVExtractPath, $SubtitleEditPath)
 foreach ($Tool in $Tools) {
     Test-Variable-Path -Path $Tool
 }
@@ -150,6 +169,7 @@ Write-Host 'All checks done' -ForegroundColor DarkYellow
 #* Start of script
 Clear-Host
 $ScriptTitle = "Torrent Script"
+
 try {
     Write-Ascii $ScriptTitle -ForegroundColor DarkYellow
 } catch {
@@ -284,8 +304,8 @@ if ($RarFile) {
 } elseif (-not $RarFile -and $SingleFile) {
     Write-HTMLLog -Column1 '***  Single File  ***' -Header
     $FileCopyParams = @{
-        source        = DownloadRootPath
-        Destination   = ProcessPathFull
+        source        = $DownloadRootPath
+        Destination   = $ProcessPathFull
         File          = $DownloadName
         DownloadLabel = $DownloadLabel
         DownloadName  = $DownloadName
@@ -295,8 +315,8 @@ if ($RarFile) {
 } elseif (-not $RarFile -and $Folder) {
     Write-HTMLLog -Column1 '***  Folder  ***' -Header
     $FileCopyParams = @{
-        source        = DownloadRootPath
-        Destination   = ProcessPathFull
+        source        = $DownloadPath
+        Destination   = $ProcessPathFull
         File          = '*.*'
         DownloadLabel = $DownloadLabel
         DownloadName  = $DownloadName
@@ -318,20 +338,8 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     } else {
         $VideoContainer = $false 
     }
+
     if ($VideoContainer) {
-        # Download any missing subs with Subliminal
-        $SubliminalParams = @{
-            Source          = $ProcessPathFull
-            OpenSubUser     = $OpenSubUser
-            OpenSubPass     = $OpenSubPass
-            omdbAPI         = $omdbAPI
-            WantedLanguages = $WantedLanguages
-            SubliminalPath  = $SubliminalPath
-            DownloadLabel   = $DownloadLabel
-            DownloadName    = $DownloadName
-        }
-        Start-Subliminal @SubliminalParams
-        
         # Remove unwanted subtitle languages and extract wanted subtitles and rename
         $MKVToolnixImportParams = @{
             Source                = $ProcessPathFull
@@ -339,10 +347,33 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
             MKVExtractPath        = $MKVExtractPath
             WantedLanguages       = $WantedLanguages
             SubtitleNamesToRemove = $SubtitleNamesToRemove
-            LanguageCodes         = $LanguageCodes
+            LanguageCodeLookup    = $LanguageCodeLookup
         }
         Start-MKVSubtitleStrip @MKVToolnixImportParams
-  
+        
+        # Download missing subtitles using OpenSubtitles.com API 
+        $OpenSubLanguages = @()
+        foreach ($language in $WantedLanguages) {
+            $OpenSubLanguages += $LanguageCodeLookup[$language]
+        }
+        $OpenSubParams = @{
+            Source                    = $ProcessPathFull
+            OpenSubUser               = $OpenSubUser
+            OpenSubPass               = $OpenSubPass
+            OpenSubAPI                = $OpenSubAPI
+            OpenSubHearing_impaired   = $OpenSubHearing_impaired
+            OpenSubForeign_parts_only = $OpenSubForeign_parts_only
+            OpenSubMachine_translated = $OpenSubMachine_translated
+            OpenSubAI_translated      = $OpenSubAI_translated
+            WantedLanguages           = $OpenSubLanguages
+        }
+        if ($DownloadLabel -eq $TVLabel) {
+            $OpenSubParams.Add("Type", "episode")
+        } elseif ($DownloadLabel -eq $MovieLabel) {
+            $OpenSubParams.Add("Type", "movie")
+        }
+        Start-OpenSubtitlesDownload @OpenSubParams
+
         # Clean up Subs
         $SubtitleEditParams = @{
             Source           = $ProcessPathFull
@@ -355,13 +386,13 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
       
         Write-HTMLLog -Column1 '***  MKV Files  ***' -Header
         foreach ($Mkv in $mkvFiles) {
-            Write-HTMLLog -Column1 ' ' -Column2 $Mkv.name
+            Write-HTMLLog -Column2 $Mkv.name
         }
         $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.srt'
         if ($SrtFiles.Count -gt 0) {
             Write-HTMLLog -Column1 '***  Subtitle Files  ***' -Header
             foreach ($Srt in $SrtFiles) {
-                Write-HTMLLog -Column1 ' ' -Column2 $srt.name
+                Write-HTMLLog -Column2 $srt.name
             }
         }
     } else {
@@ -415,7 +446,8 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     
     # Cleanup the Process Path folders
     if ($NoCleanUp) {
-        Write-HTMLLog -Column1 'Cleanup' -Column2 'NoCleanUp switch was given at command line, leaving files'
+        Write-HTMLLog -Column1 'Cleanup' -Column2 'NoCleanUp switch was given at command line, leaving files:'
+        Write-HTMLLog -Column2 "$ProcessPathFull"
     } else {
         try {
             If (Test-Path -LiteralPath $ProcessPathFull) {

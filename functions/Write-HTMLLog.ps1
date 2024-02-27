@@ -36,9 +36,9 @@ function Format-Table {
 .SYNOPSIS
     Add line to in memory log
 .DESCRIPTION
-    Adds a line to the in memory log file and based on the parameters will do formating
+    Adds a line to the in memory log file and based on the parameters will do formatting
 .PARAMETER Column1
-    Text to be put in first column, mandatory
+    Text to be put in first column, not mandatory
 .PARAMETER Column2
     Text to be put in the second column, not mandatory
 .PARAMETER Header
@@ -57,7 +57,7 @@ function Format-Table {
 Function Write-HTMLLog {
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$Column1,
 
         [Parameter(Mandatory = $false)]
@@ -92,7 +92,11 @@ Function Write-HTMLLog {
             $global:Log += '</tr>'  
         }
     }
-    Write-Output "$Column1 $Column2"
+    if ($Column1 -eq "") {
+        <# Action to perform if the condition is true #>
+    }
+    Write-Host $(($Column1, $Column2 | Where-Object { $_ }) -join ' ')
+    # Write-Host "$Column1 $Column2"
 }
 
 
