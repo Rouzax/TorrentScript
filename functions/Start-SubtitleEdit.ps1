@@ -69,7 +69,7 @@ function Start-SubtitleEdit {
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
     $stdout = $Process.StandardOutput.ReadToEnd()
-    $stderr = $Process.StandardError.ReadToEnd()
+    # $stderr = $Process.StandardError.ReadToEnd()
     $Process.WaitForExit()
 
     # Regular expressions to extract information
@@ -106,7 +106,7 @@ function Start-SubtitleEdit {
         }
         default {
             Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
-            Write-HTMLLog -Column1 'Error:' -Column2 $stderr -ColorBg 'Error'
+            Write-HTMLLog -Column1 'Error:' -Column2 $stdout -ColorBg 'Error'
             Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
             Stop-Script -ExitReason "SubEdit Error: $DownloadLabel - $DownloadName"
         }
