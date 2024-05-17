@@ -1,21 +1,26 @@
 <#
 .SYNOPSIS
-This script performs various tasks related to torrent downloads, including unraring, post-processing for movies and TV shows and any other QBittorrent download, and sending notifications.
-
+    This script performs various tasks related to torrent downloads, 
+    including unraring, post-processing for movies and TV shows 
+    and any other QBittorrent download, and sending notifications.
 .DESCRIPTION
-This script is designed to handle the post-processing of torrent downloads. It supports unraring, renaming, and organizing files based on certain criteria. Additionally, it can communicate with Medusa and Radarr for further post-processing.
-
+    This script is designed to handle the post-processing of torrent downloads. 
+    It supports unraring, renaming, and organizing files based on certain criteria. 
+    Additionally, it can communicate with Medusa and Radarr for further post-processing.
 .PARAMETER DownloadPath
-Specifies the path of the downloaded files.
-
+    Specifies the path of the downloaded torrent. If not provided, the script prompts for input.
 .PARAMETER DownloadLabel
-Specifies the label associated with the downloaded files.
-
+    Specifies the label for the downloaded torrent. If not provided, the script prompts for input.
 .PARAMETER TorrentHash
-Specifies the torrent hash, required for Radarr.
-
+    Specifies the torrent hash, required for Radarr.
 .PARAMETER NoCleanUp
-Indicates whether to skip the cleanup process in the Temp Process folder.
+    Indicates whether to skip the cleanup process in the Temp Process folder.
+.EXAMPLE
+    TorrentScript.ps1 -DownloadPath "C:\Downloads\MyTorrent" -DownloadLabel "TV" -TorrentHash "1234567890"
+    Processes a TV show torrent with the specified path, label, and torrent hash.
+.EXAMPLE
+    TorrentScript.ps1
+    Prompts for user input for download path and label to process a torrent.
 #>
 
 [CmdletBinding()]
@@ -45,32 +50,42 @@ ForEach ($import in @($Functions)) {
     }
 }
 
-Write-Host 'Loading Powershell Modules, this might take a while' -ForegroundColor DarkYellow
-# Load required modules
-$modules = @("WriteAscii", "Send-MailKitMessage")
-foreach ($module in $modules) {
-    Load-Module -ModuleName $module
-}
-Write-Host 'All checks done' -ForegroundColor DarkYellow
-
-#* Start of script
-Clear-Host
-$ScriptTitle = "Torrent Script"
-try {
-    Write-Ascii $ScriptTitle -ForegroundColor DarkYellow
-} catch {
-    Write-Host $ScriptTitle -ForegroundColor DarkYellow
-}
-
 # User Variables
 try {
     $configPath = Join-Path $PSScriptRoot 'config.json'
-    $Config = Get-Content $configPath -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    $Config = Get-Content $configPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
 } catch {
     Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
     Write-Host 'Invalid config.json file' -ForegroundColor Red
     exit 1
 }
+
+# Reading Language Code lookup
+try {
+    $LanguageCodesPath = Join-Path $PSScriptRoot 'LanguageCodes.json'
+    $LanguageCodes = Get-Content $LanguageCodesPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    # Create a hashtable for language code lookup
+    $LanguageCodeLookup = @{}
+    foreach ($langCodeKey in $LanguageCodes.PSObject.Properties.Name) {
+        $langCode = $LanguageCodes.$langCodeKey
+        $639_2 = $langCode.'639-2'
+        $639_2_B = $langCode.'639-2/B'
+        $639_1 = $langCode.'639-1'
+    
+        if ($639_2) {
+            $LanguageCodeLookup[$639_2] = $639_1
+        }
+    
+        if ($639_2_B) {
+            $LanguageCodeLookup[$639_2_B] = $639_1
+        }
+    }
+} catch {
+    Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
+    Write-Host 'Invalid LanguageCodes.json' -ForegroundColor Red
+    exit 1
+}
+
 
 # Log Date format
 $LogFileDateFormat = Get-Date -Format $Config.DateFormat
@@ -94,15 +109,12 @@ $WinRarPath = $Config.Tools.WinRarPath
 $MKVMergePath = $Config.Tools.MKVMergePath
 $MKVExtractPath = $Config.Tools.MKVExtractPath
 $SubtitleEditPath = $Config.Tools.SubtitleEditPath
-$SubliminalPath = $Config.Tools.SubliminalPath
-$MailSendPath = $Config.Tools.MailSendPath
 
 # Import qBittorrent Settings
 $qBittorrentHost = $Config.qBittorrent.Host
 $qBittorrentPort = $Config.qBittorrent.Port
 $qBittorrentUser = $Config.qBittorrent.User
 $qBittorrentPassword = $Config.qBittorrent.Password
-
 
 # Import Medusa Settings
 $MedusaHost = $Config.Medusa.Host
@@ -127,19 +139,41 @@ $SMTPport = $Config.Mail.SMTPport
 $SMTPuser = $Config.Mail.SMTPuser
 $SMTPpass = $Config.Mail.SMTPpass
 
-# OpenSubtitle User and Pass for Subliminal
+# OpenSubtitle User and Pass for OpenSubtitle.com
 $OpenSubUser = $Config.OpenSub.User
 $OpenSubPass = $Config.OpenSub.Password
-$omdbAPI = $Config.OpenSub.omdbAPI
+$OpenSubAPI = $Config.OpenSub.API
+$OpenSubHearing_impaired = $Config.OpenSub.hearing_impaired
+$OpenSubForeign_parts_only = $Config.OpenSub.foreign_parts_only
+$OpenSubMachine_translated = $Config.OpenSub.machine_translated
+$OpenSubAI_translated = $Config.OpenSub.ai_translated
 
 # Language codes of subtitles to keep
 $WantedLanguages = $Config.WantedLanguages
 $SubtitleNamesToRemove = $Config.SubtitleNamesToRemove
 
 # Test additional programs
-$Tools = @($WinRarPath, $MKVMergePath, $MKVExtractPath, $SubtitleEditPath, $SubliminalPath, $MailSendPath)
+$Tools = @($WinRarPath, $MKVMergePath, $MKVExtractPath, $SubtitleEditPath)
 foreach ($Tool in $Tools) {
     Test-Variable-Path -Path $Tool
+}
+
+Write-Host 'Loading Powershell Modules, this might take a while' -ForegroundColor DarkYellow
+# Load required modules
+$modules = @("WriteAscii", "Send-MailKitMessage")
+foreach ($module in $modules) {
+    Install-PSModule -ModuleName $module
+}
+Write-Host 'All checks done' -ForegroundColor DarkYellow
+
+#* Start of script
+Clear-Host
+$ScriptTitle = "Torrent Script"
+
+try {
+    Write-Ascii $ScriptTitle -ForegroundColor DarkYellow
+} catch {
+    Write-Host $ScriptTitle -ForegroundColor DarkYellow
 }
 
 #* Get input if no parameters defined
@@ -156,11 +190,10 @@ $DownloadName = Split-Path -Path $DownloadPath -Leaf
 # Download Label
 if (-not $PSBoundParameters.ContainsKey('DownloadLabel')) {
     #  Handle no Download Path given as parameter
-    $QBcategories = Get-QBittorrentCategories -qBittorrentUrl $($qBittorrentHost + ":" + $qBittorrentPort) -username $qBittorrentUser -password $qBittorrentPassword
+    $QBcategories = Get-QBittorrentCategories -qBittorrentUrl $qBittorrentHost -qBittorrentPort $qBittorrentPort -username $qBittorrentUser -password $qBittorrentPassword
     if ($QBcategories) {
-        $Categories = $($QBcategories.PSObject.Properties.Value.name)
-        $Categories += "[Enter your own]"
-        $DownloadLabel = Select-MenuOption -MenuOptions $Categories -MenuQuestion "Torrent Label"
+        $QBcategories += "[Enter your own]"
+        $DownloadLabel = Select-MenuOption -MenuOptions $QBcategories -MenuQuestion "Torrent Label"
         if ($DownloadLabel -eq "[Enter your own]") {
             $DownloadLabel = Get-Input -Message 'Download Label'
         }
@@ -212,7 +245,7 @@ If (!(Test-Path -LiteralPath $LogArchivePath)) {
 $ScriptMutex = New-Mutex -MutexName 'DownloadScript'
 
 # Start Stopwatch
-$StopWatch = [system.diagnostics.stopwatch]::startNew()
+$ScriptTimer = [system.diagnostics.stopwatch]::startNew()
 
 # Check paths from Parameters
 If (!(Test-Path -LiteralPath $DownloadPath)) {
@@ -256,7 +289,13 @@ if ($RarFile) {
     $TotalSize = (Get-ChildItem -LiteralPath $DownloadPath -Recurse | Measure-Object -Property Length -Sum).Sum
     $UnRarStopWatch = [system.diagnostics.stopwatch]::startNew()
     foreach ($Rar in $RarFilePaths) {
-        Start-UnRar -UnRarSourcePath $Rar -UnRarTargetPath $ProcessPathFull
+        $UnrarParams = @{
+            UnRarSourcePath = $Rar
+            UnRarTargetPath = $ProcessPathFull
+            DownloadLabel   = $DownloadLabel
+            DownloadName    = $DownloadName
+        }
+        Start-UnRar @UnrarParams
     }
     # Stop the Stopwatch
     $UnRarStopWatch.Stop() 
@@ -264,10 +303,25 @@ if ($RarFile) {
     Write-HTMLLog -Column1 'Throughput:' -Column2 "$(Format-Size -SizeInBytes ($TotalSize/$UnRarStopWatch.Elapsed.TotalSeconds))/s"
 } elseif (-not $RarFile -and $SingleFile) {
     Write-HTMLLog -Column1 '***  Single File  ***' -Header
-    Start-RoboCopy -Source $DownloadRootPath -Destination $ProcessPathFull -File $DownloadName
+    $FileCopyParams = @{
+        source        = $DownloadRootPath
+        Destination   = $ProcessPathFull
+        File          = $DownloadName
+        DownloadLabel = $DownloadLabel
+        DownloadName  = $DownloadName
+    }
+    Start-FileCopy @FileCopyParams
+
 } elseif (-not $RarFile -and $Folder) {
     Write-HTMLLog -Column1 '***  Folder  ***' -Header
-    Start-RoboCopy -Source $DownloadPath -Destination $ProcessPathFull -File '*.*'
+    $FileCopyParams = @{
+        source        = $DownloadPath
+        Destination   = $ProcessPathFull
+        File          = '*.*'
+        DownloadLabel = $DownloadLabel
+        DownloadName  = $DownloadName
+    }
+    Start-FileCopy @FileCopyParams
 }
 
 
@@ -275,7 +329,7 @@ if ($RarFile) {
 if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     $mp4Files = @(Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mp4' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
     if ($mp4Files.Count -gt 0) {
-        Start-MP4ToMKVRemux -VideoFileObjects $mp4Files
+        Start-MP4ToMKVRemux -Source $ProcessPathFull -MKVMergePath $MKVMergePath
     } 
 
     $mkvFiles = @(Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
@@ -284,26 +338,61 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     } else {
         $VideoContainer = $false 
     }
+
     if ($VideoContainer) {
-        # Download any missing subs
-        # Remove Subliminal for now as the OpenSubtitles API is closed
-        # Start-Subliminal -Source $ProcessPathFull
-        
         # Remove unwanted subtitle languages and extract wanted subtitles and rename
-        Start-MKVSubtitleStrip $ProcessPathFull
-  
+        $MKVToolnixImportParams = @{
+            Source                = $ProcessPathFull
+            MKVMergePath          = $MKVMergePath
+            MKVExtractPath        = $MKVExtractPath
+            WantedLanguages       = $WantedLanguages
+            SubtitleNamesToRemove = $SubtitleNamesToRemove
+            LanguageCodeLookup    = $LanguageCodeLookup
+        }
+        Start-MKVSubtitleStrip @MKVToolnixImportParams
+        
+        # Download missing subtitles using OpenSubtitles.com API 
+        $OpenSubLanguages = @()
+        foreach ($language in $WantedLanguages) {
+            $OpenSubLanguages += $LanguageCodeLookup[$language]
+        }
+        $OpenSubParams = @{
+            Source                    = $ProcessPathFull
+            OpenSubUser               = $OpenSubUser
+            OpenSubPass               = $OpenSubPass
+            OpenSubAPI                = $OpenSubAPI
+            OpenSubHearing_impaired   = $OpenSubHearing_impaired
+            OpenSubForeign_parts_only = $OpenSubForeign_parts_only
+            OpenSubMachine_translated = $OpenSubMachine_translated
+            OpenSubAI_translated      = $OpenSubAI_translated
+            WantedLanguages           = $OpenSubLanguages
+        }
+        if ($DownloadLabel -eq $TVLabel) {
+            $OpenSubParams.Add("Type", "episode")
+        } elseif ($DownloadLabel -eq $MovieLabel) {
+            $OpenSubParams.Add("Type", "movie")
+        }
+        Start-OpenSubtitlesDownload @OpenSubParams
+
         # Clean up Subs
-        Start-SubEdit -File '*.srt' -Source $ProcessPathFull
+        $SubtitleEditParams = @{
+            Source           = $ProcessPathFull
+            Files            = '*.srt'
+            SubtitleEditPath = $SubtitleEditPath
+            DownloadLabel    = $DownloadLabel
+            DownloadName     = $DownloadName
+        }
+        Start-SubtitleEdit @SubtitleEditParams
       
         Write-HTMLLog -Column1 '***  MKV Files  ***' -Header
         foreach ($Mkv in $mkvFiles) {
-            Write-HTMLLog -Column1 ' ' -Column2 $Mkv.name
+            Write-HTMLLog -Column2 $Mkv.name
         }
         $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.srt'
         if ($SrtFiles.Count -gt 0) {
             Write-HTMLLog -Column1 '***  Subtitle Files  ***' -Header
             foreach ($Srt in $SrtFiles) {
-                Write-HTMLLog -Column1 ' ' -Column2 $srt.name
+                Write-HTMLLog -Column2 $srt.name
             }
         }
     } else {
@@ -321,10 +410,19 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
         # Get the correct remote Medusa file path, if script is not running on local machine to Medusa
         # Remove the common prefix and append the MedusaRemotePath
         $MedusaPathFull = Join-Path $MedusaRemotePath ($ProcessPathFull.Substring($prefixLength))
+        
         # Call Medusa to Post Process
-        Import-Medusa -Source $MedusaPathFull
-        CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
-        Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
+        $MedusaImportParams = @{
+            Source               = $MedusaPathFull
+            MedusaApiKey         = $MedusaApiKey
+            MedusaHost           = $MedusaHost
+            MedusaPort           = $MedusaPort
+            MedusaTimeOutMinutes = $MedusaTimeOutMinutes
+            DownloadLabel        = $DownloadLabel
+            DownloadName         = $DownloadName
+        }
+        Import-Medusa @MedusaImportParams
+
     } elseif ($DownloadLabel -eq $MovieLabel) {
         # Get the correct remote Radarr file path, if script is not running on local machine to Radarr
         # Get the common prefix length between the paths
@@ -333,11 +431,36 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
         $RadarrPathFull = Join-Path $RadarrRemotePath ($ProcessPathFull.Substring($prefixLength))
     
         # Call Radarr to Post Process
-        Import-Radarr -Source $RadarrPathFull
-        CleanProcessPath -Path $ProcessPathFull -NoCleanUp $NoCleanUp
-        Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
+        $RadarrImportParams = @{
+            Source               = $RadarrPathFull
+            RadarrApiKey         = $RadarrApiKey
+            RadarrHost           = $RadarrHost
+            RadarrPort           = $RadarrPort
+            RadarrTimeOutMinutes = $RadarrTimeOutMinutes
+            TorrentHash          = $TorrentHash
+            DownloadLabel        = $DownloadLabel
+            DownloadName         = $DownloadName
+        }
+        Import-Radarr @RadarrImportParams
     }
     
+    # Cleanup the Process Path folders
+    if ($NoCleanUp) {
+        Write-HTMLLog -Column1 'Cleanup' -Column2 'NoCleanUp switch was given at command line, leaving files:'
+        Write-HTMLLog -Column2 "$ProcessPathFull"
+    } else {
+        try {
+            If (Test-Path -LiteralPath $ProcessPathFull) {
+                Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
+            }
+        } catch {
+            Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
+            Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
+        }
+    } 
+    
+    # Ending Script for Movie and TV downloads
+    Stop-Script -ExitReason "$DownloadLabel - $DownloadName"
 }
 # Reached the end of script
 Write-HTMLLog -Column1 '***  Post Process General Download  ***' -Header

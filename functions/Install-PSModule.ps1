@@ -1,24 +1,29 @@
 <#
 .SYNOPSIS
-    Loads a PowerShell module and ensures it is installed.
-
+    Installs and imports a PowerShell module, checking if it's already loaded.
 .DESCRIPTION
-    This function checks if a specified PowerShell module is already loaded. If not, it checks if the module is installed and installs it if necessary.
-
+    This function installs a PowerShell module specified by the $ModuleName parameter.
+    It checks if the module is already loaded and active. If not, it verifies if the
+    module is installed. If not installed, it checks for the availability of NuGet as
+    the Package Provider and installs it if necessary. Finally, it installs and loads
+    the specified module.
 .PARAMETER ModuleName
-    Specifies the name of the module to load.
-
-.NOTES
-    File Name      : Load-Module.ps1
-    Prerequisite   : PowerShell V5
-
-.LINK
-    https://docs.microsoft.com/en-us/powershell/
+    Specifies the name of the PowerShell module to be installed and imported.
+.INPUTS
+    String - You can pipeline the name of the module as a string to this function.
+.OUTPUTS
+    None - This function does not return any objects.
+.EXAMPLE
+    Install-PSModule -ModuleName "ExampleModule"
+    This example installs and imports the "ExampleModule" PowerShell module.
 #>
-
-function Load-Module {
+function Install-PSModule {
     [CmdletBinding()]
-    param ([Parameter(Mandatory = $true)] 
+    param (
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true
+        )] 
         [string]$ModuleName
     )
 
@@ -53,7 +58,6 @@ function Load-Module {
 
             # Check if the module is available for installation
             if (Find-Module -Name $ModuleName -ErrorAction SilentlyContinue) {
-                Write-Host "    We need to install $ModuleName PowerShell Modules first, this might take a while" -ForegroundColor DarkYellow
                 Write-Host "    Installing $ModuleName PowerShell Modules" -ForegroundColor DarkYellow -NoNewline
 
                 # Install the module

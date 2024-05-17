@@ -1,42 +1,73 @@
+<#
+.SYNOPSIS
+    Imports downloaded movies into Radarr and monitors the import progress.
+.DESCRIPTION
+    This function imports downloaded movies into Radarr and monitors the import progress. It uses Radarr API 
+    to initiate the import process and checks the status until completion or timeout.
+.PARAMETER Source
+    Specifies the path of the downloaded movie.
+.PARAMETER RadarrApiKey
+    Specifies the API key for Radarr.
+.PARAMETER RadarrHost
+    Specifies the host (URL or IP) where Radarr is running.
+.PARAMETER RadarrPort
+    Specifies the port on which Radarr is listening.
+.PARAMETER RadarrTimeOutMinutes
+    Specifies the timeout duration (in minutes) for the Radarr import operation.
+.PARAMETER TorrentHash
+    Specifies the unique identifier (hash) of the downloaded torrent.
+.PARAMETER DownloadLabel
+    Specifies a label for the downloaded movie.
+.PARAMETER DownloadName
+    Specifies the name of the downloaded movie.
+.OUTPUTS 
+    None
+.EXAMPLE
+    Import-Radarr -Source "C:\Downloads\Movie1" -RadarrApiKey "yourApiKey" -RadarrHost "localhost" -RadarrPort 7878 
+    -RadarrTimeOutMinutes 30 -TorrentHash "abc123" -DownloadLabel "Action" -DownloadName "Movie1"
+    Initiates Radarr import for the specified movie and monitors the progress.
+#>
 function Import-Radarr {
-    <#
-    .SYNOPSIS
-    Start Radarr movie import
-    
-    .DESCRIPTION
-    STart the Radarr movie import with error handling
-    
-    .PARAMETER Source
-    Path to movie to import
-    
-    .EXAMPLE
-    Import-Radarr -Source 'C:\Temp\Movie'
-    
-    .NOTES
-    General notes
-    #>
     [CmdletBinding()]
     param (
-        [Parameter(
-            Mandatory = $true
-        )] 
-        [string]$Source
+        [Parameter(Mandatory = $true)] 
+        [string]$Source,
+
+        [Parameter(Mandatory = $true)] 
+        [string]$RadarrApiKey,
+
+        [Parameter(Mandatory = $true)] 
+        [string]$RadarrHost,
+
+        [Parameter(Mandatory = $true)] 
+        [int]$RadarrPort,
+
+        [Parameter(Mandatory = $true)] 
+        [int]$RadarrTimeOutMinutes,
+
+        [Parameter(Mandatory = $false)] 
+        [string]$TorrentHash,
+
+        [Parameter(Mandatory = $true)] 
+        [string]$DownloadLabel,
+
+        [Parameter(Mandatory = $true)] 
+        [string]$DownloadName
     )
 
     # Make sure needed functions are available otherwise try to load them.
-    $commands = 'Write-HTMLLog', 'Stop-Script'
-    foreach ($commandName in $commands) {
-        if (!($command = Get-Command $commandName -ErrorAction SilentlyContinue)) {
-            Try {
-                . $PSScriptRoot\$commandName.ps1
-                Write-Host "$commandName Function loaded." -ForegroundColor Green
-            } Catch {
-                Write-Error -Message "Failed to import $commandName function: $_"
+    $functionsToLoad = @('Write-HTMLLog', 'Stop-Script')
+    foreach ($functionName in $functionsToLoad) {
+        if (-not (Get-Command $functionName -ErrorAction SilentlyContinue)) {
+            try {
+                . "$PSScriptRoot\$functionName.ps1"
+                Write-Host "$functionName function loaded." -ForegroundColor Green
+            } catch {
+                Write-Error "Failed to import $functionName function: $_"
                 exit 1
             }
         }
     }
-    # Start
 
     $body = @{
         'name'             = 'DownloadedMoviesScan'
