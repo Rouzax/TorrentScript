@@ -64,7 +64,7 @@ function Start-SubtitleEdit {
     $StartInfo.RedirectStandardError = $true
     $StartInfo.RedirectStandardOutput = $true
     $StartInfo.UseShellExecute = $false
-    $StartInfo.Arguments = @('/convert', "$Files", 'subrip', "/inputfolder`:`"$Source`"", '/overwrite', '/MergeSameTexts', '/fixcommonerrors', '/removetextforhi', '/fixcommonerrors', '/fixcommonerrors')
+    $StartInfo.Arguments = @('/convert', "$Files", 'subrip', "/inputfolder`:`"$Source`"", '/overwrite', '/MergeSameTexts', '/RemoveTextForHI', '/FixCommonErrors', '/FixCommonErrors')
     $Process = New-Object System.Diagnostics.Process
     $Process.StartInfo = $StartInfo
     $Process.Start() | Out-Null
