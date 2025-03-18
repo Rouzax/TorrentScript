@@ -51,7 +51,7 @@ The script processes torrent downloads by:
    ![qBittorrent Folder settings page](https://i.imgur.com/Uq6bOBP.png)
 
 4. **Configure Remote Path Mapping in Radarr/Sonarr**  
-   Radarr and Sonarr should **not** directly access qBittorrent's completed downloads folder.
+   Radarr and Sonarr should **not** directly access qBittorrent's completed downloads folder. We need to trick them to look at an empty folder.
    
    Example:
    - qBittorrent root download path: `C:\Torrent\Downloads\`
