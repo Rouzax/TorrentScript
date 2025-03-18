@@ -104,6 +104,9 @@ $DownloadRootPath = $Config.DownloadRootPath
 $TVLabel = $Config.Label.TV
 $MovieLabel = $Config.Label.Movie
 
+# Define which Programs are being used to do imports
+$TVImportProgram = $Config.ImportPrograms.TV
+
 # Additional tools that are needed
 $WinRarPath = $Config.Tools.WinRarPath
 $MKVMergePath = $Config.Tools.MKVMergePath
@@ -122,6 +125,13 @@ $MedusaPort = $Config.Medusa.Port
 $MedusaApiKey = $Config.Medusa.APIKey
 $MedusaTimeOutMinutes = $Config.Medusa.TimeOutMinutes
 $MedusaRemotePath = $Config.Medusa.RemotePath
+
+# Import Sonarr Settings
+$SonarrHost = $Config.Sonarr.Host
+$SonarrPort = $Config.Sonarr.Port
+$SonarrApiKey = $Config.Sonarr.APIKey
+$SonarrTimeOutMinutes = $Config.Sonarr.TimeOutMinutes
+$SonarrRemotePath = $Config.Sonarr.RemotePath
 
 # Import Radarr Settings
 $RadarrHost = $Config.Radarr.Host
@@ -407,32 +417,54 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
     $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
 
     if ($DownloadLabel -eq $TVLabel) {
-        # Get the correct remote Medusa file path, if script is not running on local machine to Medusa
-        # Remove the common prefix and append the MedusaRemotePath
-        $MedusaPathFull = Join-Path $MedusaRemotePath ($ProcessPathFull.Substring($prefixLength))
-        
-        # Call Medusa to Post Process
-        $MedusaImportParams = @{
-            Source               = $MedusaPathFull
-            MedusaApiKey         = $MedusaApiKey
-            MedusaHost           = $MedusaHost
-            MedusaPort           = $MedusaPort
-            MedusaTimeOutMinutes = $MedusaTimeOutMinutes
-            DownloadLabel        = $DownloadLabel
-            DownloadName         = $DownloadName
+        if ($TVImportProgram -eq "Medusa") {
+            # Get the correct remote Medusa file path, if script is not running on local machine to Medusa
+            # Remove the common prefix and append the MedusaRemotePath
+            $EpisodePathFull = Join-Path $MedusaRemotePath ($ProcessPathFull.Substring($prefixLength))
+            
+            # Call Medusa to Post Process
+            $MedusaImportParams = @{
+                Source               = $EpisodePathFull
+                MedusaApiKey         = $MedusaApiKey
+                MedusaHost           = $MedusaHost
+                MedusaPort           = $MedusaPort
+                MedusaTimeOutMinutes = $MedusaTimeOutMinutes
+                DownloadLabel        = $DownloadLabel
+                DownloadName         = $DownloadName
+            }
+            Import-Medusa @MedusaImportParams
+
+        } elseif ($TVImportProgram -eq "Sonarr") {
+            # Get the correct remote Sonarr file path, if script is not running on local machine to Sonarr
+            # Get the common prefix length between the paths
+            $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
+            # Remove the common prefix and append the SonarrRemotePath
+            $EpisodePathFull = Join-Path $SonarrRemotePath ($ProcessPathFull.Substring($prefixLength))
+    
+            # Call Sonarr to Post Process
+            $SonarrImportParams = @{
+                Source               = $EpisodePathFull
+                SonarrApiKey         = $SonarrApiKey
+                SonarrHost           = $SonarrHost
+                SonarrPort           = $SonarrPort
+                SonarrTimeOutMinutes = $SonarrTimeOutMinutes
+                TorrentHash          = $TorrentHash
+                DownloadLabel        = $DownloadLabel
+                DownloadName         = $DownloadName
+            }
+            Import-Sonarr @SonarrImportParams
         }
-        Import-Medusa @MedusaImportParams
 
     } elseif ($DownloadLabel -eq $MovieLabel) {
         # Get the correct remote Radarr file path, if script is not running on local machine to Radarr
         # Get the common prefix length between the paths
         $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
         # Remove the common prefix and append the RadarrRemotePath
-        $RadarrPathFull = Join-Path $RadarrRemotePath ($ProcessPathFull.Substring($prefixLength))
+        $MoviePathFull = Join-Path $RadarrRemotePath ($ProcessPathFull.Substring($prefixLength))
     
         # Call Radarr to Post Process
         $RadarrImportParams = @{
-            Source               = $RadarrPathFull
+            Source               = $MoviePathFull
             RadarrApiKey         = $RadarrApiKey
             RadarrHost           = $RadarrHost
             RadarrPort           = $RadarrPort
