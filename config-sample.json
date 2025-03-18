@@ -57,5 +57,12 @@
         "APIKey": "90E0C5B2A1F94D5D81E7D4D5AB62F67E",
         "TimeOutMinutes": "15",
         "RemotePath": "C:\\TEMP\\Torrent\\Radarr"
+    },
+    "Sonarr": {
+        "Host": "localhost",
+        "Port": "8989",
+        "APIKey": "90E0C5B2A1F94D5D81E7D4D5AB62F67E",
+        "TimeOutMinutes": "15",
+        "RemotePath": "C:\\TEMP\\Torrent\\Sonarr"
     }
 }
