@@ -37,7 +37,7 @@ The script processes torrent downloads by:
 ## Installation
 
 1. **Create a `config.json`** file in the root directory of the script.  
-   You can copy the provided `config-sample.json` and modify it as needed.
+   You can copy the provided `config-sample.json` and modify it as needed, see: https://github.com/Rouzax/TorrentScript/wiki/Configuration-file-explained for information
 
 2. **Set up qBittorrent to trigger the script after downloads finish**  
    The script should be triggered with the following command:
