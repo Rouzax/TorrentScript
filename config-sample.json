@@ -7,6 +7,9 @@
         "TV": "TV",
         "Movie": "Movie"
     },
+    "ImportPrograms": {
+        "TV": "Medusa"
+    },
     "Tools": {
         "WinRarPath": "C:\\Program Files\\WinRAR\\rar.exe",
         "MKVMergePath": "C:\\Program Files\\MKVToolNix\\mkvmerge.exe",
@@ -26,10 +29,10 @@
         "User": "user",
         "Password": "Password123",
         "API": "2028C39D",
-        "hearing_impaired" : "exclude",
-        "foreign_parts_only" : "exclude",
-        "machine_translated" : "exclude",
-        "ai_translated" : "include"
+        "hearing_impaired": "exclude",
+        "foreign_parts_only": "exclude",
+        "machine_translated": "exclude",
+        "ai_translated": "include"
     },
     "WantedLanguages": [
         "eng",
