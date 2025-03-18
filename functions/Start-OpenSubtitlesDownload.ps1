@@ -179,9 +179,10 @@ function Start-OpenSubtitlesDownload {
             "User-Agent" = "Torrentscript"
             "Api-Key"    = $APIKey
         }
+        $encodedQuery = [System.Web.HttpUtility]::UrlEncode($query)
 
         # Build the URI with query parameters
-        $uri = "https://api.opensubtitles.com/api/v1/subtitles?type=$type&query=$query&languages=$languages&moviehash=$moviehash&hearing_impaired=$hearing_impaired&foreign_parts_only=$foreign_parts_only&machine_translated=$machine_translated&ai_translated=$ai_translated"
+        $uri = "https://api.opensubtitles.com/api/v1/subtitles?type=$type&query=$encodedQuery&languages=$languages&moviehash=$moviehash&hearing_impaired=$hearing_impaired&foreign_parts_only=$foreign_parts_only&machine_translated=$machine_translated&ai_translated=$ai_translated"
 
         try {
             # Make request
@@ -323,6 +324,7 @@ function Start-OpenSubtitlesDownload {
             $stream.Position = [Math]::Max(0L, $stream.Length - $dataLength)
             $lhash = LongSum $lhash (StreamHash $stream)
             $hash = "{0:X}" -f $lhash
+            $hash = $hash.ToLower()
             if ($hash.Length -lt 16) {
                 $hash = ("0" * (16 - $hash.Length)) + $hash
             }
@@ -338,7 +340,7 @@ function Start-OpenSubtitlesDownload {
         $token = Connect-OpenSubtitleAPI -username $OpenSubUser -password $OpenSubPass -APIKey $OpenSubAPI
 
         if ($token) {
-            $videoFiles = @(Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
+            $videoFiles = @(Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" })
 
             foreach ($videoFile in $videoFiles) {
                 $videoHash = Get-VideoHash $videoFile.FullName

@@ -53,7 +53,30 @@ ForEach ($import in @($Functions)) {
 # User Variables
 try {
     $configPath = Join-Path $PSScriptRoot 'config.json'
-    $Config = Get-Content $configPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+    $sampleConfigPath = Join-Path $PSScriptRoot 'config-sample.json'
+    
+    # Load the JSON files and Read and parse JSON
+    $Config = Get-Content $configPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop 
+    $configSample = Get-Content $sampleConfigPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop 
+
+    # Run comparison
+    $result = Compare-JsonKeys -ReferenceJson $configSample -TestJson $Config
+
+    # Output results
+    if ($result.Missing.Count -eq 0 -and $result.Extra.Count -eq 0) {
+        Write-Host "✅ config.json matches config-sample.json"
+    } else {
+        if ($result.Missing.Count -gt 0) {
+            Write-Host "❌ Missing keys in config.json:"
+            $result.Missing | ForEach-Object { Write-Host "  - $_" }
+            exit 1
+        }
+        if ($result.Extra.Count -gt 0) {
+            Write-Host "⚠️ Extra keys in config.json:"
+            $result.Extra | ForEach-Object { Write-Host "  - $_" }
+        }
+    }
+
 } catch {
     Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
     Write-Host 'Invalid config.json file' -ForegroundColor Red
