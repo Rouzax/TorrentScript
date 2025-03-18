@@ -45,7 +45,7 @@ function Stop-Script {
     # Handle Empty Download Label
     if ($DownloadLabel -ne 'NoMail') {
         try {
-            $HTMLBody = Get-Content -Path $LogFilePath -Raw -ErrorAction Stop
+            $HTMLBody = Get-Content -LiteralPath $LogFilePath -Raw -ErrorAction Stop
         } catch {
             # Handle errors
             $errorMessage = $_.Exception.Message
