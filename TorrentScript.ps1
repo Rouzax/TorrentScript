@@ -64,15 +64,15 @@ try {
 
     # Output results
     if ($result.Missing.Count -eq 0 -and $result.Extra.Count -eq 0) {
-        Write-Host "✅ config.json matches config-sample.json"
+        Write-Host "[SUCCESS] config.json matches config-sample.json"
     } else {
         if ($result.Missing.Count -gt 0) {
-            Write-Host "❌ Missing keys in config.json:"
+            Write-Host "[ERROR] Missing keys in config.json:"
             $result.Missing | ForEach-Object { Write-Host "  - $_" }
             exit 1
         }
         if ($result.Extra.Count -gt 0) {
-            Write-Host "⚠️ Extra keys in config.json:"
+            Write-Host "[WARNING] Extra keys in config.json:"
             $result.Extra | ForEach-Object { Write-Host "  - $_" }
         }
     }
