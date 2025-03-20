@@ -55,31 +55,38 @@ try {
     $configPath = Join-Path $PSScriptRoot 'config.json'
     $sampleConfigPath = Join-Path $PSScriptRoot 'config-sample.json'
     
-    # Load the JSON files and Read and parse JSON
+    # Load and parse JSON files with status messages
+    Write-Host "Loading configuration files" -ForegroundColor DarkYellow -NoNewline
     $Config = Get-Content $configPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop 
     $configSample = Get-Content $sampleConfigPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop 
+    Write-Host " -> DONE" -ForegroundColor DarkGreen
 
-    # Run comparison
+    # Compare JSON keys with status message
+    Write-Host "Comparing JSON keys" -ForegroundColor DarkYellow -NoNewline
     $result = Compare-JsonKeys -ReferenceJson $configSample -TestJson $Config
+    Write-Host " -> DONE" -ForegroundColor DarkGreen
 
-    # Output results
+    # Output the result in a formatted manner
     if ($result.Missing.Count -eq 0 -and $result.Extra.Count -eq 0) {
-        Write-Host "[SUCCESS] config.json matches config-sample.json"
+        Write-Host "[SUCCESS] config.json matches config-sample.json" -ForegroundColor DarkGreen
     } else {
         if ($result.Missing.Count -gt 0) {
-            Write-Host "[ERROR] Missing keys in config.json:"
-            $result.Missing | ForEach-Object { Write-Host "  - $_" }
+            Write-Host "[ERROR] Missing keys in config.json:" -ForegroundColor DarkRed
+            $result.Missing | ForEach-Object { 
+                Write-Host "  - $_" -ForegroundColor Red 
+            }
             exit 1
         }
         if ($result.Extra.Count -gt 0) {
-            Write-Host "[WARNING] Extra keys in config.json:"
-            $result.Extra | ForEach-Object { Write-Host "  - $_" }
+            Write-Host "[WARNING] Extra keys in config.json:" -ForegroundColor DarkYellow
+            $result.Extra | ForEach-Object { 
+                Write-Host "  - $_" -ForegroundColor Yellow 
+            }
         }
     }
-
 } catch {
-    Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
-    Write-Host 'Invalid config.json file' -ForegroundColor Red
+    Write-Host "Exception: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Invalid config.json file" -ForegroundColor Red
     exit 1
 }
 
