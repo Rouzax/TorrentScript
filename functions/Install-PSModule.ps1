@@ -33,14 +33,14 @@ function Install-PSModule {
         Write-Host "Check if $ModuleName Module is installed" -ForegroundColor DarkYellow -NoNewline
 
         if (-not (Get-Module -Name $ModuleName -ListAvailable)) {
-            Write-Host " -> FAILED" -ForegroundColor DarkRed
+            Write-Host " -> MISSING" -ForegroundColor Yellow
 
             # Check if NuGet is available as Package Provider
             if (-not (Get-PackageProvider -Name "NuGet")) {
                 Write-Host "Check if NuGet is available as Package Provider" -ForegroundColor DarkYellow -NoNewline
 
                 if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
-                    Write-Host " -> FAILED" -ForegroundColor DarkRed
+                    Write-Host " -> MISSING" -ForegroundColor Yellow
 
                     # Install NuGet Package Provider if not available
                     if (Find-PackageProvider -Name NuGet) {
