@@ -112,23 +112,53 @@ function Start-OpenSubtitlesDownload {
             password = $password
         } | ConvertTo-Json
 
-        try {
-            # Make requests
-            $response = Invoke-RestMethod -Uri 'https://api.opensubtitles.com/api/v1/login' -Method POST -Headers $headers -ContentType 'application/json' -Body $body
-            # Check for successful login
-            if ($response.status -eq 200) {
-                return $response.token
-            } else {
-                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Login failed:" -ColorBg 'Error'
-                Write-HTMLLog -Column2 "$($response.status)" -ColorBg 'Error'
+        # simple retry on 429 Too Many Requests, honoring Retry-After if present
+        $maxAttempts = 5
+        for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+            try {
+                $response = Invoke-RestMethod -Uri 'https://api.opensubtitles.com/api/v1/login' -Method POST -Headers $headers -ContentType 'application/json' -Body $body
+                # success: return token when present
+                if ($response.token) {
+                    return $response.token
+                } else {
+                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Login failed: token not returned." -ColorBg 'Error'
+                    return $null
+                }
+            } catch {
+                # Handle rate limiting explicitly; otherwise rethrow/log and stop
+                $statusCode = $null
+                try {
+                    $statusCode = $_.Exception.Response.StatusCode.value__ 
+                } catch {
+                }
+
+                if ($statusCode -eq 429 -and $attempt -lt $maxAttempts) {
+                    # Respect Retry-After header when provided
+                    $retryAfter = 0
+                    try {
+                        $retryAfter = [int]$_.Exception.Response.Headers['Retry-After'] 
+                    } catch {
+                    }
+                    if (-not $retryAfter -or $retryAfter -lt 1) {
+                        # fallback exponential backoff: 1,2,4,8...
+                        $retryAfter = [int][math]::Pow(2, ($attempt - 1))
+                    }
+                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Rate limited on login (429). Retrying in ${retryAfter}s (attempt $attempt of $maxAttempts)..." -ColorBg 'Warning'
+                    Start-Sleep -Seconds $retryAfter
+                    continue
+                }
+
+                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Error occurred while logging in:" -ColorBg 'Error'
+                Write-HTMLLog -Column2 "$($_.Exception.Message)" -ColorBg 'Error'
                 return $null
             }
-        } catch {
-            Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Error occurred while logging in:" -ColorBg 'Error'
-            Write-HTMLLog -Column2 "$($_.Exception.Message)" -ColorBg 'Error'
-            return $null
         }
+
+        # If we exhausted attempts without success
+        Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Login failed after $maxAttempts attempts due to rate limiting." -ColorBg 'Error'
+        return $null
     }
+
 
     # Function to disconnect from the OpenSubtitle API
     function Disconnect-OpenSubtitleAPI {
@@ -370,7 +400,7 @@ function Start-OpenSubtitlesDownload {
                     Write-HTMLLog -Column1 "Downloaded:" -Column2 "$($subtitlesCounts.LanguageCounts[$language]) in $($language.ToUpper())"
                 }
                 # Log the counts
-                Write-HTMLLog -Column1 "Downloaded:"  -Column2 "$($subtitlesCounts.Downloaded) Total"
+                Write-HTMLLog -Column1 "Downloaded:" -Column2 "$($subtitlesCounts.Downloaded) Total"
                 Write-HTMLLog -Column2 "Remaining downloads today: $($subtitlesCounts.RemainingDownloads)"
 
                 if ($($subtitlesCounts.Failed) -gt 0) {
