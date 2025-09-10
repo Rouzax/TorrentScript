@@ -143,7 +143,7 @@ function Start-OpenSubtitlesDownload {
                         # fallback exponential backoff: 1,2,4,8...
                         $retryAfter = [int][math]::Pow(2, ($attempt - 1))
                     }
-                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Rate limited on login (429). Retrying in ${retryAfter}s (attempt $attempt of $maxAttempts)..." -ColorBg 'Warning'
+                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Rate limited on login (429). Retrying in ${retryAfter}s (attempt $attempt of $maxAttempts)..." -ColorBg 'Success'
                     Start-Sleep -Seconds $retryAfter
                     continue
                 }
