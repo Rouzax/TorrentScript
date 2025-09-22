@@ -342,7 +342,7 @@ function Start-OpenSubtitlesDownload {
         $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/login' `
                                     -Method POST -Headers $headers `
                                     -ContentType 'application/json' -Body $body `
-                                    -MaxAttempts 2 -StopOnAuthError `
+                                    -MaxAttempts 5 -StopOnAuthError `
                                     -RespHeaders ([ref]$respHeaders)
 
         if ($response -and $response.token) {
