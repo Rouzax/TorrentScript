@@ -225,75 +225,92 @@ function Start-OpenSubtitlesDownload {
     $script:OpenSubCreds = @{ Username = $OpenSubUser; APIKey = $OpenSubAPI }
 
     # --- Header-aware, rate-limit-respecting request wrapper ---
-    function Invoke-OpenSubs {
-        param(
-            [Parameter(Mandatory)] [string]$Uri,
-            [Parameter(Mandatory)] [ValidateSet('GET','POST','DELETE')] [string]$Method,
-            [Parameter(Mandatory)] [hashtable]$Headers,
-            [string]$ContentType,
-            $Body = $null,
-            [int]$MaxAttempts = 3,        # For /login, use 2
-            [switch]$StopOnAuthError,     # Stop immediately on 401/403 (invalid creds)
-            [ref]$RespHeaders
-        )
-        for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+ function Invoke-OpenSubs {
+    param(
+        [Parameter(Mandatory)] [string]$Uri,
+        [Parameter(Mandatory)] [ValidateSet('GET','POST','DELETE')] [string]$Method,
+        [Parameter(Mandatory)] [hashtable]$Headers,
+        [string]$ContentType,
+        $Body = $null,
+        [int]$MaxAttempts = 3,        # For /login, use 2
+        [switch]$StopOnAuthError,     # Stop immediately on 401/403 (invalid creds)
+        [ref]$RespHeaders             # returned via .Value = header dictionary
+    )
+
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            $args = @{
+                Uri     = $Uri
+                Method  = $Method
+                Headers = $Headers
+            }
+            # Ensure compatibility with Windows PowerShell 5.1 (no IE dependency)
+            if ($PSVersionTable.PSEdition -eq 'Desktop') { $args.UseBasicParsing = $true }
+            if ($PSBoundParameters.ContainsKey('ContentType')) { $args.ContentType = $ContentType }
+            if ($null -ne $Body) { $args.Body = $Body }
+
+            $resp = Invoke-WebRequest @args
+
+            # Capture headers for rate-limit accounting
+            if ($RespHeaders) { $RespHeaders.Value = $resp.Headers }
+
+            # DELETE endpoints may return no content
+            $content = $resp.Content
+            if ([string]::IsNullOrWhiteSpace($content)) { return $null }
+
+            # Try to parse JSON; if not JSON, return raw content
             try {
-                $localHeaders = $null
-                $args = @{
-                    Uri = $Uri
-                    Method = $Method
-                    Headers = $Headers
-                    ResponseHeadersVariable = 'localHeaders'
-                }
-                if ($PSBoundParameters.ContainsKey('ContentType')) { $args.ContentType = $ContentType }
-                if ($null -ne $Body) { $args.Body = $Body }
-
-                $resp = Invoke-RestMethod @args
-                if ($RespHeaders) { $RespHeaders.Value = $localHeaders }
-                return $resp
+                return ($content | ConvertFrom-Json)
             } catch {
-                $status = $null
-                try { $status = $_.Exception.Response.StatusCode.value__ } catch {}
+                return $content
+            }
+        } catch {
+            $status = $null
+            $hdrs = $null
+            try { $status = $_.Exception.Response.StatusCode.value__ } catch {}
+            try { $hdrs = $_.Exception.Response.Headers } catch {}
 
-                # If asked, stop on auth errors (e.g., bad login)
-                if ($StopOnAuthError -and ($status -in 401,403)) {
-                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Authentication failed (HTTP $status). Stopping." -ColorBg 'Error'
-                    return $null
-                }
-
-                # For any endpoint: if token became invalid, clear cache so next run relogs
-                if ($status -in 401,403) {
-                    try { Clear-TokenCache -Username $script:OpenSubCreds.Username -APIKey $script:OpenSubCreds.APIKey } catch {}
-                }
-
-                if ($status -eq 429) {
-                    $h = $null; try { $h = $_.Exception.Response.Headers } catch {}
-                    $wait = $null
-                    if ($h -and $h['Retry-After']) {
-                        if (-not [int]::TryParse($h['Retry-After'], [ref]$wait)) {
-                            $retryAt = Get-Date $h['Retry-After'] -ErrorAction SilentlyContinue
-                            if ($retryAt) {
-                                $delta = [int][Math]::Ceiling(($retryAt - (Get-Date)).TotalSeconds)
-                                if ($delta -gt 0) { $wait = $delta }
-                            }
-                        }
-                    }
-                    if (-not $wait -and $h -and $h['ratelimit-reset']) { [int]::TryParse($h['ratelimit-reset'], [ref]$wait) | Out-Null }
-                    if (-not $wait -or $wait -lt 1) { $wait = 1 }
-                    $wait += Get-Random -Minimum 0 -Maximum 2
-
-                    if ($attempt -lt $MaxAttempts) {
-                        Write-HTMLLog -Column1 'OpenSubs:' -Column2 "429 received. Retrying in ${wait}s (attempt $attempt of $MaxAttempts)..." -ColorBg 'Error'
-                        Start-Sleep -Seconds $wait
-                        continue
-                    }
-                }
-
-                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Request failed (HTTP $status): $($_.Exception.Message)" -ColorBg 'Error'
+            if ($StopOnAuthError -and ($status -in 401,403)) {
+                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Authentication failed (HTTP $status). Stopping." -ColorBg 'Error'
                 return $null
             }
+
+            # Token invalid mid-run? Clear cache so next run relogs.
+            if ($status -in 401,403) {
+                try { Clear-TokenCache -Username $script:OpenSubCreds.Username -APIKey $script:OpenSubCreds.APIKey } catch {}
+            }
+
+            if ($status -eq 429) {
+                # Derive wait strictly from headers
+                $wait = $null
+                if ($hdrs -and $hdrs['Retry-After']) {
+                    if (-not [int]::TryParse($hdrs['Retry-After'], [ref]$wait)) {
+                        $retryAt = Get-Date $hdrs['Retry-After'] -ErrorAction SilentlyContinue
+                        if ($retryAt) {
+                            $delta = [int][Math]::Ceiling(($retryAt - (Get-Date)).TotalSeconds)
+                            if ($delta -gt 0) { $wait = $delta }
+                        }
+                    }
+                }
+                if (-not $wait -and $hdrs -and $hdrs['ratelimit-reset']) {
+                    [int]::TryParse($hdrs['ratelimit-reset'], [ref]$wait) | Out-Null
+                }
+                if (-not $wait -or $wait -lt 1) { $wait = 1 }
+                $wait += Get-Random -Minimum 0 -Maximum 2
+
+                if ($attempt -lt $MaxAttempts) {
+                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "429 received. Retrying in ${wait}s (attempt $attempt of $MaxAttempts)..." -ColorBg 'Error'
+                    Start-Sleep -Seconds $wait
+                    continue
+                }
+            }
+
+            Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Request failed (HTTP $status): $($_.Exception.Message)" -ColorBg 'Error'
+            return $null
         }
     }
+}
+
 
     # --- OpenSubtitles auth helpers (with token cache + conditional logout) ---
     $script:OpenSubsUsedCachedToken = $false
