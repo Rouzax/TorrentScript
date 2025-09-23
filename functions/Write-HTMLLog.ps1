@@ -1,114 +1,211 @@
+# =========================
+# HTML Logging (Inline Style Version - Gmail Safe)
+# =========================
+
+# Script-scope storage instead of globals
+$script:HtmlLogEntries = @()
+$script:HtmlLogStarted = $false
+
 <#
 .SYNOPSIS
-    Starts and stops Log file
+Encodes a string for safe HTML rendering.
+
 .DESCRIPTION
-    Will either initiate the Log Variable in memory and open the HTML Table or closes the table
-.PARAMETER Start
-    If defined indicated to open the HTML Table, without it the HTML table will be closed
+Replaces special characters (&, <, >, ", ') with HTML entities so text does not break HTML markup.
+Empty or null strings are allowed and return as empty.
+
+.PARAMETER Text
+The input string to encode.
+
 .EXAMPLE
-    Format-Table -Start
-    Format-Table
-.NOTES
-    General notes
+ConvertTo-HtmlEncoded -Text "<Hello & Goodbye>"
+# Returns: &lt;Hello &amp; Goodbye&gt;
+#>
+function ConvertTo-HtmlEncoded {
+    param(
+        [Parameter()] [AllowEmptyString()] [string]$Text
+    )
+    if ($null -eq $Text) {
+        return '' 
+    }
+    $Text -replace '&', '&amp;' `
+        -replace '<', '&lt;' `
+        -replace '>', '&gt;' `
+        -replace '"', '&quot;' `
+        -replace "'", '&#39;'
+}
+
+<#
+.SYNOPSIS
+Initialize or close the in-memory HTML log (compat shim).
+
+.DESCRIPTION
+When called with -Start, clears and initializes the in-memory log buffer.
+Calling without -Start closes the buffer (no longer accepts entries).
+Rendering is performed by Write-Log.
+
+.PARAMETER Start
+If specified, initializes/clears the in-memory log buffer.
+
+.EXAMPLE
+Format-Table -Start
+# Initializes the log buffer.
+
+.EXAMPLE
+Format-Table
+# Closes the log buffer.
 #>
 function Format-Table {
     [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $false)]
-        [switch]$Start
-    )
-
+    param ([Parameter()][switch]$Start)
     if ($Start) {
-        $global:Log = @()
-        $global:Log += "<table border=`"0`" align=`"center`" cellspacing=`"0`""
-        $global:Log += "<table border=`"0`" align=`"center`" cellspacing=`"0`""
-        $global:Log += "style=`"border-collapse:collapse;background-color:#555555;color:#FFFFFF;font-family:arial,helvetica,sans-serif;font-size:10pt;`">"
-        $global:Log += "<col width=`"125`">"
-        $global:Log += "<col width=`"500`">"
-        $global:Log += '<tbody>'
+        $script:HtmlLogEntries = @()
+        $script:HtmlLogStarted = $true
     } else {
-        $global:Log += '</tbody>'
-        $global:Log += '</table>'
+        $script:HtmlLogStarted = $false
     }
 }
 
 <#
 .SYNOPSIS
-    Add line to in memory log
+Add a row to the in-memory HTML log.
+
 .DESCRIPTION
-    Adds a line to the in memory log file and based on the parameters will do formatting
+Stores a structured log entry with two columns and optional header.
+Visual emphasis is controlled by -ColorBg (Default, Success, Warning, Error).
+Rendering to HTML occurs later with Convert-HTMLLogToString or Write-Log.
+
 .PARAMETER Column1
-    Text to be put in first column, not mandatory
+Text for the first column (usually the label).
+
 .PARAMETER Column2
-    Text to be put in the second column, not mandatory
+Text for the second column (usually the value or message).
+
 .PARAMETER Header
-    Define that the Text from the parameter Column1 should be treated as new Header in the log table.
-    If switch is defined Column2 is ignored
+Treat this row as a table header (spans two columns). Column2 is ignored.
+
 .PARAMETER ColorBg
-    Background color of Table Cell, this is a switch indicating a Success or Error. If not defined the standard color will be used.
-    Success will get Green Table Cell color
-    Error will get Red Table Cell Color
+Row type: Default, Success, Warning, or Error. Determines the background color of Column2.
+
 .EXAMPLE
-    Write-HTMLLog -Column1 '***  Header of the table  ***' -Header
-    Write-HTMLLog -Column1 'Column1 Text' -Column2 'Column2 Text'
-    Write-HTMLLog -Column1 'Exit Code:' -Column2 'Failed to do X' -ColorBg 'Error'
-    Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
+Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg Success
+
+.EXAMPLE
+Write-HTMLLog -Column1 "*** Information ***" -Header
 #>
-Function Write-HTMLLog {
+function Write-HTMLLog {
     [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory = $false)]
-        [string]$Column1,
-
-        [Parameter(Mandatory = $false)]
-        [string]$Column2,
-
-        [Parameter(Mandatory = $false)]
-        [switch]$Header,
-
-        [Parameter(Mandatory = $false)]
-        [ValidateSet(
-            'Success', 
-            'Error'
-        )]
-        [string]$ColorBg
+    param(
+        [Parameter()] [string]$Column1,
+        [Parameter()] [string]$Column2,
+        [Parameter()] [switch]$Header,
+        [Parameter()] [ValidateSet('Default', 'Success', 'Warning', 'Error')] [string]$ColorBg = 'Default'
     )
 
-    $global:Log += '<tr>'
-    if ($Header) {
-        $global:Log += "<td colspan=`"2`" style=`"background-color:#398AA4;text-align:center;font-size:10pt`"><b>$Column1</b></td>"
-    } else {
-        if ($ColorBg -eq '') {
-            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`">$Column2</td>"
-            $global:Log += '</tr>'
-        } elseif ($ColorBg -eq 'Success') {
-            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#555000`">$Column2</td>"
-            $global:Log += '</tr>'  
-        } elseif ($ColorBg -eq 'Error') {
-            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;`"><b>$Column1</b></td>"
-            $global:Log += "<td style=`"vertical-align:top;padding: 0px 10px;background-color:#550000`">$Column2</td>"
-            $global:Log += '</tr>'  
-        }
+    if (-not $script:HtmlLogStarted) {
+        $script:HtmlLogEntries = @()
+        $script:HtmlLogStarted = $true
     }
-    if ($Column1 -eq "") {
-        <# Action to perform if the condition is true #>
-    }
-    Write-Host $(($Column1, $Column2 | Where-Object { $_ }) -join ' ')
-    # Write-Host "$Column1 $Column2"
-}
 
+    $entry = [PSCustomObject]@{
+        Header  = [bool]$Header
+        Type    = $ColorBg
+        Column1 = $Column1
+        Column2 = $Column2
+    }
+
+    $script:HtmlLogEntries += $entry
+
+    # Console echo
+    $toShow = @($Column1, $Column2) | Where-Object { $_ -and $_.Trim() -ne '' }
+    if ($toShow.Count) {
+        Write-Host ($toShow -join ' ')
+    }
+}
 
 <#
 .SYNOPSIS
-    Write log to disk
+Render in-memory log entries to an HTML string.
+
 .DESCRIPTION
-    Takes the Global Variable that hold the log in memory and writes it to disk
-.PARAMETER LogFile
-    Log File including the Path to write
+Generates a complete HTML <table> element with inline styles suitable for Gmail or browsers.
+Includes all log rows, headers, and formatting.
+
 .EXAMPLE
-    Write-Log -LogFile 'C:\Temp\logfile.html'
+$html = Convert-HTMLLogToString
+# Renders the log to an HTML string.
+
+.EXAMPLE
+Convert-HTMLLogToString | Out-File "C:\Logs\log.html"
+# Saves the rendered HTML to a file.
+#>
+function Convert-HTMLLogToString {
+    [CmdletBinding()]
+    param()
+
+    $rows = New-Object System.Collections.Generic.List[string]
+
+    # Table wrapper
+    $rows.Add('<table border="0" align="center" cellspacing="0" style="border-collapse:collapse;background-color:#555555;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:10pt;">')
+    $rows.Add('<col width="125"><col width="500">')
+    $rows.Add('<tbody>')
+
+    foreach ($e in $script:HtmlLogEntries) {
+        $rows.Add('<tr>')
+        if ($e.Header) {
+            $c1 = ConvertTo-HtmlEncoded $e.Column1
+            $rows.Add("<td colspan=""2"" style=""background-color:#398AA4;text-align:center;font-size:10pt;font-weight:bold;"">$c1</td>")
+            $rows.Add('</tr>')
+            continue
+        }
+
+        $c1 = ConvertTo-HtmlEncoded $e.Column1
+        $c2 = ConvertTo-HtmlEncoded $e.Column2
+
+        $rows.Add("<td style=""vertical-align:top;padding:0px 10px;""><b>$c1</b></td>")
+
+        switch ($e.Type) {
+            'Success' {
+                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;background-color:#2C5000;"">$c2</td>")
+            }
+            'Error' {
+                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;background-color:#8C161F;"">$c2</td>")
+            }
+            'Warning' {
+                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;background-color:#925400;"">$c2</td>")
+            }
+            Default {
+                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;"">$c2</td>")
+            }
+        }
+
+        $rows.Add('</tr>')
+    }
+
+    $rows.Add('</tbody>')
+    $rows.Add('</table>')
+
+    return ($rows -join "`r`n")
+}
+
+<#
+.SYNOPSIS
+Write the HTML log to disk.
+
+.DESCRIPTION
+Renders the current in-memory log to an HTML string and writes it to the specified file.
+Uses UTF-8 without BOM encoding for compatibility with most tools and email systems.
+
+.PARAMETER LogFile
+The target file path (including .html extension).
+
+.EXAMPLE
+Write-Log -LogFile "C:\Temp\logfile.html"
+# Saves the rendered log to an HTML file.
+
+.EXAMPLE
+Write-Log -LogFile "/var/www/html/log.html"
+# On Linux, saves the rendered log to the web root.
 #>
 function Write-Log {
     [CmdletBinding()]
@@ -116,5 +213,12 @@ function Write-Log {
         [Parameter(Mandatory = $true)]
         [string]$LogFile
     )
-    Set-Content -LiteralPath $LogFile -Value $global:Log
+    $html = Convert-HTMLLogToString
+
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        Set-Content -LiteralPath $LogFile -Value $html -Encoding utf8NoBOM
+    } else {
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($LogFile, $html, $utf8NoBom)
+    }
 }
