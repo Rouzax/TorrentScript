@@ -243,14 +243,18 @@ function Start-MKVSubtitleStrip {
             # Extract the language code from the file name
             $languageCode = $srt -replace '.*\.([a-zA-Z]+)\.srt$', '$1' 
 
-            # Check if the language code exists in the lookup table
-            if ($LanguageCodeLookup.ContainsKey($languageCode)) {
-                $SrtNameNew = $SrtName -replace "\.$languageCode\.srt$", ".$($LanguageCodeLookup[$languageCode]).srt"
-                $Destination = Join-Path -Path $SrtDirectory -ChildPath $SrtNameNew
-                Move-Item -LiteralPath $SrtPath -Destination $Destination -Force
-            } else {
-                Write-HTMLLog -Column2 "Language code [$languageCode] not found in the 3 letter lookup table." -ColorBg 'Warning'
+            # Only process if the language code is exactly 3 characters
+            if ($languageCode.Length -eq 3) {
+                # Check if the language code exists in the lookup table
+                if ($LanguageCodeLookup.ContainsKey($languageCode)) {
+                    $SrtNameNew = $SrtName -replace "\.$languageCode\.srt$", ".$($LanguageCodeLookup[$languageCode]).srt"
+                    $Destination = Join-Path -Path $SrtDirectory -ChildPath $SrtNameNew
+                    Move-Item -LiteralPath $SrtPath -Destination $Destination -Force
+                } else {
+                    Write-HTMLLog -Column2 "Language code [$languageCode] not found in the 3 letter lookup table." -ColorBg 'Warning'
+                }
             }
+
         }
         if ($TotalSubsToExtract -gt 0) {
             Write-HTMLLog -Column1 'Subtitles:' -Column2 "$TotalSubsToExtract Extracted"
