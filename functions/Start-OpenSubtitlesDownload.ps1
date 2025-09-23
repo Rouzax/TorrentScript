@@ -1,123 +1,84 @@
 <#
 .SYNOPSIS
-    Searches for and downloads missing subtitles from OpenSubtitles.com with rate-limit aware retries and token caching.
+    Download missing subtitles from OpenSubtitles.com with token caching and rate-limit handling.
 
 .DESCRIPTION
-    Start-OpenSubtitlesDownload scans a source directory for video files and downloads missing subtitles
-    from the OpenSubtitles API. It is designed to run unattended (e.g., after a download completes) and
-    handles common edge cases:
+    Scans a source directory for video files and downloads missing subtitles via the OpenSubtitles API.  
+    Designed for unattended runs (e.g., post-download), with support for caching tokens, handling rate 
+    limits (HTTP 429), and distinguishing between “already present” and “not found” subtitles.  
 
-      • Auth: Uses a per-user token cache (Windows: %LOCALAPPDATA%\TorrentScript\OpenSubtitles,
-              Linux/macOS: $XDG_CACHE_HOME or ~/.cache/TorrentScript/OpenSubtitles) to avoid repeated
-              /login calls. If any API call returns 401/403, the cached token is cleared automatically.
-      • Rate limits: On HTTP 429, retries are paced strictly by response headers (Retry-After or ratelimit-reset).
-        /login is attempted at most twice and stops immediately on 401/403.
-      • Logout: If a fresh login occurred during this run, the function logs out on completion.
-                If a cached token was used, logout is skipped to keep the token usable for subsequent runs.
-      • Logging: Uses Write-HTMLLog for structured status lines (only ColorBg 'Success' or 'Error').
-
-    The function supports recursive scanning and ignores common "Sample" subfolders. It can filter by
-    episode/movie type and by subtitle attributes such as hearing-impaired, foreign-parts-only, machine-
-    translated, and AI-translated. Only subtitles in the requested languages are considered.
+    Key features:
+      • Token cache per user/API key (Windows: %LOCALAPPDATA%\TorrentScript\OpenSubtitles,
+        Linux/macOS: $XDG_CACHE_HOME or ~/.cache/TorrentScript/OpenSubtitles).  
+        Cached tokens are reused; invalid tokens (401/403) clear the cache.  
+      • Login retried up to 5 times on 429, paced by Retry-After/ratelimit-reset headers.  
+      • Search/download retried up to 3 times on 429.  
+      • Logs out only if a fresh login was made (cached tokens remain valid).  
+      • Logging via Write-HTMLLog (ColorBg supports 'Success' or 'Error').  
+      • Computes a video hash (length + first/last 64 KiB) to improve matching.  
+      • Ignores “Sample” folders. Supports filtering for episode/movie type and subtitle attributes.  
 
 .PARAMETER Source
-    Root directory to scan for video files. The search is recursive.
-    Video extensions supported: .mkv, .mp4, .avi
-    Sample folders (e.g., "*\Sample") are skipped.
+    Directory to scan recursively for video files (.mkv, .mp4, .avi).  
+    Sample folders are skipped.  
 
 .PARAMETER OpenSubUser
-    OpenSubtitles account username used for authentication.
+    OpenSubtitles username.  
 
 .PARAMETER OpenSubPass
-    OpenSubtitles account password used for authentication.
+    OpenSubtitles password.  
 
 .PARAMETER OpenSubAPI
-    OpenSubtitles API key.
+    OpenSubtitles API key.  
 
-.PARAMETER OpenSubHearing_impaired
-    Filter for hearing-impaired subtitles.
-    Accepted values: include, exclude, only
-
+.PARAMETER OpenSubHearing_impaired 
+    Filter for hearing-impaired subtitles. 
+    Accepted values: include, exclude, only 
+    
 .PARAMETER OpenSubForeign_parts_only
-    Filter for “foreign parts only” subtitles.
-    Accepted values: include, exclude, only
+    Filter for “foreign parts only” subtitles. 
+    Accepted values: include, exclude, only 
 
-.PARAMETER OpenSubMachine_translated
-    Filter for machine-translated subtitles.
-    Accepted values: include, exclude, only
-
-.PARAMETER OpenSubAI_translated
-    Filter for AI-translated subtitles.
+.PARAMETER OpenSubMachine_translated 
+    Filter for machine-translated subtitles. 
+    Accepted values: include, exclude, only 
+    
+.PARAMETER OpenSubAI_translated 
+    Filter for AI-translated subtitles. 
     Accepted values: include, exclude, only
 
 .PARAMETER WantedLanguages
-    One or more ISO language codes indicating the desired subtitle languages (e.g. 'en','nl','fr').
-    The function will attempt to download one matching subtitle per requested language, per file.
+    ISO language codes (e.g., 'en','nl','fr'). Downloads one per requested language per file.  
 
 .PARAMETER Type
-    Content type used by the OpenSubtitles search API.
-    Accepted values: episode, movie
+    Content type for the API: movie or episode.  
 
 .INPUTS
-    None. All inputs are provided via parameters.
+    None.  
 
 .OUTPUTS
-    None (no objects returned). Writes progress and results using Write-HTMLLog, including:
-      - Per-language and total download counts
-      - Failed download counts
-      - Last-seen per-second remaining allowance (if available from headers)
+    None. Writes progress and results using Write-HTMLLog, including:  
+      - Downloaded per language & total  
+      - Already present & failed counts  
+      - Languages not found  
+      - Remaining daily downloads (if reported by API)  
 
 .EXAMPLE
     Start-OpenSubtitlesDownload `
       -Source "D:\Media\Movies" `
-      -OpenSubUser "myuser" `
-      -OpenSubPass "mypassword" `
-      -OpenSubAPI  "myapikey" `
-      -OpenSubHearing_impaired  "exclude" `
-      -OpenSubForeign_parts_only "exclude" `
-      -OpenSubMachine_translated "exclude" `
-      -OpenSubAI_translated "exclude" `
-      -WantedLanguages @("en","nl") `
-      -Type "movie"
+      -OpenSubUser "user" -OpenSubPass "pass" -OpenSubAPI "apikey" `
+      -OpenSubHearing_impaired "exclude" -OpenSubForeign_parts_only "exclude" `
+      -OpenSubMachine_translated "exclude" -OpenSubAI_translated "exclude" `
+      -WantedLanguages @("en","nl") -Type "movie"
 
-    Recursively scans D:\Media\Movies for video files and downloads English and Dutch subtitles
-    while excluding hearing-impaired, foreign-only, machine- and AI-translated variants.
-
-.EXAMPLE
-    Start-OpenSubtitlesDownload `
-      -Source "E:\TV" `
-      -OpenSubUser "myuser" `
-      -OpenSubPass "mypassword" `
-      -OpenSubAPI  "myapikey" `
-      -OpenSubHearing_impaired  "include" `
-      -OpenSubForeign_parts_only "include" `
-      -OpenSubMachine_translated "only" `
-      -OpenSubAI_translated "exclude" `
-      -WantedLanguages @("en") `
-      -Type "episode"
-
-    Searches for episode-type subtitles under E:\TV with specified attribute filters.
+    Downloads English and Dutch subtitles for all movies under D:\Media\Movies.  
 
 .NOTES
-    • Authentication:
-        - The function first tries a cached token (per user+API key). If valid, it is reused.
-        - If login is needed, /login is attempted at most once with one retry on 429 (MaxAttempts=2),
-          and will not retry on 401/403 (bad credentials).
-        - If a cached token was used, logout is skipped to keep the token valid for later runs.
-          If a fresh login occurred, the function logs out on completion.
-        - If any request returns 401/403, the cached token is cleared for the next run.
-
-    • Rate Limiting:
-        - Retries on 429 are driven strictly by API response headers (Retry-After or ratelimit-reset),
-          with a small randomized jitter to avoid synchronized retries.
-        - Search and download requests use up to 3 attempts; login uses up to 2 attempts.
-
-    • Logging:
-        - Requires Write-HTMLLog (ColorBg supports only 'Success' or 'Error').
-
-    • Hashing:
-        - A video hash is computed (first/last 64 KiB + file length) to improve match accuracy.
+    • Safe for unattended execution; distinguishes “no subtitles needed” vs “none found.”  
+    • Clears token cache automatically if authentication fails.  
+    • Retries respect API rate-limit headers; adds small jitter to avoid collisions.  
 #>
+
 
 function Start-OpenSubtitlesDownload {
     param(
@@ -157,7 +118,7 @@ function Start-OpenSubtitlesDownload {
         [string]$Type
     )
 
-    # Make sure needed functions are available otherwise try to load them.
+    # Ensure external dependencies
     $functionsToLoad = @('Write-HTMLLog')
     foreach ($functionName in $functionsToLoad) {
         if (-not (Get-Command $functionName -ErrorAction SilentlyContinue)) {
@@ -171,7 +132,7 @@ function Start-OpenSubtitlesDownload {
         }
     }
 
-    # --- Token cache helpers (per user+API key) ---
+    # ---------------- Token cache helpers ----------------
     function Get-TSCacheRoot {
         if ($IsWindows) {
             return (Join-Path $env:LOCALAPPDATA 'TorrentScript\OpenSubtitles')
@@ -209,7 +170,7 @@ function Start-OpenSubtitlesDownload {
         try {
             [pscustomobject]@{
                 username   = $Username
-                api_key    = '***' # don't persist API key
+                api_key    = '***' # do not persist API key
                 token      = $Token
                 expires_at = $ExpiresAt.ToString('o')
             } | ConvertTo-Json | Set-Content -Path $path -Encoding UTF8
@@ -221,98 +182,87 @@ function Start-OpenSubtitlesDownload {
         if (Test-Path $path) { Remove-Item $path -Force -ErrorAction SilentlyContinue }
     }
 
-    # Keep creds in script scope so lower helpers can clear cache on 401/403
+    # Keep creds accessible to clear cache on auth errors
     $script:OpenSubCreds = @{ Username = $OpenSubUser; APIKey = $OpenSubAPI }
 
-    # --- Header-aware, rate-limit-respecting request wrapper ---
- function Invoke-OpenSubs {
-    param(
-        [Parameter(Mandatory)] [string]$Uri,
-        [Parameter(Mandatory)] [ValidateSet('GET','POST','DELETE')] [string]$Method,
-        [Parameter(Mandatory)] [hashtable]$Headers,
-        [string]$ContentType,
-        $Body = $null,
-        [int]$MaxAttempts = 3,        # For /login, use 2
-        [switch]$StopOnAuthError,     # Stop immediately on 401/403 (invalid creds)
-        [ref]$RespHeaders             # returned via .Value = header dictionary
-    )
+    # ---------------- Request wrapper (Invoke-WebRequest) ----------------
+    function Invoke-OpenSubs {
+        param(
+            [Parameter(Mandatory)] [string]$Uri,
+            [Parameter(Mandatory)] [ValidateSet('GET','POST','DELETE')] [string]$Method,
+            [Parameter(Mandatory)] [hashtable]$Headers,
+            [string]$ContentType,
+            $Body = $null,
+            [int]$MaxAttempts = 3,        # For /login, we’ll use 5 as requested
+            [switch]$StopOnAuthError,     # Stop immediately on 401/403
+            [ref]$RespHeaders             # headers returned here (if provided)
+        )
 
-    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
-        try {
-            $args = @{
-                Uri     = $Uri
-                Method  = $Method
-                Headers = $Headers
-            }
-            # Ensure compatibility with Windows PowerShell 5.1 (no IE dependency)
-            if ($PSVersionTable.PSEdition -eq 'Desktop') { $args.UseBasicParsing = $true }
-            if ($PSBoundParameters.ContainsKey('ContentType')) { $args.ContentType = $ContentType }
-            if ($null -ne $Body) { $args.Body = $Body }
-
-            $resp = Invoke-WebRequest @args
-
-            # Capture headers for rate-limit accounting
-            if ($RespHeaders) { $RespHeaders.Value = $resp.Headers }
-
-            # DELETE endpoints may return no content
-            $content = $resp.Content
-            if ([string]::IsNullOrWhiteSpace($content)) { return $null }
-
-            # Try to parse JSON; if not JSON, return raw content
+        for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
             try {
-                return ($content | ConvertFrom-Json)
+                $args = @{
+                    Uri     = $Uri
+                    Method  = $Method
+                    Headers = $Headers
+                }
+                # Compatibility with Windows PowerShell 5.1
+                if ($PSVersionTable.PSEdition -eq 'Desktop') { $args.UseBasicParsing = $true }
+                if ($PSBoundParameters.ContainsKey('ContentType')) { $args.ContentType = $ContentType }
+                if ($null -ne $Body) { $args.Body = $Body }
+
+                $resp = Invoke-WebRequest @args
+
+                if ($RespHeaders) { $RespHeaders.Value = $resp.Headers }
+
+                $content = $resp.Content
+                if ([string]::IsNullOrWhiteSpace($content)) { return $null }
+
+                try { return ($content | ConvertFrom-Json) } catch { return $content }
             } catch {
-                return $content
-            }
-        } catch {
-            $status = $null
-            $hdrs = $null
-            try { $status = $_.Exception.Response.StatusCode.value__ } catch {}
-            try { $hdrs = $_.Exception.Response.Headers } catch {}
+                $status = $null
+                $hdrs = $null
+                try { $status = $_.Exception.Response.StatusCode.value__ } catch {}
+                try { $hdrs = $_.Exception.Response.Headers } catch {}
 
-            if ($StopOnAuthError -and ($status -in 401,403)) {
-                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Authentication failed (HTTP $status). Stopping." -ColorBg 'Error'
-                return $null
-            }
+                if ($StopOnAuthError -and ($status -in 401,403)) {
+                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Authentication failed (HTTP $status). Stopping." -ColorBg 'Error'
+                    return $null
+                }
+                if ($status -in 401,403) {
+                    try { Clear-TokenCache -Username $script:OpenSubCreds.Username -APIKey $script:OpenSubCreds.APIKey } catch {}
+                }
 
-            # Token invalid mid-run? Clear cache so next run relogs.
-            if ($status -in 401,403) {
-                try { Clear-TokenCache -Username $script:OpenSubCreds.Username -APIKey $script:OpenSubCreds.APIKey } catch {}
-            }
-
-            if ($status -eq 429) {
-                # Derive wait strictly from headers
-                $wait = $null
-                if ($hdrs -and $hdrs['Retry-After']) {
-                    if (-not [int]::TryParse($hdrs['Retry-After'], [ref]$wait)) {
-                        $retryAt = Get-Date $hdrs['Retry-After'] -ErrorAction SilentlyContinue
-                        if ($retryAt) {
-                            $delta = [int][Math]::Ceiling(($retryAt - (Get-Date)).TotalSeconds)
-                            if ($delta -gt 0) { $wait = $delta }
+                if ($status -eq 429) {
+                    $wait = $null
+                    if ($hdrs -and $hdrs['Retry-After']) {
+                        if (-not [int]::TryParse($hdrs['Retry-After'], [ref]$wait)) {
+                            $retryAt = Get-Date $hdrs['Retry-After'] -ErrorAction SilentlyContinue
+                            if ($retryAt) {
+                                $delta = [int][Math]::Ceiling(($retryAt - (Get-Date)).TotalSeconds)
+                                if ($delta -gt 0) { $wait = $delta }
+                            }
                         }
                     }
-                }
-                if (-not $wait -and $hdrs -and $hdrs['ratelimit-reset']) {
-                    [int]::TryParse($hdrs['ratelimit-reset'], [ref]$wait) | Out-Null
-                }
-                if (-not $wait -or $wait -lt 1) { $wait = 1 }
-                $wait += Get-Random -Minimum 0 -Maximum 2
+                    if (-not $wait -and $hdrs -and $hdrs['ratelimit-reset']) {
+                        [int]::TryParse($hdrs['ratelimit-reset'], [ref]$wait) | Out-Null
+                    }
+                    if (-not $wait -or $wait -lt 1) { $wait = 1 }
+                    $wait += Get-Random -Minimum 0 -Maximum 2
 
-                if ($attempt -lt $MaxAttempts) {
-                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "429 received. Retrying in ${wait}s (attempt $attempt of $MaxAttempts)..." -ColorBg 'Error'
-                    Start-Sleep -Seconds $wait
-                    continue
+                    if ($attempt -lt $MaxAttempts) {
+                        Write-HTMLLog -Column1 'OpenSubs:' -Column2 "429 received. Retrying in ${wait}s (attempt $attempt of $MaxAttempts)..." -ColorBg 'Error'
+                        Start-Sleep -Seconds $wait
+                        continue
+                    }
                 }
+
+                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Request failed (HTTP $status): $($_.Exception.Message)" -ColorBg 'Error'
+                return $null
             }
-
-            Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Request failed (HTTP $status): $($_.Exception.Message)" -ColorBg 'Error'
-            return $null
         }
     }
-}
 
-
-    # --- OpenSubtitles auth helpers (with token cache + conditional logout) ---
+    # ---------------- Auth helpers (token cache + conditional logout) ----------------
     $script:OpenSubsUsedCachedToken = $false
 
     function Connect-OpenSubtitleAPI {
@@ -322,14 +272,14 @@ function Start-OpenSubtitlesDownload {
             [string]$APIKey
         )
 
-        # 1) Try cache first
+        # 1) Try cached token
         $cached = Read-TokenCache -Username $username -APIKey $APIKey
         if ($cached) {
             $script:OpenSubsUsedCachedToken = $true
             return $cached
         }
 
-        # 2) Login (max 2 attempts, stop on 401/403)
+        # 2) Login (up to 5 attempts per your request; stop on 401/403)
         $headers = @{
             "Content-Type" = "application/json"
             "User-Agent"   = "Torrentscript"
@@ -346,11 +296,11 @@ function Start-OpenSubtitlesDownload {
                                     -RespHeaders ([ref]$respHeaders)
 
         if ($response -and $response.token) {
-            # Cache for ~23h (refresh ahead of any TTL)
+            # Cache for ~23h
             $expires = (Get-Date).AddHours(23)
             Write-TokenCache -Username $username -APIKey $APIKey -Token $response.token -ExpiresAt $expires
             $script:OpenSubsUsedCachedToken = $false
-            Start-Sleep -Seconds 1 # gentle pause after login
+            Start-Sleep -Seconds 1 # small grace after login
             return $response.token
         } else {
             Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Login failed: token not returned." -ColorBg 'Error'
@@ -370,12 +320,11 @@ function Start-OpenSubtitlesDownload {
             "Authorization" = "Bearer $token"
         }
         try {
-            # Use wrapper; no retries needed, just a best-effort cleanup
             [void](Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/logout' -Method DELETE -Headers $headers -MaxAttempts 1)
         } catch {}
     }
 
-    # --- Search & download helpers ---
+    # ---------------- API helpers ----------------
     function Search-Subtitles {
         param(
             [string]$type,
@@ -432,13 +381,16 @@ function Start-OpenSubtitlesDownload {
             [hashtable]$subtitleInfo,
             [string]$APIKey,
             [string]$token,
-            [string]$baseDirectory
+            [string]$baseDirectory,
+            [array]$WantedLanguages
         )
 
         $downloadedCount = 0
         $failedCount = 0
+        $alreadyPresentCount = 0
+        $notFoundLanguages = @()  # languages requested but not available in API result
         $languageCounts = @{}
-        $lastRemaining = $null
+        $lastDailyRemaining = $null
 
         $headers = @{
             "User-Agent"    = "Torrentscript"
@@ -448,49 +400,62 @@ function Start-OpenSubtitlesDownload {
             "Authorization" = "Bearer $token"
         }
 
-        foreach ($language in $subtitleInfo.SubtitleIds.Keys) {
-            $subtitleId = $subtitleInfo.SubtitleIds[$language]
-            $videoFileName = $subtitleInfo.VideoFileName
-            $subtitleFileName = Join-Path $baseDirectory "$videoFileName.$language.srt"
+        # Decide per-language action based on "wanted" vs "available" vs "already present"
+        $availableLangs = @($subtitleInfo.SubtitleIds.Keys)
+        foreach ($lang in $WantedLanguages) {
+            $langLower = $lang.ToLower()
+            $targetPath = Join-Path $baseDirectory "$($subtitleInfo.VideoFileName).$langLower.srt"
 
-            if (-not (Test-Path $subtitleFileName)) {
-                $body = @{ file_id = $subtitleId } | ConvertTo-Json
-                try {
-                    $respHeaders = $null
-                    $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/download' `
-                                                -Method POST -Headers $headers -ContentType 'application/json' `
-                                                -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders)
-                    if ($respHeaders -and $respHeaders['x-ratelimit-remaining-second']) {
-                        $lastRemaining = $respHeaders['x-ratelimit-remaining-second']
-                    } elseif ($respHeaders -and $respHeaders['ratelimit-remaining']) {
-                        $lastRemaining = $respHeaders['ratelimit-remaining']
-                    }
+            if ($availableLangs -notcontains $langLower) {
+                $notFoundLanguages += $langLower
+                continue
+            }
 
-                    if ($response -and $response.link) {
-                        Invoke-WebRequest -Uri $response.link -OutFile $subtitleFileName
-                        $downloadedCount++
-                        if (-not $languageCounts.ContainsKey($language)) { $languageCounts[$language] = 1 } else { $languageCounts[$language]++ }
-                    } else {
-                        Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Failed to download subtitle for language: $language" -ColorBg 'Error'
-                        $failedCount++
-                    }
-                } catch {
-                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Error occurred while downloading subtitle for language $($language):" -ColorBg 'Error'
-                    Write-HTMLLog -Column2 "$($_.Exception.Message)" -ColorBg 'Error'
+            if (Test-Path $targetPath) {
+                $alreadyPresentCount++
+                continue
+            }
+
+            # Download it
+            $subtitleId = $subtitleInfo.SubtitleIds[$langLower]
+            $body = @{ file_id = $subtitleId } | ConvertTo-Json
+            try {
+                $respHeaders = $null
+                $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/download' `
+                                            -Method POST -Headers $headers -ContentType 'application/json' `
+                                            -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders)
+
+                # If the API exposes daily "remaining" in response body, capture it
+                if ($response -and ($response.PSObject.Properties.Name -contains 'remaining')) {
+                    $lastDailyRemaining = $response.remaining
+                }
+
+                if ($response -and $response.link) {
+                    Invoke-WebRequest -Uri $response.link -OutFile $targetPath
+                    $downloadedCount++
+                    if (-not $languageCounts.ContainsKey($langLower)) { $languageCounts[$langLower] = 1 } else { $languageCounts[$langLower]++ }
+                } else {
+                    Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Failed to download subtitle for language: $langLower" -ColorBg 'Error'
                     $failedCount++
                 }
+            } catch {
+                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Error occurred while downloading subtitle for language $($langLower):" -ColorBg 'Error'
+                Write-HTMLLog -Column2 "$($_.Exception.Message)" -ColorBg 'Error'
+                $failedCount++
             }
         }
 
         return @{
-            Downloaded         = $downloadedCount
-            Failed             = $failedCount
-            LanguageCounts     = $languageCounts
-            RemainingDownloads = $lastRemaining
+            Downloaded           = $downloadedCount
+            Failed               = $failedCount
+            AlreadyPresent       = $alreadyPresentCount
+            NotFoundLanguages    = $notFoundLanguages
+            LanguageCounts       = $languageCounts
+            DailyRemaining       = $lastDailyRemaining
         }
     }
 
-    # --- Video hash helper (unchanged) ---
+    # ---------------- Video hash helper ----------------
     function Get-VideoHash([string]$path) {
         $dataLength = 65536
         function LongSum([UInt64]$a, [UInt64]$b) { [UInt64](([Decimal]$a + $b) % ([Decimal]([UInt64]::MaxValue) + 1)) }
@@ -518,16 +483,16 @@ function Start-OpenSubtitlesDownload {
         } finally { $stream.Close() }
     }
 
-    #* Start the search and download of the subtitles
+    # ---------------- Main flow ----------------
     try {
         Write-HTMLLog -Column1 '***  Download missing subs from OpenSubtitle.com  ***' -Header
 
-        # Build language string once
         if (-not $WantedLanguages -or $WantedLanguages.Count -eq 0) {
             Write-HTMLLog -Column1 'OpenSubs:' -Column2 "No languages requested." -ColorBg 'Error'
             return
         }
-        $languageString = ($WantedLanguages | ForEach-Object { $_.ToString().Trim().ToLower() } | Where-Object { $_ -ne '' } | Select-Object -Unique) -join ','
+        $wantedLangs = ($WantedLanguages | ForEach-Object { $_.ToString().Trim().ToLower() } | Where-Object { $_ -ne '' } | Select-Object -Unique)
+        $languageString = $wantedLangs -join ','
 
         $token = Connect-OpenSubtitleAPI -username $OpenSubUser -password $OpenSubPass -APIKey $OpenSubAPI
         if ($token) {
@@ -540,10 +505,13 @@ function Start-OpenSubtitlesDownload {
 
             $totalDownloaded = 0
             $totalFailed = 0
+            $totalAlreadyPresent = 0
+            $notFoundByLang = @{}   # lang -> count across files
             $aggregateLangCounts = @{}
-            $lastRemaining = $null
+            $lastDailyRemaining = $null
 
             foreach ($videoFile in $videoFiles) {
+                # Hash is best-effort; continue even if hashing fails
                 $videoHash = $null
                 try { $videoHash = Get-VideoHash $videoFile.FullName } catch {}
 
@@ -561,29 +529,45 @@ function Start-OpenSubtitlesDownload {
 
                 $subtitleInfo = Search-Subtitles @queryParams
                 if ($null -eq $subtitleInfo -or -not $subtitleInfo.SubtitleIds -or $subtitleInfo.SubtitleIds.Count -eq 0) {
+                    # No matching subtitles found at all for this file
+                    foreach ($lang in $wantedLangs) {
+                        if (-not $notFoundByLang.ContainsKey($lang)) { $notFoundByLang[$lang] = 0 }
+                        $notFoundByLang[$lang]++
+                    }
                     continue
                 }
 
-                $subtitlesCounts = Save-AllSubtitles -subtitleInfo $subtitleInfo -APIKey $OpenSubAPI -token $token -baseDirectory $videoFile.DirectoryName
+                $subtitlesCounts = Save-AllSubtitles -subtitleInfo $subtitleInfo -APIKey $OpenSubAPI -token $token -baseDirectory $videoFile.DirectoryName -WantedLanguages $wantedLangs
                 if ($subtitlesCounts) {
-                    $totalDownloaded += ($subtitlesCounts.Downloaded   | ForEach-Object { [int]$_ } | Measure-Object -Sum).Sum
-                    $totalFailed     += ($subtitlesCounts.Failed       | ForEach-Object { [int]$_ } | Measure-Object -Sum).Sum
-                    $lastRemaining    = $subtitlesCounts.RemainingDownloads
+                    $totalDownloaded    += [int]$subtitlesCounts.Downloaded
+                    $totalFailed        += [int]$subtitlesCounts.Failed
+                    $totalAlreadyPresent+= [int]$subtitlesCounts.AlreadyPresent
+                    if ($subtitlesCounts.DailyRemaining) { $lastDailyRemaining = $subtitlesCounts.DailyRemaining }
 
                     foreach ($lang in $subtitlesCounts.LanguageCounts.Keys) {
                         if (-not $aggregateLangCounts.ContainsKey($lang)) { $aggregateLangCounts[$lang] = 0 }
                         $aggregateLangCounts[$lang] += $subtitlesCounts.LanguageCounts[$lang]
                     }
+
+                    foreach ($nf in $subtitlesCounts.NotFoundLanguages) {
+                        if (-not $notFoundByLang.ContainsKey($nf)) { $notFoundByLang[$nf] = 0 }
+                        $notFoundByLang[$nf]++
+                    }
                 }
             }
 
+            # ------- Reporting -------
             if ($totalDownloaded -gt 0) {
                 foreach ($language in $aggregateLangCounts.Keys) {
                     Write-HTMLLog -Column1 "Downloaded:" -Column2 "$($aggregateLangCounts[$language]) in $($language.ToUpper())"
                 }
-                Write-HTMLLog -Column1 "Downloaded:"  -Column2 "$totalDownloaded Total"
-                if ($lastRemaining) { Write-HTMLLog -Column2 "Remaining per-second allowance (last seen): $lastRemaining" }
-
+                Write-HTMLLog -Column1 "Downloaded:" -Column2 "$totalDownloaded Total"
+                if ($totalAlreadyPresent -gt 0) {
+                    Write-HTMLLog -Column1 "Already present:" -Column2 "$totalAlreadyPresent (skipped)"
+                }
+                if ($lastDailyRemaining -ne $null) {
+                    Write-HTMLLog -Column2 "Downloads remaining today (last seen): $lastDailyRemaining"
+                }
                 if ($totalFailed -gt 0) {
                     Write-HTMLLog -Column1 "Failed:" -Column2 "$totalFailed failed to download" -ColorBg 'Error'
                     Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
@@ -591,10 +575,20 @@ function Start-OpenSubtitlesDownload {
                     Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
                 }
             } else {
-                Write-HTMLLog -Column1 'Result:' -Column2 'No downloads found or needed' -ColorBg 'Success'
+                # No downloads performed; clarify *why*
+                if ($totalAlreadyPresent -gt 0 -and ($notFoundByLang.Keys.Count -eq 0 -or ($notFoundByLang.Values | Measure-Object -Sum).Sum -eq 0)) {
+                    Write-HTMLLog -Column1 'Result:' -Column2 'No downloads needed (subtitles already present)' -ColorBg 'Success'
+                } else {
+                    # Summarize languages not found across files (if any)
+                    if ($notFoundByLang.Keys.Count -gt 0) {
+                        $summary = ($notFoundByLang.GetEnumerator() | ForEach-Object { "$($_.Key.ToUpper()): $($_.Value)" }) -join ', '
+                        Write-HTMLLog -Column1 'Not found:' -Column2 $summary -ColorBg 'Error'
+                    }
+                    Write-HTMLLog -Column1 'Result:' -Column2 'No suitable subtitles found' -ColorBg 'Error'
+                }
             }
 
-            # Logout only if we logged in freshly; keep cached tokens alive for next runs
+            # Logout only if we logged in freshly; keep cached tokens alive for reuse
             if (-not $script:OpenSubsUsedCachedToken) {
                 Disconnect-OpenSubtitleAPI -APIKey $OpenSubAPI -token $token
             }
@@ -604,3 +598,4 @@ function Start-OpenSubtitlesDownload {
         Write-HTMLLog -Column2 "$($_.Exception.Message)" -ColorBg 'Error'
     }
 }
+
