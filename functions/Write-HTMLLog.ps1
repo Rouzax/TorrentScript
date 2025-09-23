@@ -1,5 +1,5 @@
 # =========================
-# HTML Logging (Inline Style Version - Gmail Safe)
+# HTML Logging (Inline Style Version - Dark Theme, Gmail Safe)
 # =========================
 
 # Script-scope storage instead of globals
@@ -129,7 +129,7 @@ Render in-memory log entries to an HTML string.
 
 .DESCRIPTION
 Generates a complete HTML <table> element with inline styles suitable for Gmail or browsers.
-Includes all log rows, headers, and formatting.
+Uses a dark theme with high-contrast status colors.
 
 .EXAMPLE
 $html = Convert-HTMLLogToString
@@ -145,16 +145,26 @@ function Convert-HTMLLogToString {
 
     $rows = New-Object System.Collections.Generic.List[string]
 
+    # Shared style fragments (kept inline for Gmail)
+    $tableStyle = 'border-collapse:collapse;background-color:#1E1E1E;color:#EAEAEA;font-family:Arial,Helvetica,sans-serif;font-size:10pt;'
+    $labelStyle = 'vertical-align:top;padding:6px 12px;border-bottom:1px solid #2D2D2D;'
+    $cellBase = 'vertical-align:top;padding:6px 12px;border-bottom:1px solid #2D2D2D;'
+    $headerStyle = 'background-color:#0D47A1;color:#FFFFFF;text-align:center;font-size:10pt;font-weight:bold;padding:8px 12px;border-bottom:1px solid #2D2D2D;'
+    $successStyle = 'background-color:#2E7D32;color:#FFFFFF;'
+    $warningStyle = 'background-color:#FF8F00;color:#000000;'
+    $errorStyle = 'background-color:#C62828;color:#FFFFFF;'
+
     # Table wrapper
-    $rows.Add('<table border="0" align="center" cellspacing="0" style="border-collapse:collapse;background-color:#555555;color:#FFFFFF;font-family:Arial,Helvetica,sans-serif;font-size:10pt;">')
-    $rows.Add('<col width="125"><col width="500">')
+    $rows.Add("<table border=""0"" align=""center"" cellspacing=""0"" style=""$tableStyle"">")
+    $rows.Add('<col width="160"><col width="520">')
     $rows.Add('<tbody>')
 
     foreach ($e in $script:HtmlLogEntries) {
         $rows.Add('<tr>')
+
         if ($e.Header) {
             $c1 = ConvertTo-HtmlEncoded $e.Column1
-            $rows.Add("<td colspan=""2"" style=""background-color:#398AA4;text-align:center;font-size:10pt;font-weight:bold;"">$c1</td>")
+            $rows.Add("<td colspan=""2"" style=""$headerStyle"">$c1</td>")
             $rows.Add('</tr>')
             continue
         }
@@ -162,20 +172,22 @@ function Convert-HTMLLogToString {
         $c1 = ConvertTo-HtmlEncoded $e.Column1
         $c2 = ConvertTo-HtmlEncoded $e.Column2
 
-        $rows.Add("<td style=""vertical-align:top;padding:0px 10px;""><b>$c1</b></td>")
+        # Left label cell
+        $rows.Add("<td style=""$labelStyle""><b>$c1</b></td>")
 
+        # Right value cell with conditional background
         switch ($e.Type) {
             'Success' {
-                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;background-color:#2C5000;"">$c2</td>")
-            }
-            'Error' {
-                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;background-color:#8C161F;"">$c2</td>")
+                $rows.Add("<td style=""$cellBase$successStyle"">$c2</td>")
             }
             'Warning' {
-                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;background-color:#925400;"">$c2</td>")
+                $rows.Add("<td style=""$cellBase$warningStyle"">$c2</td>")
+            }
+            'Error' {
+                $rows.Add("<td style=""$cellBase$errorStyle"">$c2</td>")
             }
             Default {
-                $rows.Add("<td style=""vertical-align:top;padding:0px 10px;"">$c2</td>")
+                $rows.Add("<td style=""$cellBase"">$c2</td>")
             }
         }
 
