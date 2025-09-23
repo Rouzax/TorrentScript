@@ -8,7 +8,7 @@
 .PARAMETER Destination
     Specifies the destination path where the files will be copied.
 .PARAMETER File
-    Specifies the filter for files to be copied. Use '*.*' for all files.
+    Specifies the filter for files to be copied. Use '*' for all files (avoid '*.*').
 .PARAMETER DownloadLabel
     Specifies the label for the download operation (for logging purposes).
 .PARAMETER DownloadName
@@ -16,13 +16,12 @@
 .OUTPUTS 
     None
 .EXAMPLE
-    Start-FileCopy -Source "C:\Source" -Destination "D:\Destination" -File '*.*' -DownloadLabel "Label" -DownloadName "Download"
+    Start-FileCopy -Source "C:\Source" -Destination "D:\Destination" -File '*' -DownloadLabel "Label" -DownloadName "Download"
     Copies all files from C:\Source to D:\Destination and logs the results.
 .EXAMPLE
     Start-FileCopy -Source "C:\Source" -Destination "D:\Destination" -File 'example.txt' -DownloadLabel "Label" -DownloadName "Download"
     Copies a single file named 'example.txt' from C:\Source to D:\Destination and logs the results.
 #>
-
 
 function Start-FileCopy {
     [CmdletBinding()]
@@ -49,7 +48,6 @@ function Start-FileCopy {
         if (-not (Get-Command $functionName -ErrorAction SilentlyContinue)) {
             try {
                 . "$PSScriptRoot\$functionName.ps1"
-                Write-Host "$functionName function loaded." -ForegroundColor Green
             } catch {
                 Write-Error "Failed to import $functionName function: $_"
                 exit 1
@@ -57,128 +55,181 @@ function Start-FileCopy {
         }
     }
 
+    # --- Local helpers ------------------------------------------------------
+    function Convert-ToDoubleInvariant([string]$s) {
+        if (-not $s) {
+            return 0 
+        }
+        if ($s -match '[\.,].*,') {
+            $s = $s -replace '\.', ''; $s = $s -replace ',', '.' 
+        } elseif ($s -match ',') {
+            $s = $s -replace '\.', ''; $s = $s -replace ',', '.' 
+        } else {
+            $s = $s -replace '(?<=\d)\.(?=\d{3}\b)', '' 
+        }
+        return [double]::Parse($s, [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+    function Convert-ToBytes([double]$num, [string]$unit) {
+        switch ($unit.ToLower()) {
+            'k' {
+                return $num * 1KB 
+            }
+            'm' {
+                return $num * 1MB 
+            }
+            'g' {
+                return $num * 1GB 
+            }
+            default {
+                return $num 
+            }
+        }
+    }
+    function Get-RoboCopyExitDescription {
+        param([int]$RC)
+        $flags = @()
+        if ($RC -band 1) {
+            $flags += "Copied" 
+        }
+        if ($RC -band 2) {
+            $flags += "Extras" 
+        }
+        if ($RC -band 4) {
+            $flags += "Mismatched" 
+        }
+        if ($RC -band 8) {
+            $flags += "FailedCopies" 
+        }
+        if ($RC -band 16) {
+            $flags += "FatalError" 
+        }
+        if ($flags.Count -eq 0) {
+            return "0 = No files copied / everything up to date" 
+        }
+        return "$RC = " + ($flags -join " + ")
+    }
+
     if (Test-Path "$env:SystemRoot\system32\Robocopy.exe") {
 
-        # Set RoboCopy options based on the file parameter.
-        $options = @('/R:1', '/W:1', '/J', '/NP', '/NJH', '/NFL', '/NDL', '/MT8')
-        if ($File -eq '*.*') {
-            $options += '/E'
+        # Normalize file mask: '*' truly means "all files"
+        $mask = if ($File -eq '*.*' -or [string]::IsNullOrWhiteSpace($File)) {
+            '*' 
+        } else {
+            $File 
         }
-    
-        $cmdArgs = @("`"$Source`"", "`"$Destination`"", "`"$File`"", $options)
- 
-        # Execute RoboCopy command
+
+        # Set RoboCopy options
+        $options = @('/R:1', '/W:1', '/J', '/NP', '/NJH', '/NFL', '/NDL', '/MT:8')
+        if ($mask -eq '*') {
+            $options += '/E' 
+        }  # include empty dirs when copying all
+
+        # Build arguments (let PowerShell do the quoting)
+        $cmdArgs = @($Source, $Destination, $mask) + $options
+
         Write-HTMLLog -Column1 'Starting:' -Column2 'RoboCopy files'
         try {
-            $Output = robocopy @cmdArgs
+            # Capture stdout + stderr so PS7 parsing works
+            $Output = & robocopy @cmdArgs 2>&1
+            $rc = $LASTEXITCODE
         } catch {
-            Write-Host 'Exception:' $_.Exception.Message -ForegroundColor Red
-            Write-Host 'RoboCopy not found' -ForegroundColor Red
-            exit 1
+            Write-HTMLLog -Column1 'Result:' -Column2 'Failed (robocopy launch error)' -ColorBg 'Error'
+            Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName (robocopy launch failed)"
         }
+
+        $rcDesc = Get-RoboCopyExitDescription $rc
+
+        # Initialize metrics
+        $TotalDirs = 0; $CopiedDirs = 0; $FailedDirs = 0
+        $TotalFiles = 0; $CopiedFiles = 0; $FailedFiles = 0
+        $TotalSize = '0 B'; $CopiedSize = '0 B'; $FailedSize = '0 B'
+        $Speed = '0 B'
 
         # Parse RoboCopy output
         foreach ($line in $Output) {
             switch -Regex ($line) {
-                # Dir metrics
                 '^\s+Dirs\s:\s*' {
-                    # Example:  Dirs :        35         0         0         0         0         0
-                    $dirs = $_.Replace('Dirs :', '').Trim()
-                    # Now remove the white space between the values.'
-                    $dirs = $dirs -split '\s+'
-    
-                    # Assign the appropriate column to values.
-                    $TotalDirs = $dirs[0]
-                    $CopiedDirs = $dirs[1]
-                    $FailedDirs = $dirs[4]
-                }
-                # File metrics
-                '^\s+Files\s:\s[^*]' {
-                    # Example:  Files :      8318         0      8318         0         0         0
-                    $files = $_.Replace('Files :', '').Trim()
-                    # Now remove the white space between the values.'
-                    $files = $files -split '\s+'
-    
-                    # Assign the appropriate column to values.
-                    $TotalFiles = $files[0]
-                    $CopiedFiles = $files[1]
-                    $FailedFiles = $files[4]
-                }
-                # Byte metrics
-                '^\s+Bytes\s:\s*' {
-                    # Example:   Bytes :   1.607 g         0   1.607 g         0         0         0
-                    $bytes = $_.Replace('Bytes :', '').Trim()
-                    # Now remove the white space between the values.'
-                    $bytes = $bytes -split '\s+'
-    
-                    # The raw text from the log file contains a k,m,or g after the non zero numbers.
-                    # This will be used as a multiplier to determine the size in kb.
-                    $counter = 0
-                    $tempByteArray = 0, 0, 0, 0, 0, 0
-                    $tempByteArrayCounter = 0
-                    foreach ($column in $bytes) {
-                        if ($column -eq 'k') {
-                            $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1024)
-                            $counter += 1
-                        } elseif ($column -eq 'm') {
-                            $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1048576)
-                            $counter += 1
-                        } elseif ($column -eq 'g') {
-                            $tempByteArray[$tempByteArrayCounter - 1] = '{0:N2}' -f ([single]($bytes[$counter - 1]) * 1073741824)
-                            $counter += 1
-                        } else {
-                            $tempByteArray[$tempByteArrayCounter] = $column
-                            $counter += 1
-                            $tempByteArrayCounter += 1
-                        }
+                    $dirs = ($_.Replace('Dirs :', '').Trim() -split '\s+')
+                    if ($dirs.Count -ge 6) {
+                        $TotalDirs = [int]$dirs[0]; $CopiedDirs = [int]$dirs[1]; $FailedDirs = [int]$dirs[4] 
                     }
-                    # Assign the appropriate column to values.
-                    $TotalSize = Format-Size -SizeInBytes ([double]::Parse($tempByteArray[0]))
-                    $CopiedSize = Format-Size -SizeInBytes ([double]::Parse($tempByteArray[1]))
-                    $FailedSize = Format-Size -SizeInBytes ([double]::Parse($tempByteArray[4]))
-                    # array columns 2,3, and 5 are available, but not being used currently.
                 }
-                # Speed metrics
-                '^\s+Speed\s:.*sec.$' {
-                    # Example:   Speed :             120.816 Bytes/min.
-                    $speed = $_.Replace('Speed :', '').Trim()
-                    $speed = $speed.Replace('Bytes/sec.', '').Trim()
-                    # Remove any dots in the number
-                    $speed = $speed.Replace('.', '').Trim()
-                    # Assign the appropriate column to values.
-                    $speed = Format-Size -SizeInBytes $speed
+                '^\s+Files\s:\s[^*]' {
+                    $files = ($_.Replace('Files :', '').Trim() -split '\s+')
+                    if ($files.Count -ge 6) {
+                        $TotalFiles = [int]$files[0]; $CopiedFiles = [int]$files[1]; $FailedFiles = [int]$files[4] 
+                    }
+                }
+                '^\s+Bytes\s:\s*' {
+                    $t = ($_.Replace('Bytes :', '').Trim() -split '\s+')
+                    try {
+                        $totalBytes = Convert-ToBytes (Convert-ToDoubleInvariant $t[0]) $t[1]
+                        $copiedBytes = Convert-ToBytes (Convert-ToDoubleInvariant $t[2]) $t[3]
+                        $failedBytes = if ($t.Count -ge 10) {
+                            Convert-ToBytes (Convert-ToDoubleInvariant $t[8]) $t[9] 
+                        } else {
+                            0 
+                        }
+                        $TotalSize = Format-Size -SizeInBytes $totalBytes
+                        $CopiedSize = Format-Size -SizeInBytes $copiedBytes
+                        $FailedSize = Format-Size -SizeInBytes $failedBytes
+                    } catch { 
+                    }
+                }
+                '^\s+Speed\s:.*sec\.$' {
+                    $s = $_.Replace('Speed :', '').Replace('Bytes/sec.', '').Trim()
+                    $s = $s -replace '[^\d,\.]', ''
+                    if ($s.Contains(',')) {
+                        $s = $s.Replace(',', '.') 
+                    }
+                    try {
+                        $Speed = Format-Size -SizeInBytes ([double]::Parse($s, [System.Globalization.CultureInfo]::InvariantCulture)) 
+                    } catch {
+                        $Speed = '0 B' 
+                    }
                 }
             }
         }
 
-        # Log results
-        if ($FailedDirs -gt 0 -or $FailedFiles -gt 0) {
+        # Fallback if parsing didn't populate numbers (localization etc.)
+        if ($TotalFiles -eq 0 -and $CopiedFiles -eq 0) {
+            $destItems = Get-ChildItem -LiteralPath $Destination -Recurse -Force -ErrorAction SilentlyContinue
+            $TotalFiles = ($destItems | Where-Object { -not $_.PSIsContainer }).Count
+            $TotalDirs = ($destItems | Where-Object { $_.PSIsContainer }).Count
+            $CopiedFiles = $TotalFiles
+            $CopiedDirs = $TotalDirs
+            $CopiedSize = Format-Size -SizeInBytes (($destItems | Where-Object { -not $_.PSIsContainer } | Measure-Object Length -Sum).Sum)
+        }
+
+        # Decide status by RC and parsed failures
+        if ($rc -ge 8) {
             Write-HTMLLog -Column1 'Dirs' -Column2 "$TotalDirs Total" -ColorBg 'Error'
-            Write-HTMLLog -Column1 'Dirs' -Column2 "$FailedDirs Failed" -ColorBg 'Error'
             Write-HTMLLog -Column1 'Files:' -Column2 "$TotalFiles Total" -ColorBg 'Error'
-            Write-HTMLLog -Column1 'Files:' -Column2 "$FailedFiles Failed" -ColorBg 'Error'
             Write-HTMLLog -Column1 'Size:' -Column2 "$TotalSize Total" -ColorBg 'Error'
-            Write-HTMLLog -Column1 'Size:' -Column2 "$FailedSize Failed" -ColorBg 'Error'
-            Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
-            Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName" 
+            Write-HTMLLog -Column1 'Result:' -Column2 "Failed ($rcDesc)" -ColorBg 'Error'
+            Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName ($rcDesc)"
+        } elseif ($FailedDirs -gt 0 -or $FailedFiles -gt 0) {
+            Write-HTMLLog -Column1 'Dirs' -Column2 "$TotalDirs Total / $FailedDirs Failed" -ColorBg 'Error'
+            Write-HTMLLog -Column1 'Files:' -Column2 "$TotalFiles Total / $FailedFiles Failed" -ColorBg 'Error'
+            Write-HTMLLog -Column1 'Size:' -Column2 "$TotalSize Total / $FailedSize Failed" -ColorBg 'Error'
+            Write-HTMLLog -Column1 'Result:' -Column2 "Partial ($rcDesc)" -ColorBg 'Error'
+            Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName (Partial: $rcDesc)"
         } else {
             Write-HTMLLog -Column1 'Dirs:' -Column2 "$CopiedDirs Copied"
             Write-HTMLLog -Column1 'Files:' -Column2 "$CopiedFiles Copied"
             Write-HTMLLog -Column1 'Size:' -Column2 "$CopiedSize"
             Write-HTMLLog -Column1 'Throughput:' -Column2 "$Speed/s"
-            Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
+            Write-HTMLLog -Column1 'Result:' -Column2 "Successful ($rcDesc)" -ColorBg 'Success'
         }
+
     } else {
         # RoboCopy not available, fallback to PowerShell copy
         Write-HTMLLog -Column1 'Starting:' -Column2 'Copy files using PowerShell Copy'
         try {
-            # Start the Stopwatch
-            $copyResultsStopWatch = [system.diagnostics.stopwatch]::startNew()
-            $copyResults = Copy-Item -Path $Source -Destination $Destination -Filter $File -Recurse -PassThru -ErrorAction Stop
-            # Stop the Stopwatch
+            $copyResultsStopWatch = [System.Diagnostics.Stopwatch]::StartNew()
+            $copyResults = Copy-Item -LiteralPath $Source -Destination $Destination -Filter $File -Recurse -PassThru -ErrorAction Stop
             $copyResultsStopWatch.Stop() 
         
-            # Log results for Copy-Item
             $totalFiles = ($copyResults | Where-Object { -not $_.PSIsContainer }).Count
             $totalDirs = ($copyResults | Where-Object { $_.PSIsContainer }).Count
             $totalSize = ($copyResults | Measure-Object Length -Sum).Sum
@@ -186,10 +237,9 @@ function Start-FileCopy {
             Write-HTMLLog -Column1 'Dirs:' -Column2 $totalDirs
             Write-HTMLLog -Column1 'Files:' -Column2 "$totalFiles Copied"
             Write-HTMLLog -Column1 'Size:' -Column2 (Format-Size -SizeInBytes $totalSize)
-            Write-HTMLLog -Column1 'Throughput:' -Column2 "$(Format-Size -SizeInBytes ($TotalSize/$copyResultsStopWatch.Elapsed.TotalSeconds))/s"
+            Write-HTMLLog -Column1 'Throughput:' -Column2 "$(Format-Size -SizeInBytes ($totalSize / [Math]::Max(0.001, $copyResultsStopWatch.Elapsed.TotalSeconds)))/s"
             Write-HTMLLog -Column1 'Result:' -Column2 'Successful' -ColorBg 'Success'
         } catch {
-            # Log error for Copy-Item
             Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
             Stop-Script -ExitReason "Copy Error: $DownloadLabel - $DownloadName"
         }
