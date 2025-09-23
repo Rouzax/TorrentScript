@@ -297,7 +297,7 @@ function Start-OpenSubtitlesDownload {
                     $wait += Get-Random -Minimum 0 -Maximum 2
 
                     if ($attempt -lt $MaxAttempts) {
-                        Write-HTMLLog -Column1 'OpenSubs:' -Column2 "429 received. Retrying in ${wait}s (attempt $attempt of $MaxAttempts)..." -ColorBg 'Warning'
+                        # Write-HTMLLog -Column1 'OpenSubs:' -Column2 "429 received. Retrying in ${wait}s (attempt $attempt of $MaxAttempts)..." -ColorBg 'Warning'
                         Start-Sleep -Seconds $wait
                         continue
                     }
