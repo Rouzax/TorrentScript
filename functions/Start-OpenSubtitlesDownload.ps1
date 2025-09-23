@@ -138,17 +138,21 @@ function Start-OpenSubtitlesDownload {
             return (Join-Path $env:LOCALAPPDATA 'TorrentScript\OpenSubtitles')
         } else {
             $base = $env:XDG_CACHE_HOME
-            if (-not $base -or $base -eq '') { $base = (Join-Path $HOME '.cache') }
+            if (-not $base -or $base -eq '') {
+                $base = (Join-Path $HOME '.cache') 
+            }
             return (Join-Path $base 'TorrentScript/OpenSubtitles')
         }
     }
     function Get-TokenCachePath {
         param([string]$Username, [string]$APIKey)
         $root = Get-TSCacheRoot
-        if (-not (Test-Path $root)) { New-Item -ItemType Directory -Path $root -Force | Out-Null }
+        if (-not (Test-Path $root)) {
+            New-Item -ItemType Directory -Path $root -Force | Out-Null 
+        }
         $hashInput = "$($Username)`n$($APIKey)"
         $sha = [System.Security.Cryptography.SHA256]::Create()
-        $hash = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($hashInput))).Replace('-','').Substring(0,32)
+        $hash = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($hashInput))).Replace('-', '').Substring(0, 32)
         return (Join-Path $root "token-$hash.json")
     }
     function Read-TokenCache {
@@ -158,9 +162,12 @@ function Start-OpenSubtitlesDownload {
             try {
                 $data = Get-Content $path -Raw | ConvertFrom-Json
                 if ($data -and $data.token -and $data.expires_at) {
-                    if ((Get-Date) -lt ([datetime]$data.expires_at)) { return $data.token }
+                    if ((Get-Date) -lt ([datetime]$data.expires_at)) {
+                        return $data.token 
+                    }
                 }
-            } catch {}
+            } catch {
+            }
         }
         return $null
     }
@@ -174,12 +181,15 @@ function Start-OpenSubtitlesDownload {
                 token      = $Token
                 expires_at = $ExpiresAt.ToString('o')
             } | ConvertTo-Json | Set-Content -Path $path -Encoding UTF8
-        } catch {}
+        } catch {
+        }
     }
     function Clear-TokenCache {
         param([string]$Username, [string]$APIKey)
         $path = Get-TokenCachePath -Username $Username -APIKey $APIKey
-        if (Test-Path $path) { Remove-Item $path -Force -ErrorAction SilentlyContinue }
+        if (Test-Path $path) {
+            Remove-Item $path -Force -ErrorAction SilentlyContinue 
+        }
     }
 
     # Keep creds accessible to clear cache on auth errors
@@ -189,14 +199,20 @@ function Start-OpenSubtitlesDownload {
     function Invoke-OpenSubs {
         param(
             [Parameter(Mandatory)] [string]$Uri,
-            [Parameter(Mandatory)] [ValidateSet('GET','POST','DELETE')] [string]$Method,
+            [Parameter(Mandatory)] [ValidateSet('GET', 'POST', 'DELETE')] [string]$Method,
             [Parameter(Mandatory)] [hashtable]$Headers,
             [string]$ContentType,
             $Body = $null,
             [int]$MaxAttempts = 3,        # For /login, we’ll use 5 as requested
             [switch]$StopOnAuthError,     # Stop immediately on 401/403
-            [ref]$RespHeaders             # headers returned here (if provided)
+            [ref]$RespHeaders,            # headers returned here (if provided)
+            [ref]$StatusOut               # <-- NEW: set to last HTTP status code (int) or $null
         )
+
+        # default out
+        if ($StatusOut) {
+            $StatusOut.Value = $null 
+        }
 
         for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
             try {
@@ -206,30 +222,60 @@ function Start-OpenSubtitlesDownload {
                     Headers = $Headers
                 }
                 # Compatibility with Windows PowerShell 5.1
-                if ($PSVersionTable.PSEdition -eq 'Desktop') { $args.UseBasicParsing = $true }
-                if ($PSBoundParameters.ContainsKey('ContentType')) { $args.ContentType = $ContentType }
-                if ($null -ne $Body) { $args.Body = $Body }
+                if ($PSVersionTable.PSEdition -eq 'Desktop') {
+                    $args.UseBasicParsing = $true 
+                }
+                if ($PSBoundParameters.ContainsKey('ContentType')) {
+                    $args.ContentType = $ContentType 
+                }
+                if ($null -ne $Body) {
+                    $args.Body = $Body 
+                }
 
                 $resp = Invoke-WebRequest @args
 
-                if ($RespHeaders) { $RespHeaders.Value = $resp.Headers }
+                if ($RespHeaders) {
+                    $RespHeaders.Value = $resp.Headers 
+                }
+                if ($StatusOut) {
+                    $StatusOut.Value = 200 
+                }
 
                 $content = $resp.Content
-                if ([string]::IsNullOrWhiteSpace($content)) { return $null }
+                if ([string]::IsNullOrWhiteSpace($content)) {
+                    return $null 
+                }
 
-                try { return ($content | ConvertFrom-Json) } catch { return $content }
+                try {
+                    return ($content | ConvertFrom-Json) 
+                } catch {
+                    return $content 
+                }
             } catch {
                 $status = $null
                 $hdrs = $null
-                try { $status = $_.Exception.Response.StatusCode.value__ } catch {}
-                try { $hdrs = $_.Exception.Response.Headers } catch {}
+                try {
+                    $status = $_.Exception.Response.StatusCode.value__ 
+                } catch {
+                }
+                try {
+                    $hdrs = $_.Exception.Response.Headers 
+                } catch {
+                }
+                if ($StatusOut) {
+                    $StatusOut.Value = $status 
+                }
 
-                if ($StopOnAuthError -and ($status -in 401,403)) {
+                if ($StopOnAuthError -and ($status -in 401, 403)) {
                     Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Authentication failed (HTTP $status). Stopping." -ColorBg 'Error'
                     return $null
                 }
-                if ($status -in 401,403) {
-                    try { Clear-TokenCache -Username $script:OpenSubCreds.Username -APIKey $script:OpenSubCreds.APIKey } catch {}
+                if ($status -in 401, 403) {
+                    # Token invalid mid-run? Clear cache so next login will succeed
+                    try {
+                        Clear-TokenCache -Username $script:OpenSubCreds.Username -APIKey $script:OpenSubCreds.APIKey 
+                    } catch {
+                    }
                 }
 
                 if ($status -eq 429) {
@@ -239,14 +285,18 @@ function Start-OpenSubtitlesDownload {
                             $retryAt = Get-Date $hdrs['Retry-After'] -ErrorAction SilentlyContinue
                             if ($retryAt) {
                                 $delta = [int][Math]::Ceiling(($retryAt - (Get-Date)).TotalSeconds)
-                                if ($delta -gt 0) { $wait = $delta }
+                                if ($delta -gt 0) {
+                                    $wait = $delta 
+                                }
                             }
                         }
                     }
                     if (-not $wait -and $hdrs -and $hdrs['ratelimit-reset']) {
                         [int]::TryParse($hdrs['ratelimit-reset'], [ref]$wait) | Out-Null
                     }
-                    if (-not $wait -or $wait -lt 1) { $wait = 1 }
+                    if (-not $wait -or $wait -lt 1) {
+                        $wait = 1 
+                    }
                     $wait += Get-Random -Minimum 0 -Maximum 2
 
                     if ($attempt -lt $MaxAttempts) {
@@ -261,6 +311,7 @@ function Start-OpenSubtitlesDownload {
             }
         }
     }
+
 
     # ---------------- Auth helpers (token cache + conditional logout) ----------------
     $script:OpenSubsUsedCachedToken = $false
@@ -290,10 +341,10 @@ function Start-OpenSubtitlesDownload {
 
         $respHeaders = $null
         $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/login' `
-                                    -Method POST -Headers $headers `
-                                    -ContentType 'application/json' -Body $body `
-                                    -MaxAttempts 5 -StopOnAuthError `
-                                    -RespHeaders ([ref]$respHeaders)
+            -Method POST -Headers $headers `
+            -ContentType 'application/json' -Body $body `
+            -MaxAttempts 5 -StopOnAuthError `
+            -RespHeaders ([ref]$respHeaders)
 
         if ($response -and $response.token) {
             # Cache for ~23h
@@ -321,7 +372,8 @@ function Start-OpenSubtitlesDownload {
         }
         try {
             [void](Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/logout' -Method DELETE -Headers $headers -MaxAttempts 1)
-        } catch {}
+        } catch {
+        }
     }
 
     # ---------------- API helpers ----------------
@@ -349,7 +401,9 @@ function Start-OpenSubtitlesDownload {
         try {
             $respHeaders = $null
             $response = Invoke-OpenSubs -Uri $uri -Method GET -Headers $headers -MaxAttempts 3 -RespHeaders ([ref]$respHeaders)
-            if (-not $response -or -not $response.data) { return $null }
+            if (-not $response -or -not $response.data) {
+                return $null 
+            }
 
             $subtitleInfo = @{
                 VideoFileName = $query
@@ -357,17 +411,25 @@ function Start-OpenSubtitlesDownload {
             }
 
             foreach ($subtitle in $response.data) {
-                if (-not $subtitle -or -not $subtitle.attributes) { continue }
+                if (-not $subtitle -or -not $subtitle.attributes) {
+                    continue 
+                }
                 $language = $subtitle.attributes.language
-                if (-not $language) { continue }
+                if (-not $language) {
+                    continue 
+                }
                 $file = $subtitle.attributes.files | Select-Object -First 1
-                if (-not $file -or -not $file.file_id) { continue }
+                if (-not $file -or -not $file.file_id) {
+                    continue 
+                }
                 if (-not $subtitleInfo.SubtitleIds.ContainsKey($language)) {
                     $subtitleInfo.SubtitleIds[$language] = $file.file_id
                 }
             }
 
-            if ($subtitleInfo.SubtitleIds.Count -gt 0) { return $subtitleInfo }
+            if ($subtitleInfo.SubtitleIds.Count -gt 0) {
+                return $subtitleInfo 
+            }
             return $null
         } catch {
             Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Error occurred while searching for subtitles:" -ColorBg 'Error'
@@ -421,9 +483,25 @@ function Start-OpenSubtitlesDownload {
             $body = @{ file_id = $subtitleId } | ConvertTo-Json
             try {
                 $respHeaders = $null
+                $status = $null
                 $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/download' `
-                                            -Method POST -Headers $headers -ContentType 'application/json' `
-                                            -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders)
+                    -Method POST -Headers $headers -ContentType 'application/json' `
+                    -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders) -StatusOut ([ref]$status)
+
+                # If unauthorized, refresh token once and retry download
+                if (-not $response -and ($status -in 401, 403)) {
+                    # Re-login (will use cache or do a fresh login if cache was cleared)
+                    $newToken = Connect-OpenSubtitleAPI -username $script:OpenSubCreds.Username -password $OpenSubPass -APIKey $script:OpenSubCreds.APIKey
+                    if ($newToken) {
+                        # Update Authorization header and retry once
+                        $headers["Authorization"] = "Bearer $newToken"
+                        $respHeaders = $null
+                        $status = $null
+                        $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/download' `
+                            -Method POST -Headers $headers -ContentType 'application/json' `
+                            -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders) -StatusOut ([ref]$status)
+                    }
+                }
 
                 # If the API exposes daily "remaining" in response body, capture it
                 if ($response -and ($response.PSObject.Properties.Name -contains 'remaining')) {
@@ -433,7 +511,11 @@ function Start-OpenSubtitlesDownload {
                 if ($response -and $response.link) {
                     Invoke-WebRequest -Uri $response.link -OutFile $targetPath
                     $downloadedCount++
-                    if (-not $languageCounts.ContainsKey($langLower)) { $languageCounts[$langLower] = 1 } else { $languageCounts[$langLower]++ }
+                    if (-not $languageCounts.ContainsKey($langLower)) {
+                        $languageCounts[$langLower] = 1 
+                    } else {
+                        $languageCounts[$langLower]++ 
+                    }
                 } else {
                     Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Failed to download subtitle for language: $langLower" -ColorBg 'Error'
                     $failedCount++
@@ -446,19 +528,21 @@ function Start-OpenSubtitlesDownload {
         }
 
         return @{
-            Downloaded           = $downloadedCount
-            Failed               = $failedCount
-            AlreadyPresent       = $alreadyPresentCount
-            NotFoundLanguages    = $notFoundLanguages
-            LanguageCounts       = $languageCounts
-            DailyRemaining       = $lastDailyRemaining
+            Downloaded        = $downloadedCount
+            Failed            = $failedCount
+            AlreadyPresent    = $alreadyPresentCount
+            NotFoundLanguages = $notFoundLanguages
+            LanguageCounts    = $languageCounts
+            DailyRemaining    = $lastDailyRemaining
         }
     }
 
     # ---------------- Video hash helper ----------------
     function Get-VideoHash([string]$path) {
         $dataLength = 65536
-        function LongSum([UInt64]$a, [UInt64]$b) { [UInt64](([Decimal]$a + $b) % ([Decimal]([UInt64]::MaxValue) + 1)) }
+        function LongSum([UInt64]$a, [UInt64]$b) {
+            [UInt64](([Decimal]$a + $b) % ([Decimal]([UInt64]::MaxValue) + 1)) 
+        }
         function StreamHash([IO.Stream]$stream) {
             $hashLength = 8
             [UInt64]$lhash = 0
@@ -478,9 +562,13 @@ function Start-OpenSubtitlesDownload {
             $lhash = LongSum $lhash (StreamHash $stream)
             $hash = "{0:X}" -f $lhash
             $hash = $hash.ToLower()
-            if ($hash.Length -lt 16) { $hash = ("0" * (16 - $hash.Length)) + $hash }
+            if ($hash.Length -lt 16) {
+                $hash = ("0" * (16 - $hash.Length)) + $hash 
+            }
             $hash
-        } finally { $stream.Close() }
+        } finally {
+            $stream.Close() 
+        }
     }
 
     # ---------------- Main flow ----------------
@@ -496,10 +584,12 @@ function Start-OpenSubtitlesDownload {
 
         $token = Connect-OpenSubtitleAPI -username $OpenSubUser -password $OpenSubPass -APIKey $OpenSubAPI
         if ($token) {
-            $videoFiles = @(Get-ChildItem -LiteralPath $Source -Recurse -Include *.mkv,*.mp4,*.avi | Where-Object { $_.PSIsContainer -eq $false -and $_.DirectoryName -notlike "*\Sample" })
+            $videoFiles = @(Get-ChildItem -LiteralPath $Source -Recurse -Include *.mkv, *.mp4, *.avi | Where-Object { $_.PSIsContainer -eq $false -and $_.DirectoryName -notlike "*\Sample" })
             if ($videoFiles.Count -eq 0) {
                 Write-HTMLLog -Column1 'Result:' -Column2 'No video files found' -ColorBg 'Success'
-                if (-not $script:OpenSubsUsedCachedToken) { Disconnect-OpenSubtitleAPI -APIKey $OpenSubAPI -token $token }
+                if (-not $script:OpenSubsUsedCachedToken) {
+                    Disconnect-OpenSubtitleAPI -APIKey $OpenSubAPI -token $token 
+                }
                 return
             }
 
@@ -513,7 +603,10 @@ function Start-OpenSubtitlesDownload {
             foreach ($videoFile in $videoFiles) {
                 # Hash is best-effort; continue even if hashing fails
                 $videoHash = $null
-                try { $videoHash = Get-VideoHash $videoFile.FullName } catch {}
+                try {
+                    $videoHash = Get-VideoHash $videoFile.FullName 
+                } catch {
+                }
 
                 $queryParams = @{
                     query              = $videoFile.BaseName
@@ -531,7 +624,9 @@ function Start-OpenSubtitlesDownload {
                 if ($null -eq $subtitleInfo -or -not $subtitleInfo.SubtitleIds -or $subtitleInfo.SubtitleIds.Count -eq 0) {
                     # No matching subtitles found at all for this file
                     foreach ($lang in $wantedLangs) {
-                        if (-not $notFoundByLang.ContainsKey($lang)) { $notFoundByLang[$lang] = 0 }
+                        if (-not $notFoundByLang.ContainsKey($lang)) {
+                            $notFoundByLang[$lang] = 0 
+                        }
                         $notFoundByLang[$lang]++
                     }
                     continue
@@ -539,18 +634,24 @@ function Start-OpenSubtitlesDownload {
 
                 $subtitlesCounts = Save-AllSubtitles -subtitleInfo $subtitleInfo -APIKey $OpenSubAPI -token $token -baseDirectory $videoFile.DirectoryName -WantedLanguages $wantedLangs
                 if ($subtitlesCounts) {
-                    $totalDownloaded    += [int]$subtitlesCounts.Downloaded
-                    $totalFailed        += [int]$subtitlesCounts.Failed
-                    $totalAlreadyPresent+= [int]$subtitlesCounts.AlreadyPresent
-                    if ($subtitlesCounts.DailyRemaining) { $lastDailyRemaining = $subtitlesCounts.DailyRemaining }
+                    $totalDownloaded += [int]$subtitlesCounts.Downloaded
+                    $totalFailed += [int]$subtitlesCounts.Failed
+                    $totalAlreadyPresent += [int]$subtitlesCounts.AlreadyPresent
+                    if ($subtitlesCounts.DailyRemaining) {
+                        $lastDailyRemaining = $subtitlesCounts.DailyRemaining 
+                    }
 
                     foreach ($lang in $subtitlesCounts.LanguageCounts.Keys) {
-                        if (-not $aggregateLangCounts.ContainsKey($lang)) { $aggregateLangCounts[$lang] = 0 }
+                        if (-not $aggregateLangCounts.ContainsKey($lang)) {
+                            $aggregateLangCounts[$lang] = 0 
+                        }
                         $aggregateLangCounts[$lang] += $subtitlesCounts.LanguageCounts[$lang]
                     }
 
                     foreach ($nf in $subtitlesCounts.NotFoundLanguages) {
-                        if (-not $notFoundByLang.ContainsKey($nf)) { $notFoundByLang[$nf] = 0 }
+                        if (-not $notFoundByLang.ContainsKey($nf)) {
+                            $notFoundByLang[$nf] = 0 
+                        }
                         $notFoundByLang[$nf]++
                     }
                 }
