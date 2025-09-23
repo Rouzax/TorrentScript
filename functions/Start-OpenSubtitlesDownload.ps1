@@ -710,7 +710,7 @@ function Start-OpenSubtitlesDownload {
             Write-HTMLLog -Column1 "Total:" -Column2 "$($aggregateLangCounts[$language]) in $($language.ToUpper())"
         }
         if ($totalAlreadyPresent -gt 0) {
-            Write-HTMLLog -Column1 "Present:" -Column2 "$totalAlreadyPresent (skipped)"
+            Write-HTMLLog -Column1 "Already present:" -Column2 "$totalAlreadyPresent (skipped)"
         }
         if ($lastDailyRemaining -ne $null) {
             Write-HTMLLog -Column2 "Downloads remaining today: $lastDailyRemaining"
@@ -723,7 +723,7 @@ function Start-OpenSubtitlesDownload {
         }
     } else {
         if ($totalAlreadyPresent -gt 0) {
-            Write-HTMLLog -Column1 'Present:' -Column2 "$totalAlreadyPresent (skipped)"
+            Write-HTMLLog -Column1 'Already present:' -Column2 "$totalAlreadyPresent (skipped)"
         }
         if ($notFoundByLang.Keys.Count -gt 0) {
             $summary = ($notFoundByLang.GetEnumerator() | ForEach-Object { "$($_.Key.ToUpper()): $($_.Value)" }) -join ', '

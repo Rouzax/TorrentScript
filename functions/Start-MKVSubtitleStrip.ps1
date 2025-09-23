@@ -249,7 +249,7 @@ function Start-MKVSubtitleStrip {
                 $Destination = Join-Path -Path $SrtDirectory -ChildPath $SrtNameNew
                 Move-Item -LiteralPath $SrtPath -Destination $Destination -Force
             } else {
-                Write-HTMLLog -Column2 "Language code $languageCode not found in the 3 letter lookup table." -ColorBg 'Error'
+                Write-HTMLLog -Column2 "Language code [$languageCode] not found in the 3 letter lookup table." -ColorBg 'Warning'
             }
         }
         if ($TotalSubsToExtract -gt 0) {
