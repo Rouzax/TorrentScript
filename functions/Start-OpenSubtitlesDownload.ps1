@@ -468,17 +468,19 @@ function Start-OpenSubtitlesDownload {
             $langLower = $lang.ToLower()
             $targetPath = Join-Path $baseDirectory "$($subtitleInfo.VideoFileName).$langLower.srt"
 
-            if ($availableLangs -notcontains $langLower) {
-                $notFoundLanguages += $langLower
-                continue
-            }
-
+            # 1) If the subtitle file is already present, don't count it as "not found"
             if (Test-Path $targetPath) {
                 $alreadyPresentCount++
                 continue
             }
 
-            # Download it
+            # 2) If API didn't offer this language and it's not already present, mark as truly "not found"
+            if ($availableLangs -notcontains $langLower) {
+                $notFoundLanguages += $langLower
+                continue
+            }
+
+            # 3) Otherwise, download it
             $subtitleId = $subtitleInfo.SubtitleIds[$langLower]
             $body = @{ file_id = $subtitleId } | ConvertTo-Json
             try {
@@ -490,10 +492,8 @@ function Start-OpenSubtitlesDownload {
 
                 # If unauthorized, refresh token once and retry download
                 if (-not $response -and ($status -in 401, 403)) {
-                    # Re-login (will use cache or do a fresh login if cache was cleared)
                     $newToken = Connect-OpenSubtitleAPI -username $script:OpenSubCreds.Username -password $OpenSubPass -APIKey $script:OpenSubCreds.APIKey
                     if ($newToken) {
-                        # Update Authorization header and retry once
                         $headers["Authorization"] = "Bearer $newToken"
                         $respHeaders = $null
                         $status = $null
@@ -503,7 +503,7 @@ function Start-OpenSubtitlesDownload {
                     }
                 }
 
-                # If the API exposes daily "remaining" in response body, capture it
+                # Capture daily remaining if present
                 if ($response -and ($response.PSObject.Properties.Name -contains 'remaining')) {
                     $lastDailyRemaining = $response.remaining
                 }
@@ -526,6 +526,7 @@ function Start-OpenSubtitlesDownload {
                 $failedCount++
             }
         }
+
 
         return @{
             Downloaded        = $downloadedCount
@@ -622,15 +623,22 @@ function Start-OpenSubtitlesDownload {
 
                 $subtitleInfo = Search-Subtitles @queryParams
                 if ($null -eq $subtitleInfo -or -not $subtitleInfo.SubtitleIds -or $subtitleInfo.SubtitleIds.Count -eq 0) {
-                    # No matching subtitles found at all for this file
+                    # No results from API for this file. Check what's already present and only mark truly missing langs as "not found".
                     foreach ($lang in $wantedLangs) {
-                        if (-not $notFoundByLang.ContainsKey($lang)) {
-                            $notFoundByLang[$lang] = 0 
+                        $langLower = $lang.ToLower()
+                        $existingPath = Join-Path $videoFile.DirectoryName "$($videoFile.BaseName).$langLower.srt"
+                        if (Test-Path $existingPath) {
+                            $totalAlreadyPresent++
+                        } else {
+                            if (-not $notFoundByLang.ContainsKey($langLower)) {
+                                $notFoundByLang[$langLower] = 0 
+                            }
+                            $notFoundByLang[$langLower]++
                         }
-                        $notFoundByLang[$lang]++
                     }
                     continue
                 }
+
 
                 $subtitlesCounts = Save-AllSubtitles -subtitleInfo $subtitleInfo -APIKey $OpenSubAPI -token $token -baseDirectory $videoFile.DirectoryName -WantedLanguages $wantedLangs
                 if ($subtitlesCounts) {
