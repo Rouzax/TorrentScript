@@ -147,9 +147,9 @@ function Convert-HTMLLogToString {
 
     # Shared style fragments (kept inline for Gmail)
     $tableStyle = 'border-collapse:collapse;background-color:#1E1E1E;color:#EAEAEA;font-family:Arial,Helvetica,sans-serif;font-size:10pt;'
-    $labelStyle = 'vertical-align:top;padding:6px 12px;border-bottom:1px solid #2D2D2D;'
-    $cellBase = 'vertical-align:top;padding:6px 12px;border-bottom:1px solid #2D2D2D;'
-    $headerStyle = 'background-color:#0D47A1;color:#FFFFFF;text-align:center;font-size:10pt;font-weight:bold;padding:8px 12px;border-bottom:1px solid #2D2D2D;'
+    $labelStyle = 'vertical-align:top;padding:2px 10px;border-bottom:1px solid #2D2D2D;'
+    $cellBase = 'vertical-align:top;padding:2px 10px;border-bottom:1px solid #2D2D2D;'
+    $headerStyle = 'background-color:#0D47A1;color:#FFFFFF;text-align:center;font-size:10pt;font-weight:bold;padding:4px 10px;border-bottom:1px solid #2D2D2D;'
     $successStyle = 'background-color:#2E7D32;color:#FFFFFF;'
     $warningStyle = 'background-color:#FF8F00;color:#000000;'
     $errorStyle = 'background-color:#C62828;color:#FFFFFF;'
