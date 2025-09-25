@@ -108,7 +108,7 @@ function Send-HtmlMail {
             From       = $From
             To         = $toList
             Subject    = $Subject
-            BodyHtml   = $bodyHtml
+            HTML   = $bodyHtml
             Credential = $cred
         }
 
