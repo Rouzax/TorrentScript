@@ -424,23 +424,23 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
         }
         Start-SubtitleEdit @SubtitleEditParams
       
-        Write-HTMLLog -Column1 '***  MKV Files  ***' -Header
-        foreach ($Mkv in $mkvFiles) {
-            Write-HTMLLog -Column2 $Mkv.name
-        }
-        $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.srt'
-        if ($SrtFiles.Count -gt 0) {
-            Write-HTMLLog -Column1 '***  Subtitle Files  ***' -Header
-            foreach ($Srt in $SrtFiles) {
-                Write-HTMLLog -Column2 $srt.name
-            }
-        }
+        # Write-HTMLLog -Column1 '***  MKV Files  ***' -Header
+        # foreach ($Mkv in $mkvFiles) {
+        #     Write-HTMLLog -Column2 $Mkv.name
+        # }
+        # $SrtFiles = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.srt'
+        # if ($SrtFiles.Count -gt 0) {
+        #     Write-HTMLLog -Column1 '***  Subtitle Files  ***' -Header
+        #     foreach ($Srt in $SrtFiles) {
+        #         Write-HTMLLog -Column2 $srt.name
+        #     }
+        # }
     } else {
-        Write-HTMLLog -Column1 '***  Files  ***' -Header
-        $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.*'
-        foreach ($File in $Files) {
-            Write-HTMLLog -Column1 'File:' -Column2 $File.name
-        }
+        # Write-HTMLLog -Column1 '***  Files  ***' -Header
+        # $Files = Get-ChildItem -LiteralPath $ProcessPathFull -Recurse -Filter '*.*'
+        # foreach ($File in $Files) {
+        #     Write-HTMLLog -Column1 'File:' -Column2 $File.name
+        # }
     }
     
     # Get the common prefix length between the paths
