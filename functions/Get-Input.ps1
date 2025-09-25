@@ -1,24 +1,24 @@
-<#
-.SYNOPSIS
-    Gets user input with optional validation.
-.DESCRIPTION
-    This function prompts the user for input and validates it based on the optional 'Required' switch.
-.PARAMETER Message
-    Specifies the message displayed to the user as a prompt for input.
-.PARAMETER Required
-    Indicates whether the input is required. If used, the function continues to prompt until valid input is provided.
-.INPUTS
-    None. This function does not accept piped input.
-.OUTPUTS 
-    System.String. The user-provided input.
-.EXAMPLE
-    Get-Input -Message "Enter your name" -Required
-    Prompts the user to enter their name, and the input is required.
-.EXAMPLE
-    Get-Input -Message "Enter your age"
-    Prompts the user to enter their age, and the input is optional.
-#>
 function Get-Input {
+    <#
+    .SYNOPSIS
+        Gets user input with optional validation.
+    .DESCRIPTION
+        This function prompts the user for input and validates it based on the optional 'Required' switch.
+    .PARAMETER Message
+        Specifies the message displayed to the user as a prompt for input.
+    .PARAMETER Required
+        Indicates whether the input is required. If used, the function continues to prompt until valid input is provided.
+    .INPUTS
+        None. This function does not accept piped input.
+    .OUTPUTS 
+        System.String. The user-provided input.
+    .EXAMPLE
+        Get-Input -Message "Enter your name" -Required
+        Prompts the user to enter their name, and the input is required.
+    .EXAMPLE
+        Get-Input -Message "Enter your age"
+        Prompts the user to enter their age, and the input is optional.
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

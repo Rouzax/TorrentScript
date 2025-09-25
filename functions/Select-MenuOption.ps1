@@ -1,29 +1,30 @@
-<#
-.SYNOPSIS
-    Presents a menu of options to the user and allows them to select one.
-.DESCRIPTION
-    The Select-MenuOption function is used to create a menu with options provided 
-    as an array in the $MenuOptions parameter. 
-    The function prompts the user to select an option by displaying the options 
-    with their corresponding index numbers. 
-    The user must enter the index number of the option they wish to select. 
-    The function checks if the entered number is within the range of the available options and returns the selected option.
-.PARAMETER MenuOptions
-    An array of options to be presented in the menu. The options must be of the same data type.
-.PARAMETER MenuQuestion
-    A string representing the question to be asked when prompting the user for input.
-.OUTPUTS 
-    The selected menu option.
-.EXAMPLE
-    $Options = @("Option 1","Option 2","Option 3")
-    $Question = "an option"
-    $SelectedOption = Select-MenuOption -MenuOptions $Options -MenuQuestion $Question
-        This example creates a menu with three options "Option 1", "Option 2", and "Option 3". 
-        The user is prompted to select an option by displaying the options with their index numbers. 
-        The function returns the selected option.
-#>
 function Select-MenuOption {
+    <#
+    .SYNOPSIS
+        Presents a menu of options to the user and allows them to select one.
+    .DESCRIPTION
+        The Select-MenuOption function is used to create a menu with options provided 
+        as an array in the $MenuOptions parameter. 
+        The function prompts the user to select an option by displaying the options 
+        with their corresponding index numbers. 
+        The user must enter the index number of the option they wish to select. 
+        The function checks if the entered number is within the range of the available options and returns the selected option.
+    .PARAMETER MenuOptions
+        An array of options to be presented in the menu. The options must be of the same data type.
+    .PARAMETER MenuQuestion
+        A string representing the question to be asked when prompting the user for input.
+    .OUTPUTS 
+        The selected menu option.
+    .EXAMPLE
+        $Options = @("Option 1","Option 2","Option 3")
+        $Question = "an option"
+        $SelectedOption = Select-MenuOption -MenuOptions $Options -MenuQuestion $Question
+            This example creates a menu with three options "Option 1", "Option 2", and "Option 3". 
+            The user is prompted to select an option by displaying the options with their index numbers. 
+            The function returns the selected option.
+    #>
     param (
+        [CmdletBinding()]
         [Parameter(Mandatory = $true)]
         [Object]$MenuOptions,
 
@@ -33,7 +34,7 @@ function Select-MenuOption {
 
     # Check if there is only one option, return it directly
     if ($MenuOptions.Count -eq 1) {
-        Return $MenuOptions
+        return $MenuOptions
     } 
 
     Write-Host "`nSelect the correct $MenuQuestion" -ForegroundColor DarkCyan
@@ -66,6 +67,6 @@ function Select-MenuOption {
     until (($ans -ge 1 -and $ans -le $MenuOptions.Count) -and $numOK)
 
     # Return the selected option
-    Return $MenuOptions[$ans - 1]
+    return $MenuOptions[$ans - 1]
 
 }

@@ -82,7 +82,13 @@ function Import-Sonarr {
     }
     Write-HTMLLog -Column1 '***  Sonarr Import  ***' -Header
     try {
-        $EpisodesScanJob = Invoke-RestMethod -Uri "http://$SonarrHost`:$SonarrPort/api/v3/command" -Method Post -Body $body -Headers $headers
+        $Parameters = @{
+            Uri     = "http://$SonarrHost`:$SonarrPort/api/v3/command"
+            Method  = 'Post'
+            Body    = $body
+            Headers = $headers
+        }
+        $EpisodesScanJob = Invoke-RestMethod @Parameters
     } catch {
         Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
@@ -93,7 +99,12 @@ function Import-Sonarr {
         $endTime = (Get-Date).Add($timeout)
         do {
             try {
-                $EpisodesScanResult = Invoke-RestMethod -Uri "http://$SonarrHost`:$SonarrPort/api/v3/command/$($EpisodesScanJob.id)" -Method Get -Headers $headers
+                $Parameters = @{
+                    Uri     = "http://$SonarrHost`:$SonarrPort/api/v3/command/$($EpisodesScanJob.id)"
+                    Method  = 'Get'
+                    Headers = $headers
+                }
+                $EpisodesScanResult = Invoke-RestMethod @Parameters
             } catch {
                 Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'

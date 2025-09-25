@@ -1,26 +1,26 @@
-<#
-.SYNOPSIS
-    Start-UnRar function extracts RAR files using WinRAR.
-.DESCRIPTION
-    This function extracts RAR files specified by the UnRarSourcePath to the UnRarTargetPath.
-    It logs the extraction process, handles errors, and stops the script if extraction fails.
-.PARAMETER UnRarSourcePath
-    Specifies the path of the RAR file to be extracted.
-.PARAMETER UnRarTargetPath
-    Specifies the target path where the contents of the RAR file will be extracted.
-.PARAMETER DownloadLabel
-    Specifies the label associated with the download.
-.PARAMETER DownloadName
-    Specifies the name of the download.
-.OUTPUTS
-    Outputs the result of the extraction process.
-.EXAMPLE
-    Start-UnRar -UnRarSourcePath "C:\Downloads\File.rar" -UnRarTargetPath "C:\Extracted" -DownloadLabel "TV" -DownloadName "Show1"
-    # Extracts File.rar to C:\Extracted and logs the process.
-#>
 function Start-UnRar {
+    <#
+    .SYNOPSIS
+        Start-UnRar function extracts RAR files using WinRAR.
+    .DESCRIPTION
+        This function extracts RAR files specified by the UnRarSourcePath to the UnRarTargetPath.
+        It logs the extraction process, handles errors, and stops the script if extraction fails.
+    .PARAMETER UnRarSourcePath
+        Specifies the path of the RAR file to be extracted.
+    .PARAMETER UnRarTargetPath
+        Specifies the target path where the contents of the RAR file will be extracted.
+    .PARAMETER DownloadLabel
+        Specifies the label associated with the download.
+    .PARAMETER DownloadName
+        Specifies the name of the download.
+    .OUTPUTS
+        Outputs the result of the extraction process.
+    .EXAMPLE
+        Start-UnRar -UnRarSourcePath "C:\Downloads\File.rar" -UnRarTargetPath "C:\Extracted" -DownloadLabel "TV" -DownloadName "Show1"
+        # Extracts File.rar to C:\Extracted and logs the process.
+    #>
     [CmdletBinding()]
-    Param( 
+    param( 
         [Parameter(Mandatory = $true)] 
         [string]$UnRarSourcePath, 
        

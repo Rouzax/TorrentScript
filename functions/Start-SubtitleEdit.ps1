@@ -1,29 +1,29 @@
-<#
-.SYNOPSIS
-    Starts Subtitle Edit to clean up subtitles.
-.DESCRIPTION
-    This function initiates Subtitle Edit, a free and open-source subtitle editor,
-    to clean up subtitles for specified files.
-.PARAMETER Source
-    Specifies the source directory of the subtitle files.
-.PARAMETER Files
-    Specifies the file or wildcard pattern for subtitle files to process.
-.PARAMETER SubtitleEditPath
-    Specifies the path to the Subtitle Edit executable.
-.PARAMETER DownloadLabel
-    Specifies the label associated with the download.
-.PARAMETER DownloadName
-    Specifies the name of the downloaded content.
-.OUTPUTS
-None.
-.EXAMPLE
-    Start-SubtitleEdit -Source "C:\Subtitles" -Files "*.srt" -SubtitleEditPath "C:\SubtitleEdit.exe" -DownloadLabel "TV" -DownloadName "Episode1"
-    # Initiates Subtitle Edit to clean up subtitles for TV Episode1.
-.EXAMPLE
-    Start-SubtitleEdit -Source "C:\Movies" -Files "*.sub" -SubtitleEditPath "C:\SubtitleEdit.exe" -DownloadLabel "Movie" -DownloadName "FilmA"
-    # Initiates Subtitle Edit to clean up subtitles for Movie FilmA.
-#>
 function Start-SubtitleEdit {
+    <#
+    .SYNOPSIS
+        Starts Subtitle Edit to clean up subtitles.
+    .DESCRIPTION
+        This function initiates Subtitle Edit, a free and open-source subtitle editor,
+        to clean up subtitles for specified files.
+    .PARAMETER Source
+        Specifies the source directory of the subtitle files.
+    .PARAMETER Files
+        Specifies the file or wildcard pattern for subtitle files to process.
+    .PARAMETER SubtitleEditPath
+        Specifies the path to the Subtitle Edit executable.
+    .PARAMETER DownloadLabel
+        Specifies the label associated with the download.
+    .PARAMETER DownloadName
+        Specifies the name of the downloaded content.
+    .OUTPUTS
+    None.
+    .EXAMPLE
+        Start-SubtitleEdit -Source "C:\Subtitles" -Files "*.srt" -SubtitleEditPath "C:\SubtitleEdit.exe" -DownloadLabel "TV" -DownloadName "Episode1"
+        # Initiates Subtitle Edit to clean up subtitles for TV Episode1.
+    .EXAMPLE
+        Start-SubtitleEdit -Source "C:\Movies" -Files "*.sub" -SubtitleEditPath "C:\SubtitleEdit.exe" -DownloadLabel "Movie" -DownloadName "FilmA"
+        # Initiates Subtitle Edit to clean up subtitles for Movie FilmA.
+    #>
 
     [CmdletBinding()]
     param (

@@ -1,32 +1,32 @@
-<#
-.SYNOPSIS
-    Imports items into Medusa for post-processing.
-.DESCRIPTION
-    This function initiates the import process in Medusa for post-processing. It takes various parameters 
-    such as source directory, Medusa API key, host information, timeout settings, and download details.
-.PARAMETER Source
-    Specifies the source directory for the items to be imported.
-.PARAMETER MedusaApiKey
-    Specifies the API key for authentication with the Medusa server.
-.PARAMETER MedusaHost
-    Specifies the host address of the Medusa server.
-.PARAMETER MedusaPort
-    Specifies the port number for communication with the Medusa server.
-.PARAMETER MedusaTimeOutMinutes
-    Specifies the timeout duration (in minutes) for the Medusa import operation.
-.PARAMETER DownloadLabel
-    Specifies the label for the download being imported.
-.PARAMETER DownloadName
-    Specifies the name of the download being imported.
-.OUTPUTS 
-    None
-.EXAMPLE
-    Import-Medusa -Source "C:\Downloads\Show" -MedusaApiKey "123456" -MedusaHost "medusa.example.com" 
-    -MedusaPort 8081 -MedusaTimeOutMinutes 30 -DownloadLabel "TV" -DownloadName "Show"
-
-    Initiates the Medusa import for a episode named "Show" in the "C:\Downloads" directory.
-#>
 function Import-Medusa {
+    <#
+    .SYNOPSIS
+        Imports items into Medusa for post-processing.
+    .DESCRIPTION
+        This function initiates the import process in Medusa for post-processing. It takes various parameters 
+        such as source directory, Medusa API key, host information, timeout settings, and download details.
+    .PARAMETER Source
+        Specifies the source directory for the items to be imported.
+    .PARAMETER MedusaApiKey
+        Specifies the API key for authentication with the Medusa server.
+    .PARAMETER MedusaHost
+        Specifies the host address of the Medusa server.
+    .PARAMETER MedusaPort
+        Specifies the port number for communication with the Medusa server.
+    .PARAMETER MedusaTimeOutMinutes
+        Specifies the timeout duration (in minutes) for the Medusa import operation.
+    .PARAMETER DownloadLabel
+        Specifies the label for the download being imported.
+    .PARAMETER DownloadName
+        Specifies the name of the download being imported.
+    .OUTPUTS 
+        None
+    .EXAMPLE
+        Import-Medusa -Source "C:\Downloads\Show" -MedusaApiKey "123456" -MedusaHost "medusa.example.com" 
+        -MedusaPort 8081 -MedusaTimeOutMinutes 30 -DownloadLabel "TV" -DownloadName "Show"
+    
+        Initiates the Medusa import for a episode named "Show" in the "C:\Downloads" directory.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)] 

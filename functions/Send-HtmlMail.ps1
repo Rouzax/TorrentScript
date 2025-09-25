@@ -1,46 +1,44 @@
-<#
-.SYNOPSIS
-    Sends an HTML email via Mailozaurr; auto-detects inline HTML vs. HTML file and selects TLS by port.
-.DESCRIPTION
-    Uses Mailozaurr's Send-EmailMessage. If -HTMLBody is a path (or file:/// URI) to an .html/.htm file, the file is read as UTF-8; 
-    otherwise it's treated as inline HTML. TLS mode auto-selects: 465=SSL (implicit), 587=STARTTLS, others try STARTTLS.
-.PARAMETER SMTPServer
-    SMTP host (e.g., smtp.example.com).
-.PARAMETER SMTPServerPort
-    Submission port (465 implicit TLS, 587 STARTTLS).
-.PARAMETER SmtpUser
-    SMTP username.
-.PARAMETER SmtpPassword
-    SMTP password (converted to SecureString).
-.PARAMETER To
-    Recipient(s); single or comma/semicolon-separated.
-.PARAMETER From
-    Sender address.
-.PARAMETER Subject
-    Email subject.
-.PARAMETER HTMLBody
-    Inline HTML string or path/URI to an HTML file.
-.EXAMPLE
-    Send-HtmlMail -SMTPServer smtp.example.com -SMTPServerPort 587 `
-    -SmtpUser user@example.com -SmtpPassword "P@ssw0rd!" `
-    -To "a@example.com;b@example.com" -From user@example.com `
-    -Subject "Report" -HTMLBody "<h1>Hello</h1>"
-.EXAMPLE
-    Send-HtmlMail -SMTPServer smtp.example.com -SMTPServerPort 465 `
-    -SmtpUser user@example.com -SmtpPassword "P@ssw0rd!" `
-    -To ops@example.com -From noreply@example.com `
-    -Subject "Daily" -HTMLBody "C:\Reports\Daily.html"
-.OUTPUTS
-    None.
-
-.NOTES
-    Requires: Mailozaurr module. Recipients list supports comma/semicolon. HTML files read as UTF-8.
-.LINK
-    https://github.com/EvotecIT/Mailozaurr
-#>
-
-
 function Send-HtmlMail {
+    <#
+    .SYNOPSIS
+        Sends an HTML email via Mailozaurr; auto-detects inline HTML vs. HTML file and selects TLS by port.
+    .DESCRIPTION
+        Uses Mailozaurr's Send-EmailMessage. If -HTMLBody is a path (or file:/// URI) to an .html/.htm file, the file is read as UTF-8; 
+        otherwise it's treated as inline HTML. TLS mode auto-selects: 465=SSL (implicit), 587=STARTTLS, others try STARTTLS.
+    .PARAMETER SMTPServer
+        SMTP host (e.g., smtp.example.com).
+    .PARAMETER SMTPServerPort
+        Submission port (465 implicit TLS, 587 STARTTLS).
+    .PARAMETER SmtpUser
+        SMTP username.
+    .PARAMETER SmtpPassword
+        SMTP password (converted to SecureString).
+    .PARAMETER To
+        Recipient(s); single or comma/semicolon-separated.
+    .PARAMETER From
+        Sender address.
+    .PARAMETER Subject
+        Email subject.
+    .PARAMETER HTMLBody
+        Inline HTML string or path/URI to an HTML file.
+    .EXAMPLE
+        Send-HtmlMail -SMTPServer smtp.example.com -SMTPServerPort 587 `
+        -SmtpUser user@example.com -SmtpPassword "P@ssw0rd!" `
+        -To "a@example.com;b@example.com" -From user@example.com `
+        -Subject "Report" -HTMLBody "<h1>Hello</h1>"
+    .EXAMPLE
+        Send-HtmlMail -SMTPServer smtp.example.com -SMTPServerPort 465 `
+        -SmtpUser user@example.com -SmtpPassword "P@ssw0rd!" `
+        -To ops@example.com -From noreply@example.com `
+        -Subject "Daily" -HTMLBody "C:\Reports\Daily.html"
+    .OUTPUTS
+        None.
+    
+    .NOTES
+        Requires: Mailozaurr module. Recipients list supports comma/semicolon. HTML files read as UTF-8.
+    .LINK
+        https://github.com/EvotecIT/Mailozaurr
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]

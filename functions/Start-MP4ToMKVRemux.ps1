@@ -1,21 +1,21 @@
-<#
-.SYNOPSIS
-    Remuxes MP4 files to MKV using MKVMerge.
-.DESCRIPTION
-    This function remuxes MP4 files to MKV format using MKVMerge. 
-    It deletes the original MP4 file after successful remux and 
-    overwrites the original MKV file.
-.PARAMETER Source
-    Specifies the path to the directory containing MP4 files to remux.
-.PARAMETER MKVMergePath
-    Specifies the path to the MKVMerge executable.
-.OUTPUTS 
-    Outputs the remuxed MKV files to the specified directory.
-.EXAMPLE
-    Start-MP4ToMKVRemux -Source "C:\Videos" -MKVMergePath "C:\Program Files\MKVToolNix\mkvmerge.exe"
-    # Remuxes all MP4 files in the "C:\Videos" directory using MKVMerge.
-#>
 function Start-MP4ToMKVRemux {
+    <#
+    .SYNOPSIS
+        Remuxes MP4 files to MKV using MKVMerge.
+    .DESCRIPTION
+        This function remuxes MP4 files to MKV format using MKVMerge. 
+        It deletes the original MP4 file after successful remux and 
+        overwrites the original MKV file.
+    .PARAMETER Source
+        Specifies the path to the directory containing MP4 files to remux.
+    .PARAMETER MKVMergePath
+        Specifies the path to the MKVMerge executable.
+    .OUTPUTS 
+        Outputs the remuxed MKV files to the specified directory.
+    .EXAMPLE
+        Start-MP4ToMKVRemux -Source "C:\Videos" -MKVMergePath "C:\Program Files\MKVToolNix\mkvmerge.exe"
+        # Remuxes all MP4 files in the "C:\Videos" directory using MKVMerge.
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

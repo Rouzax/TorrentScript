@@ -1,83 +1,82 @@
-<#
-.SYNOPSIS
-    Download missing subtitles from OpenSubtitles.com with token caching and rate-limit handling.
-
-.DESCRIPTION
-    Scans a source directory for video files and downloads missing subtitles via the OpenSubtitles API.
-    Designed for unattended runs (e.g., post-download), with support for caching tokens, handling rate limits (HTTP 429),
-    and distinguishing between “already present” and “not found” subtitles.
-
-    Key features:
-      • Token cache per user/API key (Windows: %LOCALAPPDATA%\TorrentScript\OpenSubtitles,
-        Linux/macOS: $XDG_CACHE_HOME or ~/.cache/TorrentScript/OpenSubtitles).
-        Cached tokens are reused; invalid tokens (401/403) clear the cache.
-      • Login retried up to 5 times on 429, paced by Retry-After/ratelimit-reset headers.
-      • Search/download retried up to 3 times on 429.
-      • Logs out only if a fresh login was made (cached tokens remain valid).
-      • Logging via Write-HTMLLog (supports 'Success', 'Warning', 'Error').
-      • Computes a video hash (length + first/last 64 KiB) to improve matching.
-      • Ignores “Sample” folders. Supports filtering for episode/movie type and subtitle attributes.
-
-.PARAMETER Source
-    Directory to scan recursively for video files (.mkv, .mp4, .avi).
-    "Sample" folders are skipped.
-
-.PARAMETER OpenSubUser
-    OpenSubtitles username.
-
-.PARAMETER OpenSubPass
-    OpenSubtitles password.
-
-.PARAMETER OpenSubAPI
-    OpenSubtitles API key.
-
-.PARAMETER OpenSubHearing_impaired 
-    Filter for hearing-impaired subtitles.
-    Accepted values: include, exclude, only
-
-.PARAMETER OpenSubForeign_parts_only
-    Filter for “foreign parts only” subtitles.
-    Accepted values: include, exclude, only
-
-.PARAMETER OpenSubMachine_translated 
-    Filter for machine-translated subtitles.
-    Accepted values: include, exclude, only
-
-.PARAMETER OpenSubAI_translated 
-    Filter for AI-translated subtitles.
-    Accepted values: include, exclude, only
-
-.PARAMETER WantedLanguages
-    ISO 639-1 language codes (e.g., 'en','nl','fr'). Downloads one per requested language per file.
-
-.PARAMETER Type
-    Content type for the API: movie or episode.
-
-.INPUTS
-    None.
-
-.OUTPUTS
-    None. Writes progress and results using Write-HTMLLog, including:
-      - Downloaded per language & total
-      - Already present & failed counts
-      - Languages not found
-      - Remaining daily downloads (if reported by API)
-
-.EXAMPLE
-    Start-OpenSubtitlesDownload `
-      -Source "D:\Media\TV\Show\Season 01" `
-      -OpenSubUser "user" -OpenSubPass "pass" -OpenSubAPI "apikey" `
-      -OpenSubHearing_impaired "exclude" -OpenSubForeign_parts_only "exclude" `
-      -OpenSubMachine_translated "exclude" -OpenSubAI_translated "exclude" `
-      -WantedLanguages @("en","nl") -Type "episode"
-
-.NOTES
-    • Safe for unattended execution; distinguishes “no subtitles needed” vs “none found.”
-    • Clears token cache automatically if authentication fails.
-    • Retries respect API rate-limit headers; adds small jitter to avoid collisions.
-#>
-
 function Start-OpenSubtitlesDownload {
+    <#
+    .SYNOPSIS
+        Download missing subtitles from OpenSubtitles.com with token caching and rate-limit handling.
+    
+    .DESCRIPTION
+        Scans a source directory for video files and downloads missing subtitles via the OpenSubtitles API.
+        Designed for unattended runs (e.g., post-download), with support for caching tokens, handling rate limits (HTTP 429),
+        and distinguishing between “already present” and “not found” subtitles.
+    
+        Key features:
+          • Token cache per user/API key (Windows: %LOCALAPPDATA%\TorrentScript\OpenSubtitles,
+            Linux/macOS: $XDG_CACHE_HOME or ~/.cache/TorrentScript/OpenSubtitles).
+            Cached tokens are reused; invalid tokens (401/403) clear the cache.
+          • Login retried up to 5 times on 429, paced by Retry-After/ratelimit-reset headers.
+          • Search/download retried up to 3 times on 429.
+          • Logs out only if a fresh login was made (cached tokens remain valid).
+          • Logging via Write-HTMLLog (supports 'Success', 'Warning', 'Error').
+          • Computes a video hash (length + first/last 64 KiB) to improve matching.
+          • Ignores “Sample” folders. Supports filtering for episode/movie type and subtitle attributes.
+    
+    .PARAMETER Source
+        Directory to scan recursively for video files (.mkv, .mp4, .avi).
+        "Sample" folders are skipped.
+    
+    .PARAMETER OpenSubUser
+        OpenSubtitles username.
+    
+    .PARAMETER OpenSubPass
+        OpenSubtitles password.
+    
+    .PARAMETER OpenSubAPI
+        OpenSubtitles API key.
+    
+    .PARAMETER OpenSubHearing_impaired 
+        Filter for hearing-impaired subtitles.
+        Accepted values: include, exclude, only
+    
+    .PARAMETER OpenSubForeign_parts_only
+        Filter for “foreign parts only” subtitles.
+        Accepted values: include, exclude, only
+    
+    .PARAMETER OpenSubMachine_translated 
+        Filter for machine-translated subtitles.
+        Accepted values: include, exclude, only
+    
+    .PARAMETER OpenSubAI_translated 
+        Filter for AI-translated subtitles.
+        Accepted values: include, exclude, only
+    
+    .PARAMETER WantedLanguages
+        ISO 639-1 language codes (e.g., 'en','nl','fr'). Downloads one per requested language per file.
+    
+    .PARAMETER Type
+        Content type for the API: movie or episode.
+    
+    .INPUTS
+        None.
+    
+    .OUTPUTS
+        None. Writes progress and results using Write-HTMLLog, including:
+          - Downloaded per language & total
+          - Already present & failed counts
+          - Languages not found
+          - Remaining daily downloads (if reported by API)
+    
+    .EXAMPLE
+        Start-OpenSubtitlesDownload `
+          -Source "D:\Media\TV\Show\Season 01" `
+          -OpenSubUser "user" -OpenSubPass "pass" -OpenSubAPI "apikey" `
+          -OpenSubHearing_impaired "exclude" -OpenSubForeign_parts_only "exclude" `
+          -OpenSubMachine_translated "exclude" -OpenSubAI_translated "exclude" `
+          -WantedLanguages @("en","nl") -Type "episode"
+    
+    .NOTES
+        • Safe for unattended execution; distinguishes “no subtitles needed” vs “none found.”
+        • Clears token cache automatically if authentication fails.
+        • Retries respect API rate-limit headers; adds small jitter to avoid collisions.
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]
@@ -298,7 +297,6 @@ function Start-OpenSubtitlesDownload {
                     $wait += Get-Random -Minimum 0 -Maximum 2
 
                     if ($attempt -lt $MaxAttempts) {
-                        # Write-HTMLLog -Column1 'OpenSubs:' -Column2 "429 received. Retrying in ${wait}s (attempt $attempt of $MaxAttempts)..." -ColorBg 'Warning'
                         Start-Sleep -Seconds $wait
                         continue
                     }
@@ -336,11 +334,17 @@ function Start-OpenSubtitlesDownload {
         $body = @{ username = $username; password = $password } | ConvertTo-Json
 
         $respHeaders = $null
-        $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/login' `
-            -Method POST -Headers $headers `
-            -ContentType 'application/json' -Body $body `
-            -MaxAttempts 5 -StopOnAuthError `
-            -RespHeaders ([ref]$respHeaders)
+        $Parameters = @{
+            Uri             = 'https://api.opensubtitles.com/api/v1/login'
+            Method          = 'POST'
+            Headers         = $headers
+            ContentType     = 'application/json'
+            Body            = $body
+            MaxAttempts     = 5
+            StopOnAuthError = $true
+            RespHeaders     = ([ref]$respHeaders)
+        }
+        $response = Invoke-OpenSubs @Parameters
 
         if ($response -and $response.token) {
             $expires = (Get-Date).AddHours(23)
@@ -487,10 +491,18 @@ function Start-OpenSubtitlesDownload {
                 $respHeaders = $null
                 $status = $null
                 # First attempt: suppress the noisy 401/403 log; we’ll handle them.
-                $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/download' `
-                    -Method POST -Headers $headers -ContentType 'application/json' `
-                    -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders) -StatusOut ([ref]$status) `
-                    -SuppressLogForStatus @(401, 403)
+                $Parameters = @{
+                    Uri                  = 'https://api.opensubtitles.com/api/v1/download'
+                    Method               = 'POST'
+                    Headers              = $headers
+                    ContentType          = 'application/json'
+                    Body                 = $body
+                    MaxAttempts          = 3
+                    RespHeaders          = ([ref]$respHeaders)
+                    StatusOut            = ([ref]$status)
+                    SuppressLogForStatus = @(401, 403)
+                }
+                $response = Invoke-OpenSubs @Parameters
 
                 # If unauthorized, refresh token once and retry (this time DO log if it still fails)
                 if (-not $response -and ($status -in 401, 403)) {
@@ -499,9 +511,17 @@ function Start-OpenSubtitlesDownload {
                         $headers["Authorization"] = "Bearer $newToken"
                         $respHeaders = $null
                         $status = $null
-                        $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/download' `
-                            -Method POST -Headers $headers -ContentType 'application/json' `
-                            -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders) -StatusOut ([ref]$status)
+                        $Parameters = @{
+                            Uri         = 'https://api.opensubtitles.com/api/v1/download'
+                            Method      = 'POST'
+                            Headers     = $headers
+                            ContentType = 'application/json'
+                            Body        = $body
+                            MaxAttempts = 3
+                            RespHeaders = ([ref]$respHeaders)
+                            StatusOut   = ([ref]$status)
+                        }
+                        $response = Invoke-OpenSubs @Parameters
                     }
                 }
 
@@ -664,16 +684,18 @@ function Start-OpenSubtitlesDownload {
 
         # Search for all missing languages in one query to reduce API calls
         $languagesCsv = ($missing -join ',')
-        $subtitleInfo = Search-Subtitles `
-            -type $Type `
-            -query $name `
-            -languagesCsv $languagesCsv `
-            -moviehash $hash `
-            -APIKey $OpenSubAPI `
-            -hearing_impaired $OpenSubHearing_impaired `
-            -foreign_parts_only $OpenSubForeign_parts_only `
-            -machine_translated $OpenSubMachine_translated `
-            -ai_translated $OpenSubAI_translated
+        $Parameters = @{
+            type               = $Type
+            query              = $name
+            languagesCsv       = $languagesCsv
+            moviehash          = $hash
+            APIKey             = $OpenSubAPI
+            hearing_impaired   = $OpenSubHearing_impaired
+            foreign_parts_only = $OpenSubForeign_parts_only
+            machine_translated = $OpenSubMachine_translated
+            ai_translated      = $OpenSubAI_translated
+        }
+        $subtitleInfo = Search-Subtitles @Parameters
 
         if (-not $subtitleInfo) {
             # Count all missing as "not found"
@@ -689,9 +711,16 @@ function Start-OpenSubtitlesDownload {
         }
 
         # Download only the missing ones for this file
-        $fileResult = Save-AllSubtitles -subtitleInfo $subtitleInfo -APIKey $OpenSubAPI -token $token `
-            -baseDirectory $dir -videoBaseName $name `
-            -WantedLanguages $missing -aggregate $aggregate
+        $Parameters = @{
+            subtitleInfo    = $subtitleInfo
+            APIKey          = $OpenSubAPI
+            token           = $token
+            baseDirectory   = $dir
+            videoBaseName   = $name
+            WantedLanguages = $missing
+            aggregate       = $aggregate
+        }
+        $fileResult = Save-AllSubtitles @Parameters
 
         # Concise per-file summary lines
         if ($fileResult -and $fileResult.Downloaded.Count -gt 0) {

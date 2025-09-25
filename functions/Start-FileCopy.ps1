@@ -1,29 +1,28 @@
-<#
-.SYNOPSIS
-    Copies files using RoboCopy or falls back to PowerShell Copy if RoboCopy is not available.
-.DESCRIPTION
-    This function copies files from a source to a destination using RoboCopy or PowerShell Copy.
-.PARAMETER Source
-    Specifies the source path of the files to be copied.
-.PARAMETER Destination
-    Specifies the destination path where the files will be copied.
-.PARAMETER File
-    Specifies the filter for files to be copied. Use '*' for all files (avoid '*.*').
-.PARAMETER DownloadLabel
-    Specifies the label for the download operation (for logging purposes).
-.PARAMETER DownloadName
-    Specifies the name of the download operation (for logging purposes).
-.OUTPUTS 
-    None
-.EXAMPLE
-    Start-FileCopy -Source "C:\Source" -Destination "D:\Destination" -File '*' -DownloadLabel "Label" -DownloadName "Download"
-    Copies all files from C:\Source to D:\Destination and logs the results.
-.EXAMPLE
-    Start-FileCopy -Source "C:\Source" -Destination "D:\Destination" -File 'example.txt' -DownloadLabel "Label" -DownloadName "Download"
-    Copies a single file named 'example.txt' from C:\Source to D:\Destination and logs the results.
-#>
-
 function Start-FileCopy {
+    <#
+    .SYNOPSIS
+        Copies files using RoboCopy or falls back to PowerShell Copy if RoboCopy is not available.
+    .DESCRIPTION
+        This function copies files from a source to a destination using RoboCopy or PowerShell Copy.
+    .PARAMETER Source
+        Specifies the source path of the files to be copied.
+    .PARAMETER Destination
+        Specifies the destination path where the files will be copied.
+    .PARAMETER File
+        Specifies the filter for files to be copied. Use '*' for all files (avoid '*.*').
+    .PARAMETER DownloadLabel
+        Specifies the label for the download operation (for logging purposes).
+    .PARAMETER DownloadName
+        Specifies the name of the download operation (for logging purposes).
+    .OUTPUTS 
+        None
+    .EXAMPLE
+        Start-FileCopy -Source "C:\Source" -Destination "D:\Destination" -File '*' -DownloadLabel "Label" -DownloadName "Download"
+        Copies all files from C:\Source to D:\Destination and logs the results.
+    .EXAMPLE
+        Start-FileCopy -Source "C:\Source" -Destination "D:\Destination" -File 'example.txt' -DownloadLabel "Label" -DownloadName "Download"
+        Copies a single file named 'example.txt' from C:\Source to D:\Destination and logs the results.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]

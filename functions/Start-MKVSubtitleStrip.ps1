@@ -1,38 +1,37 @@
-<#
-.SYNOPSIS
-    Strips unwanted subtitles from MKV files and extracts desired SRT subtitles.
-.DESCRIPTION
-    This function extracts SRT subtitles from MKV files based on specified criteria,
-    and removes unwanted subtitles. It also remuxes the MKV file to exclude undesired
-    subtitle tracks.
-.PARAMETER Source
-    Specifies the path to the directory containing MKV files.
-.PARAMETER MKVMergePath
-    Specifies the path to the MKVMerge executable.
-.PARAMETER MKVExtractPath
-    Specifies the path to the MKVExtract executable.
-.PARAMETER WantedLanguages
-    Specifies an array of language codes for the desired subtitles.
-    The function extracts subtitles for the specified languages.
-    Example: @("eng", "dut")
-.PARAMETER SubtitleNamesToRemove
-    Specifies an array of subtitle names to be removed.
-    Subtitles with matching names will be excluded from the extraction.
-    Example: @("Forced")
-.PARAMETER LanguageCodeLookup
-    Specifies an Hashtable of language code mappings.
-    Each item in the array should be a hashtable with 'alpha3' and 'alpha2' keys
-    representing the three-letter and two-letter language codes, respectively.
-    Example: @(@{alpha3="eng"; alpha2="en"}, @{alpha3="dut"; alpha2="nl"})
-.OUTPUTS
-    None
-.EXAMPLE
-    Start-MKVSubtitleStrip -Source "C:\Path\To\MKVFiles" -MKVMergePath "C:\Program Files\MKVToolNix\mkvmerge.exe"
-    -MKVExtractPath "C:\Program Files\MKVToolNix\mkvextract.exe" -WantedLanguages @("eng", "dut") 
-    -SubtitleNamesToRemove @("Forced") -LanguageCodes @{"en"=@{"639-1"="en";"639-2"="eng";"name"="English"}; "nl"=@{"639-1"="nl";"639-2"="nld";"639-2/B"="dut";"name"="Dutch"}}
-#>
-
 function Start-MKVSubtitleStrip {
+    <#
+    .SYNOPSIS
+        Strips unwanted subtitles from MKV files and extracts desired SRT subtitles.
+    .DESCRIPTION
+        This function extracts SRT subtitles from MKV files based on specified criteria,
+        and removes unwanted subtitles. It also remuxes the MKV file to exclude undesired
+        subtitle tracks.
+    .PARAMETER Source
+        Specifies the path to the directory containing MKV files.
+    .PARAMETER MKVMergePath
+        Specifies the path to the MKVMerge executable.
+    .PARAMETER MKVExtractPath
+        Specifies the path to the MKVExtract executable.
+    .PARAMETER WantedLanguages
+        Specifies an array of language codes for the desired subtitles.
+        The function extracts subtitles for the specified languages.
+        Example: @("eng", "dut")
+    .PARAMETER SubtitleNamesToRemove
+        Specifies an array of subtitle names to be removed.
+        Subtitles with matching names will be excluded from the extraction.
+        Example: @("Forced")
+    .PARAMETER LanguageCodeLookup
+        Specifies an Hashtable of language code mappings.
+        Each item in the array should be a hashtable with 'alpha3' and 'alpha2' keys
+        representing the three-letter and two-letter language codes, respectively.
+        Example: @(@{alpha3="eng"; alpha2="en"}, @{alpha3="dut"; alpha2="nl"})
+    .OUTPUTS
+        None
+    .EXAMPLE
+        Start-MKVSubtitleStrip -Source "C:\Path\To\MKVFiles" -MKVMergePath "C:\Program Files\MKVToolNix\mkvmerge.exe"
+        -MKVExtractPath "C:\Program Files\MKVToolNix\mkvextract.exe" -WantedLanguages @("eng", "dut") 
+        -SubtitleNamesToRemove @("Forced") -LanguageCodes @{"en"=@{"639-1"="en";"639-2"="eng";"name"="English"}; "nl"=@{"639-1"="nl";"639-2"="nld";"639-2/B"="dut";"name"="Dutch"}}
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]

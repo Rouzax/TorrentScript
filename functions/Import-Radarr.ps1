@@ -1,33 +1,33 @@
-<#
-.SYNOPSIS
-    Imports downloaded movies into Radarr and monitors the import progress.
-.DESCRIPTION
-    This function imports downloaded movies into Radarr and monitors the import progress. It uses Radarr API 
-    to initiate the import process and checks the status until completion or timeout.
-.PARAMETER Source
-    Specifies the path of the downloaded movie.
-.PARAMETER RadarrApiKey
-    Specifies the API key for Radarr.
-.PARAMETER RadarrHost
-    Specifies the host (URL or IP) where Radarr is running.
-.PARAMETER RadarrPort
-    Specifies the port on which Radarr is listening.
-.PARAMETER RadarrTimeOutMinutes
-    Specifies the timeout duration (in minutes) for the Radarr import operation.
-.PARAMETER TorrentHash
-    Specifies the unique identifier (hash) of the downloaded torrent.
-.PARAMETER DownloadLabel
-    Specifies a label for the downloaded movie.
-.PARAMETER DownloadName
-    Specifies the name of the downloaded movie.
-.OUTPUTS 
-    None
-.EXAMPLE
-    Import-Radarr -Source "C:\Downloads\Movie1" -RadarrApiKey "yourApiKey" -RadarrHost "localhost" -RadarrPort 7878 
-    -RadarrTimeOutMinutes 30 -TorrentHash "abc123" -DownloadLabel "Action" -DownloadName "Movie1"
-    Initiates Radarr import for the specified movie and monitors the progress.
-#>
 function Import-Radarr {
+    <#
+    .SYNOPSIS
+        Imports downloaded movies into Radarr and monitors the import progress.
+    .DESCRIPTION
+        This function imports downloaded movies into Radarr and monitors the import progress. It uses Radarr API 
+        to initiate the import process and checks the status until completion or timeout.
+    .PARAMETER Source
+        Specifies the path of the downloaded movie.
+    .PARAMETER RadarrApiKey
+        Specifies the API key for Radarr.
+    .PARAMETER RadarrHost
+        Specifies the host (URL or IP) where Radarr is running.
+    .PARAMETER RadarrPort
+        Specifies the port on which Radarr is listening.
+    .PARAMETER RadarrTimeOutMinutes
+        Specifies the timeout duration (in minutes) for the Radarr import operation.
+    .PARAMETER TorrentHash
+        Specifies the unique identifier (hash) of the downloaded torrent.
+    .PARAMETER DownloadLabel
+        Specifies a label for the downloaded movie.
+    .PARAMETER DownloadName
+        Specifies the name of the downloaded movie.
+    .OUTPUTS 
+        None
+    .EXAMPLE
+        Import-Radarr -Source "C:\Downloads\Movie1" -RadarrApiKey "yourApiKey" -RadarrHost "localhost" -RadarrPort 7878 
+        -RadarrTimeOutMinutes 30 -TorrentHash "abc123" -DownloadLabel "Action" -DownloadName "Movie1"
+        Initiates Radarr import for the specified movie and monitors the progress.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)] 

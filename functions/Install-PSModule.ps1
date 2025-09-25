@@ -1,23 +1,23 @@
-<#
-.SYNOPSIS
-    Installs and imports a PowerShell module, checking if it's already loaded.
-.DESCRIPTION
-    This function installs a PowerShell module specified by the $ModuleName parameter.
-    It checks if the module is already loaded and active. If not, it verifies if the
-    module is installed. If not installed, it checks for the availability of NuGet as
-    the Package Provider and installs it if necessary. Finally, it installs and loads
-    the specified module.
-.PARAMETER ModuleName
-    Specifies the name of the PowerShell module to be installed and imported.
-.INPUTS
-    String - You can pipeline the name of the module as a string to this function.
-.OUTPUTS
-    None - This function does not return any objects.
-.EXAMPLE
-    Install-PSModule -ModuleName "ExampleModule"
-    This example installs and imports the "ExampleModule" PowerShell module.
-#>
 function Install-PSModule {
+    <#
+    .SYNOPSIS
+        Installs and imports a PowerShell module, checking if it's already loaded.
+    .DESCRIPTION
+        This function installs a PowerShell module specified by the $ModuleName parameter.
+        It checks if the module is already loaded and active. If not, it verifies if the
+        module is installed. If not installed, it checks for the availability of NuGet as
+        the Package Provider and installs it if necessary. Finally, it installs and loads
+        the specified module.
+    .PARAMETER ModuleName
+        Specifies the name of the PowerShell module to be installed and imported.
+    .INPUTS
+        String - You can pipeline the name of the module as a string to this function.
+    .OUTPUTS
+        None - This function does not return any objects.
+    .EXAMPLE
+        Install-PSModule -ModuleName "ExampleModule"
+        This example installs and imports the "ExampleModule" PowerShell module.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(
@@ -49,7 +49,7 @@ function Install-PSModule {
                         Write-Host "Check if NuGet is available as Package Provider" -ForegroundColor DarkYellow -NoNewline
                     } else {
                         Write-Host "NuGet not imported, not available and not in an online gallery, exiting."
-                        Exit 1
+                        exit 1
                     }
                 } else {
                     Write-Host " -> DONE" -ForegroundColor DarkGreen
@@ -71,7 +71,7 @@ function Install-PSModule {
                 Write-Host " -> DONE" -ForegroundColor DarkGreen
             } else {
                 Write-Host "Module $ModuleName not imported, not available and not in an online gallery, exiting."
-                Exit 1
+                exit 1
             }
         } else {
             Write-Host " -> DONE" -ForegroundColor DarkGreen

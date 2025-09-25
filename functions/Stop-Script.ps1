@@ -1,20 +1,20 @@
-<#
-.SYNOPSIS
-    Stop-Script function stops the script execution, logs the execution time, and sends an email notification.
-.DESCRIPTION
-    This function is designed to stop script execution, record the execution time, and send an email notification.
-.PARAMETER ExitReason
-    Mandatory parameter specifying the reason for stopping the script.
-.EXAMPLE
-    Stop-Script -ExitReason "Script completed successfully"
-    Stops the script, logs execution time, and sends an email with the specified exit reason.
-.NOTES
-    This functions relies heavily on variables that have been set in the main script, 
-    they are not passed as parameters to this functions
-#>
 function Stop-Script {
+    <#
+    .SYNOPSIS
+        Stop-Script function stops the script execution, logs the execution time, and sends an email notification.
+    .DESCRIPTION
+        This function is designed to stop script execution, record the execution time, and send an email notification.
+    .PARAMETER ExitReason
+        Mandatory parameter specifying the reason for stopping the script.
+    .EXAMPLE
+        Stop-Script -ExitReason "Script completed successfully"
+        Stops the script, logs execution time, and sends an email with the specified exit reason.
+    .NOTES
+        This functions relies heavily on variables that have been set in the main script, 
+        they are not passed as parameters to this functions
+    #>
     [CmdletBinding()]
-    Param(
+    param(
         [Parameter(Mandatory = $true)]
         [string]$ExitReason
     )  
@@ -53,11 +53,20 @@ function Stop-Script {
             # Exit the script
             return
         }
-        # Send-Mail -SMTPserver $SMTPserver -SMTPport $SMTPport -MailTo $MailTo -MailFrom $MailFrom -MailFromName $MailFromName -MailSubject $ExitReason -MailBody $LogFilePath -SMTPuser $SMTPuser -SMTPpass $SMTPpass
-        Send-HtmlMail -SMTPServer $SMTPServer -SMTPServerPort $SMTPport -SmtpUser $SMTPuser -SmtpPassword $SMTPpass -To $MailTo -From "$MailFromName <$MailFrom>" -Subject $ExitReason -HTMLBody $HTMLBody
+        $Parameters = @{
+            SMTPServer     = $SMTPServer
+            SMTPServerPort = $SMTPport
+            SmtpUser       = $SMTPuser
+            SmtpPassword   = $SMTPpass
+            To             = $MailTo
+            From           = "$MailFromName <$MailFrom>"
+            Subject        = $ExitReason
+            HTMLBody       = $HTMLBody
+        }
+        Send-HtmlMail @Parameters
     }
     
     # Clean up the Mutex
     Remove-Mutex -MutexObject $ScriptMutex
-    Exit
+    exit
 }

@@ -6,19 +6,19 @@
 $script:HtmlLogEntries = @()
 $script:HtmlLogStarted = $false
 
-<#
-.SYNOPSIS
-    Encodes a string for safe HTML rendering.
-.DESCRIPTION
-    Replaces special characters (&, <, >, ", ') with HTML entities so text does not break HTML markup.
-    Empty or null strings are allowed and return as empty.
-.PARAMETER Text
-    The input string to encode.
-.EXAMPLE
-    ConvertTo-HtmlEncoded -Text "<Hello & Goodbye>"
-    # Returns: &lt;Hello &amp; Goodbye&gt;
-#>
 function ConvertTo-HtmlEncoded {
+    <#
+    .SYNOPSIS
+        Encodes a string for safe HTML rendering.
+    .DESCRIPTION
+        Replaces special characters (&, <, >, ", ') with HTML entities so text does not break HTML markup.
+        Empty or null strings are allowed and return as empty.
+    .PARAMETER Text
+        The input string to encode.
+    .EXAMPLE
+        ConvertTo-HtmlEncoded -Text "<Hello & Goodbye>"
+        # Returns: &lt;Hello &amp; Goodbye&gt;
+    #>
     param(
         [Parameter()] [AllowEmptyString()] [string]$Text
     )
@@ -32,26 +32,23 @@ function ConvertTo-HtmlEncoded {
         -replace "'", '&#39;'
 }
 
-<#
-.SYNOPSIS
-    Initialize or close the in-memory HTML log (compat shim).
-.DESCRIPTION
-When called with -Start, clears and initializes the in-memory log buffer.
-Calling without -Start closes the buffer (no longer accepts entries).
-Rendering is performed by Write-Log.
-
-.PARAMETER Start
-If specified, initializes/clears the in-memory log buffer.
-
-.EXAMPLE
-Format-Table -Start
-# Initializes the log buffer.
-
-.EXAMPLE
-Format-Table
-# Closes the log buffer.
-#>
 function Format-Table {
+    <#
+    .SYNOPSIS
+        Initialize or close the in-memory HTML log (compat shim).
+    .DESCRIPTION
+        When called with -Start, clears and initializes the in-memory log buffer.
+        Calling without -Start closes the buffer (no longer accepts entries).
+        Rendering is performed by Write-Log.
+    .PARAMETER Start
+        If specified, initializes/clears the in-memory log buffer.
+    .EXAMPLE
+        Format-Table -Start
+        # Initializes the log buffer.
+    .EXAMPLE
+        Format-Table
+        # Closes the log buffer.
+    #>
     [CmdletBinding()]
     param ([Parameter()][switch]$Start)
     if ($Start) {
@@ -62,34 +59,27 @@ function Format-Table {
     }
 }
 
-<#
-.SYNOPSIS
-Add a row to the in-memory HTML log.
-
-.DESCRIPTION
-Stores a structured log entry with two columns and optional header.
-Visual emphasis is controlled by -ColorBg (Default, Success, Warning, Error).
-Rendering to HTML occurs later with Convert-HTMLLogToString or Write-Log.
-
-.PARAMETER Column1
-Text for the first column (usually the label).
-
-.PARAMETER Column2
-Text for the second column (usually the value or message).
-
-.PARAMETER Header
-Treat this row as a table header (spans two columns). Column2 is ignored.
-
-.PARAMETER ColorBg
-Row type: Default, Success, Warning, or Error. Determines the background color of Column2.
-
-.EXAMPLE
-Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg Success
-
-.EXAMPLE
-Write-HTMLLog -Column1 "*** Information ***" -Header
-#>
 function Write-HTMLLog {
+    <#
+    .SYNOPSIS
+        Add a row to the in-memory HTML log.
+    .DESCRIPTION
+        Stores a structured log entry with two columns and optional header.
+        Visual emphasis is controlled by -ColorBg (Default, Success, Warning, Error).
+        Rendering to HTML occurs later with Convert-HTMLLogToString or Write-Log.
+    .PARAMETER Column1
+        Text for the first column (usually the label).
+    .PARAMETER Column2
+        Text for the second column (usually the value or message).    
+    .PARAMETER Header
+        Treat this row as a table header (spans two columns). Column2 is ignored.    
+    .PARAMETER ColorBg
+        Row type: Default, Success, Warning, or Error. Determines the background color of Column2.    
+    .EXAMPLE
+        Write-HTMLLog -Column1 "Result:" -Column2 "Successful" -ColorBg Success    
+    .EXAMPLE
+        Write-HTMLLog -Column1 "*** Information ***" -Header
+    #>
     [CmdletBinding()]
     param(
         [Parameter()] [string]$Column1,
@@ -119,23 +109,20 @@ function Write-HTMLLog {
     }
 }
 
-<#
-.SYNOPSIS
-Render in-memory log entries to an HTML string.
-
-.DESCRIPTION
-Generates a complete HTML <table> element with inline styles suitable for Gmail or browsers.
-Uses a dark theme with high-contrast status colors.
-
-.EXAMPLE
-$html = Convert-HTMLLogToString
-# Renders the log to an HTML string.
-
-.EXAMPLE
-Convert-HTMLLogToString | Out-File "C:\Logs\log.html"
-# Saves the rendered HTML to a file.
-#>
 function Convert-HTMLLogToString {
+    <#
+    .SYNOPSIS
+        Render in-memory log entries to an HTML string.
+    .DESCRIPTION
+        Generates a complete HTML <table> element with inline styles suitable for Gmail or browsers.
+        Uses a dark theme with high-contrast status colors.
+    .EXAMPLE
+        $html = Convert-HTMLLogToString
+        # Renders the log to an HTML string.
+    .EXAMPLE
+        Convert-HTMLLogToString | Out-File "C:\Logs\log.html"
+        # Saves the rendered HTML to a file.
+    #>
     [CmdletBinding()]
     param()
 
@@ -196,26 +183,22 @@ function Convert-HTMLLogToString {
     return ($rows -join "`r`n")
 }
 
-<#
-.SYNOPSIS
-Write the HTML log to disk.
-
-.DESCRIPTION
-Renders the current in-memory log to an HTML string and writes it to the specified file.
-Uses UTF-8 without BOM encoding for compatibility with most tools and email systems.
-
-.PARAMETER LogFile
-The target file path (including .html extension).
-
-.EXAMPLE
-Write-Log -LogFile "C:\Temp\logfile.html"
-# Saves the rendered log to an HTML file.
-
-.EXAMPLE
-Write-Log -LogFile "/var/www/html/log.html"
-# On Linux, saves the rendered log to the web root.
-#>
 function Write-Log {
+    <#
+    .SYNOPSIS
+        Write the HTML log to disk.
+    .DESCRIPTION
+        Renders the current in-memory log to an HTML string and writes it to the specified file.
+        Uses UTF-8 without BOM encoding for compatibility with most tools and email systems.
+    .PARAMETER LogFile
+        The target file path (including .html extension).
+    .EXAMPLE
+        Write-Log -LogFile "C:\Temp\logfile.html"
+        # Saves the rendered log to an HTML file.
+    .EXAMPLE
+        Write-Log -LogFile "/var/www/html/log.html"
+        # On Linux, saves the rendered log to the web root.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
