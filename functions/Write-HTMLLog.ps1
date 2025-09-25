@@ -134,7 +134,7 @@ function Convert-HTMLLogToString {
     $cellBase = 'vertical-align:top;padding:2px 10px;border-bottom:1px solid #2D2D2D;'
     $headerStyle = 'background-color:#0D47A1;color:#FFFFFF;text-align:center;font-size:10pt;font-weight:bold;padding:4px 10px;border-bottom:1px solid #2D2D2D;'
     $successStyle = 'background-color:#2E7D32;color:#FFFFFF;'
-    $warningStyle = 'background-color:#FF8F00;color:#000000;'
+    $warningStyle = 'background-color:#EA8300;color:#FFFFFF;'
     $errorStyle = 'background-color:#C62828;color:#FFFFFF;'
 
     # Table wrapper

@@ -1,7 +1,8 @@
+ # TorrentScript
+ 
+ **qBittorrent post‑processing** PowerShell script that imports newly downloaded media into **Radarr** (Movies) and **Medusa or Sonarr** (TV), while taking care of **unpacking, remuxing, subtitle handling, cleanup, logging, and notifications**.
 
-# TorrentScript
-A qBittorrent post-processing script designed to import media into Radarr (Movies) and Medusa or Sonarr (TV Shows) while handling subtitles, renaming, and cleanup. 
-Caveat: I'm not a programmer, so use at own risk :)
+> ⚠️ I'm not a programmer — use at your own risk 🙂. Tested on Windows with PowerShell 7+. Most paths below assume Windows. PowerShell 7 can run on Linux/macOS, but you’ll need equivalent tools and paths.
 
 ## Description
 The script processes torrent downloads by:
