@@ -67,71 +67,55 @@ function Send-HtmlMail {
     )
 
     try {
-        # Normalize recipients to an array
+        # Recipients → array
         $toList = $To -split '[;,]' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
 
         # Credentials
         $secure = ConvertTo-SecureString -String $SmtpPassword -AsPlainText -Force
-        $cred = [System.Management.Automation.PSCredential]::new($SmtpUser, $secure)
+        $cred = [PSCredential]::new($SmtpUser, $secure)
 
-        # --- Detect whether HTMLBody is a file path or inline HTML ---
-        $bodyHtml = $null
+        # Detect file vs inline HTML
         $isFile = $false
-
-        # If it's a valid local file path, use it
         if (Test-Path -LiteralPath $HTMLBody -PathType Leaf) {
             $isFile = $true
-        } else {
-            # Also allow file:/// URIs that point to local files
-            if ([Uri]::IsWellFormedUriString($HTMLBody, [UriKind]::Absolute)) {
-                $uri = [Uri]$HTMLBody
-                if ($uri.Scheme -eq 'file' -and (Test-Path -LiteralPath $uri.LocalPath -PathType Leaf)) {
-                    $HTMLBody = $uri.LocalPath
-                    $isFile = $true
-                }
+        } elseif ([Uri]::IsWellFormedUriString($HTMLBody, [UriKind]::Absolute)) {
+            $uri = [Uri]$HTMLBody
+            if ($uri.Scheme -eq 'file' -and (Test-Path -LiteralPath $uri.LocalPath -PathType Leaf)) {
+                $HTMLBody = $uri.LocalPath
+                $isFile = $true
             }
         }
-
-        if ($isFile) {
-            # Read whole file as UTF-8 (works well with UTF-8 & UTF-8-BOM)
-            $bodyHtml = Get-Content -LiteralPath $HTMLBody -Raw -Encoding utf8
+        $bodyHtml = if ($isFile) {
+            Get-Content -LiteralPath $HTMLBody -Raw -Encoding utf8 
         } else {
-            # Treat the provided value as inline HTML
-            $bodyHtml = $HTMLBody
+            $HTMLBody 
         }
-        # -------------------------------------------------------------
 
-        # Base params
+        # Base params (note: HTML, not BodyHtml)
         $params = @{
             Server     = $SMTPServer
             Port       = $SMTPServerPort
             From       = $From
             To         = $toList
             Subject    = $Subject
-            HTML   = $bodyHtml
+            HTML       = $bodyHtml
             Credential = $cred
         }
 
-        # Auto-select TLS mode by port
+        # TLS via MailKit SecureSocketOptions
         switch ($SMTPServerPort) {
             465 {
-                $params.SSL = $true 
-            }                  # implicit TLS (SMTPS)
+                $params.SecureSocketOptions = [MailKit.Security.SecureSocketOptions]::SslOnConnect 
+            }
             587 {
-                $params.UseSecureConnection = $true 
-            }  # STARTTLS
+                $params.SecureSocketOptions = [MailKit.Security.SecureSocketOptions]::StartTls 
+            }
             default {
-                $params.UseSecureConnection = $true 
-            } # try STARTTLS if supported
+                $params.SecureSocketOptions = [MailKit.Security.SecureSocketOptions]::StartTlsWhenAvailable 
+            }
         }
 
-        $mode = if ($params.SSL) {
-            'SSL (implicit TLS)' 
-        } elseif ($params.UseSecureConnection) {
-            'STARTTLS' 
-        } else {
-            'Plain' 
-        }
+        $mode = $params.SecureSocketOptions
         $src = if ($isFile) {
             "HTML file '$HTMLBody'" 
         } else {
@@ -139,7 +123,7 @@ function Send-HtmlMail {
         }
 
         Write-Host "Sending mail via $($SMTPServer):$SMTPServerPort using $mode; body from $src..." -ForegroundColor DarkGray
-        Send-EmailMessage @params
+        $null = Send-EmailMessage @params
         Write-Host "Mail sent." -ForegroundColor DarkGray
     } catch {
         Write-Host ("Error sending email: " + $_.Exception.Message) -ForegroundColor DarkRed
