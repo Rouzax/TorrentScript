@@ -214,7 +214,8 @@ function Start-OpenSubtitlesDownload {
             [int]$MaxAttempts = 3,        # For /login, we’ll use 5
             [switch]$StopOnAuthError,
             [ref]$RespHeaders,
-            [ref]$StatusOut
+            [ref]$StatusOut,
+            [int[]]$SuppressLogForStatus = @()
         )
         if ($StatusOut) {
             $StatusOut.Value = $null 
@@ -301,6 +302,11 @@ function Start-OpenSubtitlesDownload {
                         Start-Sleep -Seconds $wait
                         continue
                     }
+                }
+
+                # If caller asked to suppress logging for this status, just return quietly.
+                if ($SuppressLogForStatus -and ($SuppressLogForStatus -contains $status)) {
+                    return $null
                 }
 
                 Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Request failed (HTTP $status): $($_.Exception.Message)" -ColorBg 'Error'
@@ -480,11 +486,13 @@ function Start-OpenSubtitlesDownload {
             try {
                 $respHeaders = $null
                 $status = $null
+                # First attempt: suppress the noisy 401/403 log; we’ll handle them.
                 $response = Invoke-OpenSubs -Uri 'https://api.opensubtitles.com/api/v1/download' `
                     -Method POST -Headers $headers -ContentType 'application/json' `
-                    -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders) -StatusOut ([ref]$status)
-    
-                # If unauthorized, refresh token once and retry
+                    -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders) -StatusOut ([ref]$status) `
+                    -SuppressLogForStatus @(401, 403)
+
+                # If unauthorized, refresh token once and retry (this time DO log if it still fails)
                 if (-not $response -and ($status -in 401, 403)) {
                     $newToken = Connect-OpenSubtitleAPI -username $script:OpenSubCreds.Username -password $OpenSubPass -APIKey $script:OpenSubCreds.APIKey
                     if ($newToken) {
@@ -496,6 +504,14 @@ function Start-OpenSubtitlesDownload {
                             -Body $body -MaxAttempts 3 -RespHeaders ([ref]$respHeaders) -StatusOut ([ref]$status)
                     }
                 }
+
+                # If still nothing after the retry, log a proper error and count a failure
+                if (-not $response) {
+                    Write-HTMLLog -Column2 "Failed to download subtitle for language: $langLower (HTTP $status)" -ColorBg 'Error'
+                    $aggregate.Failed++
+                    continue
+                }
+
     
                 if ($response -and ($response.PSObject.Properties.Name -contains 'remaining')) {
                     $aggregate.LastDailyRemaining = $response.remaining
@@ -583,7 +599,7 @@ function Start-OpenSubtitlesDownload {
     if ($script:OpenSubsUsedCachedToken) {
         Write-HTMLLog -Column1 'Auth:' -Column2 'Using cached OpenSubtitles token'
     } else {
-        Write-HTMLLog -Column1 'Auth:' -Column2 'Logged in to OpenSubtitles (new token cached)' -ColorBg 'Success'
+        Write-HTMLLog -Column1 'Auth:' -Column2 'Logged in to OpenSubtitles (new token cached)'
     }
 
     # Gather video files, skipping any path containing '\Sample\' (case-insensitive)
