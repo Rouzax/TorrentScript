@@ -48,12 +48,31 @@ function Get-QBittorrentCategories {
             username = $username
             password = $password
         }
-        Invoke-RestMethod -Uri "$baseUri/auth/login" -Method Post -Body $loginParams -WebSession $session -ErrorAction Stop | Out-Null
+        $Parameters = @{
+            Uri         = "$baseUri/auth/login"
+            Method      = 'Post'
+            Body        = $loginParams
+            WebSession  = $session
+            ErrorAction = 'Stop'
+        }
+        Invoke-RestMethod @Parameters | Out-Null
 
         # Get categories
-        $categoriesResponse = Invoke-RestMethod -Uri "$baseUri/torrents/categories" -WebSession $session -ErrorAction Stop
+        $Parameters = @{
+            Uri         = "$baseUri/torrents/categories"
+            WebSession  = $session
+            ErrorAction = 'Stop'
+        }
+        $categoriesResponse = Invoke-RestMethod @Parameters
+        
         # Log out from qBittorrent
-        Invoke-RestMethod -Uri "$baseUri/auth/logout" -Method Post -WebSession $session -ErrorAction Stop | Out-Null
+        $Parameters = @{
+            Uri         = "$baseUri/auth/logout"
+            Method      = 'Post'
+            WebSession  = $session
+            ErrorAction = 'Stop'
+        }
+        Invoke-RestMethod @Parameters | Out-Null
         
         # Check if categories are retrieved
         if ($null -ne $categoriesResponse) {

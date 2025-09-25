@@ -82,7 +82,13 @@ function Import-Radarr {
     }
     Write-HTMLLog -Column1 '***  Radarr Import  ***' -Header
     try {
-        $MoviesScanJob = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command" -Method Post -Body $Body -Headers $headers
+        $Parameters = @{
+            Uri     = "http://$RadarrHost`:$RadarrPort/api/v3/command"
+            Method  = 'Post'
+            Body    = $Body
+            Headers = $headers
+        }
+        $MoviesScanJob = Invoke-RestMethod @Parameters
     } catch {
         Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
@@ -93,7 +99,12 @@ function Import-Radarr {
         $endTime = (Get-Date).Add($timeout)
         do {
             try {
-                $MoviesScanResult = Invoke-RestMethod -Uri "http://$RadarrHost`:$RadarrPort/api/v3/command/$($MoviesScanJob.id)" -Method Get -Headers $headers
+                $Parameters = @{
+                    Uri     = "http://$RadarrHost`:$RadarrPort/api/v3/command/$($MoviesScanJob.id)"
+                    Method  = 'Get'
+                    Headers = $headers
+                }
+                $MoviesScanResult = Invoke-RestMethod @Parameters
             } catch {
                 Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'

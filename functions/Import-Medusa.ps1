@@ -86,7 +86,13 @@ function Import-Medusa {
 
     # Doing the API call to Medusa
     try {
-        $response = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess" -Method Post -Body $Body -Headers $headers
+        $Parameters = @{
+            Uri     = "http://$MedusaHost`:$MedusaPort/api/v2/postprocess"
+            Method  = 'Post'
+            Body    = $Body
+            Headers = $headers
+        }
+        $response = Invoke-RestMethod @Parameters
     } catch {
         Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
         Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
@@ -100,7 +106,12 @@ function Import-Medusa {
         # Check progress of Import Job in Medusa and wait till success or Time Out
         do {
             try {
-                $status = Invoke-RestMethod -Uri "http://$MedusaHost`:$MedusaPort/api/v2/postprocess/$($response.queueItem.identifier)" -Method Get -Headers $headers
+                $Parameters = @{
+                    Uri     = "http://$MedusaHost`:$MedusaPort/api/v2/postprocess/$($response.queueItem.identifier)"
+                    Method  = 'Get'
+                    Headers = $headers
+                }
+                $status = Invoke-RestMethod @Parameters
             } catch {
                 Write-HTMLLog -Column1 'Exception:' -Column2 $_.Exception.Message -ColorBg 'Error'
                 Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
@@ -121,7 +132,7 @@ function Import-Medusa {
 
                 foreach ($line in $status.output ) {
                     if ($line -match $MatchPattern) {
-                        Write-HTMLLog -Column1 'Medusa:' -Column2 $line -ColorBg 'Error' 
+                        Write-HTMLLog -Column1 'Medusa:' -Column2 $line -ColorBg 'Warning' 
                     }       
                 }
 
