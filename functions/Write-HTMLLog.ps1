@@ -8,18 +8,15 @@ $script:HtmlLogStarted = $false
 
 <#
 .SYNOPSIS
-Encodes a string for safe HTML rendering.
-
+    Encodes a string for safe HTML rendering.
 .DESCRIPTION
-Replaces special characters (&, <, >, ", ') with HTML entities so text does not break HTML markup.
-Empty or null strings are allowed and return as empty.
-
+    Replaces special characters (&, <, >, ", ') with HTML entities so text does not break HTML markup.
+    Empty or null strings are allowed and return as empty.
 .PARAMETER Text
-The input string to encode.
-
+    The input string to encode.
 .EXAMPLE
-ConvertTo-HtmlEncoded -Text "<Hello & Goodbye>"
-# Returns: &lt;Hello &amp; Goodbye&gt;
+    ConvertTo-HtmlEncoded -Text "<Hello & Goodbye>"
+    # Returns: &lt;Hello &amp; Goodbye&gt;
 #>
 function ConvertTo-HtmlEncoded {
     param(
@@ -37,8 +34,7 @@ function ConvertTo-HtmlEncoded {
 
 <#
 .SYNOPSIS
-Initialize or close the in-memory HTML log (compat shim).
-
+    Initialize or close the in-memory HTML log (compat shim).
 .DESCRIPTION
 When called with -Start, clears and initializes the in-memory log buffer.
 Calling without -Start closes the buffer (no longer accepts entries).

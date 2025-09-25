@@ -200,7 +200,7 @@ foreach ($Tool in $Tools) {
 
 Write-Host 'Loading Powershell Modules, this might take a while' -ForegroundColor DarkYellow
 # Load required modules
-$modules = @("WriteAscii", "Send-MailKitMessage")
+$modules = @("WriteAscii", "Mailozaurr")
 foreach ($module in $modules) {
     Install-PSModule -ModuleName $module
 }
