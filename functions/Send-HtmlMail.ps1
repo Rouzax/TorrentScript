@@ -74,7 +74,9 @@ function Send-HtmlMail {
 
     # Send the email
     try {
+        Write-Host "Sending mail" -ForegroundColor DarkGray
         Send-MailKitMessage @Parameters
+        Write-Host "Mail send" -ForegroundColor DarkGray
     } catch {
         # Handle errors
         $errorMessage = $_.Exception.Message
