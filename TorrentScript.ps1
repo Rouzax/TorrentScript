@@ -466,8 +466,6 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
 
         } elseif ($TVImportProgram -eq "Sonarr") {
             # Get the correct remote Sonarr file path, if script is not running on local machine to Sonarr
-            # Get the common prefix length between the paths
-            $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
             # Remove the common prefix and append the SonarrRemotePath
             $EpisodePathFull = Join-Path $SonarrRemotePath ($ProcessPathFull.Substring($prefixLength))
     
@@ -487,8 +485,6 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
 
     } elseif ($DownloadLabel -eq $MovieLabel) {
         # Get the correct remote Radarr file path, if script is not running on local machine to Radarr
-        # Get the common prefix length between the paths
-        $prefixLength = ($ProcessPath.TrimEnd('\') + '\').Length
         # Remove the common prefix and append the RadarrRemotePath
         $MoviePathFull = Join-Path $RadarrRemotePath ($ProcessPathFull.Substring($prefixLength))
     
