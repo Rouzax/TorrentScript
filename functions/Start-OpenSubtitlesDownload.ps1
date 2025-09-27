@@ -439,19 +439,21 @@ function Start-OpenSubtitlesDownload {
         param(
             [hashtable]$subtitleInfo,
             [string]$APIKey,
-            [string]$token,
+            [ref]$token,
             [string]$baseDirectory,
             [string]$videoBaseName,
             [array]$WantedLanguages,
             [System.Collections.IDictionary]$aggregate # running totals (by ref)
         )
+
+        $tokenRefreshed = $false
     
         $headers = @{
             "User-Agent"    = "Torrentscript"
             "Content-Type"  = "application/json"
             "Accept"        = "application/json"
             "Api-Key"       = $APIKey
-            "Authorization" = "Bearer $token"
+            "Authorization" = "Bearer $($Token.Value)"
         }
     
         $availableLangs = @($subtitleInfo.SubtitleIds.Keys)
@@ -508,6 +510,8 @@ function Start-OpenSubtitlesDownload {
                 if (-not $response -and ($status -in 401, 403)) {
                     $newToken = Connect-OpenSubtitleAPI -username $script:OpenSubCreds.Username -password $OpenSubPass -APIKey $script:OpenSubCreds.APIKey
                     if ($newToken) {
+                        $Token.Value = $newToken
+                        $tokenRefreshed = $true                
                         $headers["Authorization"] = "Bearer $newToken"
                         $respHeaders = $null
                         $status = $null
@@ -527,7 +531,7 @@ function Start-OpenSubtitlesDownload {
 
                 # If still nothing after the retry, log a proper error and count a failure
                 if (-not $response) {
-                    Write-HTMLLog -Column2 "Failed to download subtitle for language: $langLower (HTTP $status)" -ColorBg 'Error'
+                    Write-HTMLLog -Column2 "Failed to download subtitle for language: $($langLower.ToUpperInvariant()) (HTTP $status)" -ColorBg 'Error'
                     $aggregate.Failed++
                     continue
                 }
@@ -551,15 +555,16 @@ function Start-OpenSubtitlesDownload {
                     $aggregate.Failed++
                 }
             } catch {
-                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Error while downloading subtitle for $($langLower): $($_.Exception.Message)" -ColorBg 'Error'
+                Write-HTMLLog -Column1 'OpenSubs:' -Column2 "Error while downloading subtitle for $($langLower.ToUpperInvariant()): $($_.Exception.Message)" -ColorBg 'Error'
                 $aggregate.Failed++
             }
         }
     
         # Return a concise per-file result so caller can log one line
         return @{
-            Downloaded = $downloadedThisFile.ToArray()
-            NotFound   = $notFoundThisFile.ToArray()
+            Downloaded     = $downloadedThisFile.ToArray()
+            NotFound       = $notFoundThisFile.ToArray()
+            TokenRefreshed = $tokenRefreshed
         }
     }
     
@@ -714,7 +719,7 @@ function Start-OpenSubtitlesDownload {
         $Parameters = @{
             subtitleInfo    = $subtitleInfo
             APIKey          = $OpenSubAPI
-            token           = $token
+            Token           = ([ref]$token)  
             baseDirectory   = $dir
             videoBaseName   = $name
             WantedLanguages = $missing
@@ -724,12 +729,16 @@ function Start-OpenSubtitlesDownload {
 
         # Concise per-file summary lines
         if ($fileResult -and $fileResult.Downloaded.Count -gt 0) {
-            Write-HTMLLog -Column2 ("Downloaded: " + ($fileResult.Downloaded -join ', '))
+            Write-HTMLLog -Column2 ("Downloaded: " + ( ($fileResult.Downloaded | ForEach-Object { $_.ToUpperInvariant() }) -join ', '))
         }
         if ($fileResult -and $fileResult.NotFound.Count -gt 0) {
-            Write-HTMLLog -Column2 ("Not found: " + ($fileResult.NotFound | ForEach-Object { $_.ToUpper() } -join ', ')) -ColorBg 'Warning'
+            Write-HTMLLog -Column2 ("Not found: " + ( ($fileResult.NotFound | ForEach-Object { $_.ToUpperInvariant() }) -join ', ')) -ColorBg 'Warning'
         }
 
+        # Backoff only if we refreshed the token for this file
+        if ($fileResult -and $fileResult.TokenRefreshed) {
+            Start-Sleep -Milliseconds (200 + (Get-Random -Minimum 0 -Maximum 400))
+        }
     }
 
     # Disconnect only if we did a fresh login
@@ -752,7 +761,7 @@ function Start-OpenSubtitlesDownload {
 
     if ($totalDownloaded -gt 0) {
         foreach ($language in $aggregateLangCounts.Keys) {
-            Write-HTMLLog -Column1 "Total:" -Column2 "$($aggregateLangCounts[$language]) in $($language.ToUpper())"
+            Write-HTMLLog -Column1 "Total:" -Column2 "$($aggregateLangCounts[$language]) in $($language.ToUpperInvariant())"
         }
         if ($totalAlreadyPresent -gt 0) {
             Write-HTMLLog -Column1 "Already present:" -Column2 "$totalAlreadyPresent (skipped)"
@@ -771,7 +780,9 @@ function Start-OpenSubtitlesDownload {
             Write-HTMLLog -Column1 'Already present:' -Column2 "$totalAlreadyPresent (skipped)"
         }
         if ($notFoundByLang.Keys.Count -gt 0) {
-            $summary = ($notFoundByLang.GetEnumerator() | ForEach-Object { "$($_.Key.ToUpper()): $($_.Value)" }) -join ', '
+            # Note the parentheses: pipeline first, then -join
+            $summary = ( $notFoundByLang.GetEnumerator() |
+                    ForEach-Object { "$($_.Key.ToUpperInvariant()): $($_.Value)" } ) -join ', '
             Write-HTMLLog -Column1 'Not found:' -Column2 $summary -ColorBg 'Warning'
         }
 
