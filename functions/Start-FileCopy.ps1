@@ -59,15 +59,21 @@ function Start-FileCopy {
         if (-not $s) {
             return 0 
         }
+        # Normalize thousands/decimal separators but preserve exponent if present
         if ($s -match '[\.,].*,') {
-            $s = $s -replace '\.', ''; $s = $s -replace ',', '.' 
+            $s = $s -replace '\.', ''
+            $s = $s -replace ',', '.'
         } elseif ($s -match ',') {
-            $s = $s -replace '\.', ''; $s = $s -replace ',', '.' 
+            $s = $s -replace '\.', ''
+            $s = $s -replace ',', '.'
         } else {
-            $s = $s -replace '(?<=\d)\.(?=\d{3}\b)', '' 
+            # Remove dot as thousands separator if used that way
+            $s = $s -replace '(?<=\d)\.(?=\d{3}\b)', ''
         }
-        return [double]::Parse($s, [System.Globalization.CultureInfo]::InvariantCulture)
+        # Parse allowing scientific notation (e.g. 1.23e+09)
+        return [double]::Parse($s, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture)
     }
+
     function Convert-ToBytes([double]$num, [string]$unit) {
         switch ($unit.ToLower()) {
             'k' {
@@ -175,16 +181,13 @@ function Start-FileCopy {
                     } catch { 
                     }
                 }
-                '^\s+Speed\s:.*sec\.$' {
-                    $s = $_.Replace('Speed :', '').Replace('Bytes/sec.', '').Trim()
-                    $s = $s -replace '[^\d,\.]', ''
-                    if ($s.Contains(',')) {
-                        $s = $s.Replace(',', '.') 
-                    }
+                '^\s*Speed\s*:\s*(?<num>[\d\.,Ee\+\-]+)\s*Bytes/sec\.$' {
+                    $raw = $Matches['num']
                     try {
-                        $Speed = Format-Size -SizeInBytes ([double]::Parse($s, [System.Globalization.CultureInfo]::InvariantCulture)) 
+                        $spd = Convert-ToDoubleInvariant $raw
+                        $Speed = Format-Size -SizeInBytes $spd
                     } catch {
-                        $Speed = '0 B' 
+                        $Speed = '0 B'
                     }
                 }
             }
