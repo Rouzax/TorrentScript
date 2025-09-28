@@ -75,48 +75,68 @@ function Start-MKVSubtitleStrip {
 
     Write-HTMLLog -Column1 '***  Extract srt files from MKV  ***' -Header
 
-    Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.mkv' | Where-Object { $_.DirectoryName -notlike "*\Sample" } | ForEach-Object {
-        $MkvFileInfo = $_
+    # Enumerate MKV files (skip folders named "Sample") and collect their track metadata via mkvmerge -J
+    Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.mkv' |
+        Where-Object { $_.DirectoryName -notlike "*\Sample" } |
+        ForEach-Object {
+            $MkvFileInfo = $_
+            $MkvFileMetadata = $null
 
-        # Start the json export with MKVMerge on the available tracks
-        $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
-        $StartInfo.FileName = $MKVMergePath
-        $StartInfo.RedirectStandardError = $true
-        $StartInfo.RedirectStandardOutput = $true
-        $StartInfo.UseShellExecute = $false
-        $StartInfo.Arguments = @('-J', "`"$($MkvFileInfo.FullName)`"")
-        $Process = New-Object System.Diagnostics.Process
-        $Process.StartInfo = $StartInfo
-        $Process.Start() | Out-Null
-        $stdout = $Process.StandardOutput.ReadToEnd()
-        $Process.WaitForExit()
+            # Query mkvmerge for track/attachment info in JSON
+            $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $StartInfo.FileName = $MKVMergePath
+            $StartInfo.RedirectStandardError = $true
+            $StartInfo.RedirectStandardOutput = $true
+            $StartInfo.UseShellExecute = $false
+            $StartInfo.Arguments = @('-J', "`"$($MkvFileInfo.FullName)`"")
 
-        switch ($process.ExitCode) {
-            0 {
-                $MkvFileMetadata = $stdout | ConvertFrom-Json
+            $Process = New-Object System.Diagnostics.Process
+            $Process.StartInfo = $StartInfo
+            $Process.Start() | Out-Null
+            $stdout = $Process.StandardOutput.ReadToEnd()
+            $stderr = $Process.StandardError.ReadToEnd()
+            $Process.WaitForExit()
+
+            switch ($Process.ExitCode) {
+                0 {
+                    # mkvmerge exited OK; parse JSON (guard against malformed output)
+                    try {
+                        $MkvFileMetadata = $stdout | ConvertFrom-Json
+                    } catch {
+                        Write-HTMLLog -Column1 'mkvmerge JSON parse error:' -Column2 $_.Exception.Message -ColorBg 'Error'
+                    }
+                }
+                1 {
+                    Write-HTMLLog -Column1 'Exit Code:' -Column2 $Process.ExitCode -ColorBg 'Error'
+                    Write-HTMLLog -Column1 'mkvmerge (stderr):' -Column2 $stderr -ColorBg 'Error'
+                    Write-HTMLLog -Column1 'mkvmerge (stdout):' -Column2 $stdout -ColorBg 'Error'
+                    Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
+                }
+                default {
+                    Write-HTMLLog -Column1 'Exit Code:' -Column2 $Process.ExitCode -ColorBg 'Error'
+                    Write-HTMLLog -Column1 'mkvmerge (stderr):' -Column2 $stderr -ColorBg 'Error'
+                    Write-HTMLLog -Column1 'mkvmerge (stdout):' -Column2 $stdout -ColorBg 'Error'
+                    Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
+                }
             }
-            1 {
-                Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
-                Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
-                Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
+
+            # Guard: if we couldn’t get valid metadata, skip this file cleanly
+            if (-not $MkvFileMetadata -or -not $MkvFileMetadata.tracks) {
+                Write-HTMLLog -Column1 'Skipping file:' -Column2 $MkvFileInfo.FullName -ColorBg 'Warning'
+                return
             }
-            default {
-                Write-HTMLLog -Column1 'Exit Code:' -Column2 $($Process.ExitCode) -ColorBg 'Error'
-                Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
-                Write-HTMLLog -Column1 'Result:' -Column2 'Warning' -ColorBg 'Error'
+
+            # Collect just what we need for the later extract/remux steps
+            $file = @{
+                FileName        = $MkvFileInfo.BaseName
+                FilePath        = $MkvFileInfo.FullName
+                FileRoot        = $MkvFileInfo.Directory
+                FileTracks      = $MkvFileMetadata.tracks
+                FileAttachments = $MkvFileMetadata.attachments
             }
+
+            $MkvFiles += New-Object PSObject -Property $file
         }
-
-        $file = @{
-            FileName        = $MkvFileInfo.BaseName
-            FilePath        = $MkvFileInfo.FullName
-            FileRoot        = $MkvFileInfo.Directory
-            FileTracks      = $MkvFileMetadata.tracks
-            FileAttachments = $MkvFileMetadata.attachments
-        }
-
-        $MkvFiles += New-Object PSObject -Property $file   
-    }
 
     # Extract wanted SRT subtitles
     $MkvFiles | ForEach-Object {
@@ -126,38 +146,60 @@ function Start-MKVSubtitleStrip {
         $SubsToExtract = @()
         $SubNamesToKeep = @()
 
+        # Iterate all tracks in the MKV and decide what to extract/remove.
         $MkvFile.FileTracks | ForEach-Object {
             $FileTrack = $_
-            if ($FileTrack.id) {
-                # Check if subtitle is srt
-                if ($FileTrack.type -eq 'subtitles' -and ($FileTrack.codec -eq 'SubRip/SRT' -or $FileTrack.codec -eq 'Timed Text')) {
-                    
-                    # Check to see if track_name is part of $SubtitleNamesToRemove list
-                    if ($null -ne ($SubtitleNamesToRemove | Where-Object { $FileTrack.properties.track_name -match $_ })) {
+
+            # IMPORTANT: track id can be 0, so check for $null (not truthiness).
+            if ($null -ne $FileTrack.id) {
+
+                # Only care about subtitle tracks here.
+                if ($FileTrack.type -eq 'subtitles') {
+
+                    # Normalize identifiers the JSON may expose.
+                    $codec = $FileTrack.codec
+                    $codec_id = $FileTrack.properties.codec_id
+
+                    # We only extract *text* subtitles: SRT (SubRip) and Timed Text.
+                    # Everything else (e.g., PGS/HDMV, VobSub, DVD Sub) is removed.
+                    $isSrtOrTimedText =
+                    ($codec -eq 'SubRip/SRT') -or
+                    ($codec -eq 'Timed Text') -or
+                    ($codec_id -eq 'S_TEXT/UTF8')   # sometimes reported via codec_id
+
+                    if (-not $isSrtOrTimedText) {
+                        # Non-SRT (image-based or other) → flag for removal during remux.
                         $SubIDsToRemove += $FileTrack.id
+                        continue
                     }
-                    # Check is subtitle is in $WantedLanguages list
-                    elseif ($FileTrack.properties.language -in $WantedLanguages) {
 
-                        # Handle multiple subtitles of same language, if exist skip duplicates of same language 
-                        if ("$($MkvFile.FileName).$($FileTrack.properties.language).srt" -notin $SubNamesToKeep) {
-                            $prefix = "$($FileTrack.properties.language)"
+                    # From here on we only handle SRT/Timed Text tracks.
 
-                            # Add Subtitle name and ID to be extracted
-                            $SubsToExtract += "`"$($FileTrack.id):$($MkvFile.FileRoot)\$($MkvFile.FileName).$($prefix).srt`""
-                            
-                            # Keep track of subtitle file names that will be extracted to handle possible duplicates
-                            $SubNamesToKeep += "$($MkvFile.FileName).$($prefix).srt"
-    
-                            # Add subtitle ID to for MKV remux
+                    # If a track name exists and matches any removal pattern (e.g., 'Forced'), remove it.
+                    if ($FileTrack.properties.track_name -and
+                        ($SubtitleNamesToRemove | Where-Object { $FileTrack.properties.track_name -match $_ })) {
+                        $SubIDsToRemove += $FileTrack.id
+                        continue
+                    }
+
+                    # Keep/extract only the wanted languages; remove the rest.
+                    if ($FileTrack.properties.language -in $WantedLanguages) {
+                        # Avoid extracting duplicate SRTs for the same language per file.
+                        $targetName = "$($MkvFile.FileName).$($FileTrack.properties.language).srt"
+                        if ($targetName -notin $SubNamesToKeep) {
+                            # Queue extraction for mkvextract as id:path (keep quotes for safety).
+                            $SubsToExtract += "`"$($FileTrack.id):$($MkvFile.FileRoot)\$targetName`""
+                            $SubNamesToKeep += $targetName
                             $SubIDsToExtract += $FileTrack.id
-                        }                        
+                        }
                     } else {
+                        # SRT/Timed Text but not in the wanted language list → remove.
                         $SubIDsToRemove += $FileTrack.id
                     }
                 }
             }
         }
+
 
         # Count all subtitles to keep and remove for logging
         $TotalSubsToExtract = $TotalSubsToExtract + $SubIDsToExtract.count
@@ -177,7 +219,7 @@ function Start-MKVSubtitleStrip {
             $stdout = $Process.StandardOutput.ReadToEnd()
             $Process.WaitForExit()
 
-            switch ($process.ExitCode) {
+            switch ($Process.ExitCode) {
                 0 {
                     $SubsExtracted = $true
                 }
@@ -188,13 +230,11 @@ function Start-MKVSubtitleStrip {
                 }
                 default {
                     Write-HTMLLog -Column1 'Exit Code:' -Column2 $process.ExitCode -ColorBg 'Error'
-                    Write-HTMLLog -Column1 'mkvmerge:' -Column2 $stdout -ColorBg 'Error'
+                    Write-HTMLLog -Column1 'mkvextract:' -Column2 $stdout -ColorBg 'Error'
                     Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
                 }
             }
         }
-
-
 
         # Remux and strip out all unwanted subtitle languages
         if ($SubIDsToRemove.Count -gt 0) {
@@ -230,31 +270,48 @@ function Start-MKVSubtitleStrip {
         }
     }
    
-    # Rename extracted subs to correct 2 county code based on $LanguageCodes
+    # Rename extracted subs to correct 2 letter language code code based on $LanguageCodes
     if ($SubsExtracted) {
         $SrtFiles = Get-ChildItem -LiteralPath $Source -Recurse -Filter '*.srt'
 
+        # Rename extracted SRTs from ISO-639-2 (3-letter) to ISO-639-1 (2-letter) codes
+        # Example: My.Movie.eng.srt  →  My.Movie.en.srt
+        # NOTE: LanguageCodeLookup must be a flat 3→2 map, e.g. @{ 'eng'='en'; 'nld'='nl'; 'dut'='nl' }
         foreach ($srt in $SrtFiles) {
             $SrtDirectory = $srt.Directory
             $SrtPath = $srt.FullName
             $SrtName = $srt.Name
-           
-            # Extract the language code from the file name
-            $languageCode = $srt -replace '.*\.([a-zA-Z]+)\.srt$', '$1' 
 
-            # Only process if the language code is exactly 3 characters
+            # Extract the trailing language code from the file name (before .srt), e.g. ".eng.srt" → "eng"
+            # BUGFIX: operate on $SrtName (string), not on the FileInfo object $srt.
+            $languageCode = $SrtName -replace '.*\.([A-Za-z]+)\.srt$', '$1'
+
+            # Only convert when a 3-letter code is present (skip already-correct 2-letter files)
             if ($languageCode.Length -eq 3) {
-                # Check if the language code exists in the lookup table
-                if ($LanguageCodeLookup.ContainsKey($languageCode)) {
-                    $SrtNameNew = $SrtName -replace "\.$languageCode\.srt$", ".$($LanguageCodeLookup[$languageCode]).srt"
+
+                # Check if a mapping for this 3-letter code exists (e.g., 'eng' → 'en', 'dut' → 'nl')
+                if ($LanguageCodeLookup.ContainsKey($languageCode) -and $LanguageCodeLookup[$languageCode]) {
+                    $twoLetter = $LanguageCodeLookup[$languageCode]
+
+                    # Build the new filename by replacing ".<3letter>.srt" with ".<2letter>.srt"
+                    $SrtNameNew = $SrtName -replace "\.$languageCode\.srt$", ".$twoLetter.srt"
                     $Destination = Join-Path -Path $SrtDirectory -ChildPath $SrtNameNew
-                    Move-Item -LiteralPath $SrtPath -Destination $Destination -Force
+
+                    # Only move if the destination path is actually different
+                    if ($Destination -ne $SrtPath) {
+                        try {
+                            Move-Item -LiteralPath $SrtPath -Destination $Destination -Force
+                        } catch {
+                            Write-HTMLLog -Column1 'Rename failed:' -Column2 "$SrtPath → $Destination :: $($_.Exception.Message)" -ColorBg 'Error'
+                        }
+                    }
                 } else {
-                    Write-HTMLLog -Column2 "Language code [$languageCode] not found in the 3 letter lookup table." -ColorBg 'Warning'
+                    Write-HTMLLog -Column2 "Language code [$languageCode] not found in the 3→2 lookup table." -ColorBg 'Warning'
                 }
             }
-
+            # else: language is not 3 letters (probably already 2-letter); leave as-is.
         }
+
         if ($TotalSubsToExtract -gt 0) {
             Write-HTMLLog -Column1 'Subtitles:' -Column2 "$TotalSubsToExtract Extracted"
         }
