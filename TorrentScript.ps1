@@ -41,11 +41,11 @@ param(
 # Get function definition files.
 $Functions = @( Get-ChildItem -Path $PSScriptRoot\functions\*.ps1 -ErrorAction SilentlyContinue )
 # Dot source the files
-ForEach ($import in @($Functions)) {
-    Try {
+foreach ($import in @($Functions)) {
+    try {
         # dotsourcing a function script
         .$import.FullName
-    } Catch {
+    } catch {
         Write-Error -Message "Failed to import function $($import.FullName): $_"
     }
 }
@@ -258,7 +258,7 @@ $TorrentHash = $TorrentHash.ToUpper()
 # Handle NoProcess Torrent Label
 if ($DownloadLabel -eq 'NoProcess') {
     Write-Host 'Do nothing'
-    Exit
+    exit
 }
 
 # Create Log file
@@ -274,10 +274,10 @@ Write-HTMLLog -Column1 'Name:' -Column2 $DownloadName
 Write-HTMLLog -Column1 'Hash:' -Column2 $TorrentHash
 
 # Test File Paths
-If (!(Test-Path -LiteralPath $ProcessPath)) {
+if (!(Test-Path -LiteralPath $ProcessPath)) {
     New-Item -ItemType Directory -Force -Path $ProcessPath | Out-Null
 }
-If (!(Test-Path -LiteralPath $LogArchivePath)) {
+if (!(Test-Path -LiteralPath $LogArchivePath)) {
     New-Item -ItemType Directory -Force -Path $LogArchivePath | Out-Null
 }
 
@@ -288,7 +288,7 @@ $ScriptMutex = New-Mutex -MutexName 'DownloadScript'
 $ScriptTimer = [system.diagnostics.stopwatch]::startNew()
 
 # Check paths from Parameters
-If (!(Test-Path -LiteralPath $DownloadPath)) {
+if (!(Test-Path -LiteralPath $DownloadPath)) {
     Write-Host "$DownloadPath - Not valid location"
     Write-HTMLLog -Column1 'Path:' -Column2 "$DownloadPath - Not valid location" -ColorBg 'Error'
     Write-HTMLLog -Column1 'Result:' -Column2 'Failed' -ColorBg 'Error'
@@ -319,7 +319,7 @@ if ($RarFilePaths.Count -gt 0) {
 }
 
 # Check is destination folder exists otherwise create it
-If (!(Test-Path -LiteralPath $ProcessPathFull)) {
+if (!(Test-Path -LiteralPath $ProcessPathFull)) {
     New-Item -ItemType Directory -Force -Path $ProcessPathFull | Out-Null
 }
 
@@ -508,7 +508,7 @@ if ($DownloadLabel -eq $TVLabel -or $DownloadLabel -eq $MovieLabel) {
         Write-HTMLLog -Column2 "$ProcessPathFull"
     } else {
         try {
-            If (Test-Path -LiteralPath $ProcessPathFull) {
+            if (Test-Path -LiteralPath $ProcessPathFull) {
                 Remove-Item -Force -Recurse -LiteralPath $ProcessPathFull
             }
         } catch {
