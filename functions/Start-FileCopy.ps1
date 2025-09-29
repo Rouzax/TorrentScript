@@ -59,20 +59,25 @@ function Start-FileCopy {
         if (-not $s) {
             return 0 
         }
-        # Normalize thousands/decimal separators but preserve exponent if present
-        if ($s -match '[\.,].*,') {
-            $s = $s -replace '\.', ''
-            $s = $s -replace ',', '.'
-        } elseif ($s -match ',') {
-            $s = $s -replace '\.', ''
+        $s = $s.Trim()
+
+        # Count separators
+        $sepCount = ([regex]::Matches($s, '[\.,]')).Count
+
+        if ($sepCount -gt 1) {
+            # Remove thousands separators (dots/commas followed by exactly 3 digits),
+            # but only when there are multiple separators (e.g., 2.848.476.316).
+            $s = [regex]::Replace($s, '(?<=\d)[\.,](?=\d{3}(?:\D|$))', '')
+            # Normalize remaining decimal comma to dot
             $s = $s -replace ',', '.'
         } else {
-            # Remove dot as thousands separator if used that way
-            $s = $s -replace '(?<=\d)\.(?=\d{3}\b)', ''
+            # Single separator → treat as decimal, just normalize comma to dot
+            $s = $s -replace ',', '.'
         }
-        # Parse allowing scientific notation (e.g. 1.23e+09)
+
         return [double]::Parse($s, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture)
     }
+
 
     function Convert-ToBytes([double]$num, [string]$unit) {
         switch ($unit.ToLower()) {
